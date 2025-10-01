@@ -1,0 +1,161 @@
+
+Input:
+You are a cutting-edge AI researcher. Based on the new method described in # New Methods and the experimental policy outlined in # Experiment Strategy, please generate 1 distinct Experiment objects.
+
+# Instructions
+- Generate 1 major experimental lines (Experiment objects) based on the experimental strategy.
+- Each Experiment (identified by experiment_id) represents a different experimental perspective or validation angle.
+- Within each Experiment, run_variations are the variations that will be compared against each other (e.g., ["baseline", "proposed"], ["full-method", "ablation-A", "ablation-B"]).
+- Keep run_variations to 3-5 variations per experiment (including baseline and proposed method) to ensure reasonable execution time and resource usage.
+- Each Experiment should:
+    - Have a unique experiment_id (e.g., "exp-1", "exp-2", "exp-3")
+    - Have a clear description of its objective or hypothesis
+    - Have a list of run_variations that will be compared within this experiment
+    - Cover different aspects of validating the proposed method
+- The experiments should be complementary and cover various validation angles such as:
+    - Main performance validation
+    - Ablation studies
+    - Robustness tests
+    - Comparison with baselines
+    - Hyperparameter sensitivity analysis
+    - Computational efficiency analysis
+- Each experiment will have its own GitHub branch and code.
+- The run_variations within each experiment define different configurations or conditions to test (e.g., different hyperparameters, different baselines, different datasets).
+
+- Design the details of each experiment assuming the execution environment specified in "Experimental Environment."
+- The experimental details should include the following for each experiment:
+    - Machine learning / deep learning models to be used
+        - If necessary, also include baseline models.
+    - Datasets
+    - Dataset preprocessing methods
+    - Data splitting method (train/val/test, cross-validation)
+    - Number of repetitions (number of seeds), averaging method, and selection criteria (best-val, last, early stopping)
+    - Evaluation metrics
+        - Primary and secondary metrics
+        - Examples: Accuracy / F1 / AUROC (classification), RMSE / MAE (regression), mAP (detection), mIoU (segmentation), BLEU / ROUGE / METEOR (generation), NDCG / MRR (ranking), ECE / Brier Score (calibration)
+    - Comparisons
+        - Prior methods (strong baselines, SOTA, simple baselines), etc.
+        - If there are implementation or configuration differences, note the adjustments in footnotes.
+    - Methods for analyzing important hyperparameters (e.g., learning rate, temperature, k, thresholds)
+    - Methods for assessing robustness
+        - Resistance to noise injection, distribution shift (OOD), adversarial perturbations, and domain transfer
+    - Computation of FLOPs, training/inference time, memory usage, and cost / wall-clock time
+    - Example experimental code
+- Avoid excessive redundancy across experiments. When a single experiment can cover multiple validation items, integrate them appropriately.
+- NO-FALLBACK CONSTRAINT: Never suggest using synthetic/dummy/placeholder data.
+- Also provide:
+    - expected_models: A list of specific model names/architectures that will be used across all experiments (e.g., ["ResNet-50", "BERT-base", "GPT-3.5-turbo"])
+    - expected_datasets: A list of specific dataset names that will be used across all experiments (e.g., ["CIFAR-10", "ImageNet", "IMDB Reviews"])
+
+## Output Format
+Please provide:
+- experiments: A list of 1 Experiment objects, each with:
+    - experiment_id: Unique identifier
+    - run_variations: List of variation names/identifiers for this experiment
+    - description: Detailed description including all aspects mentioned in the instructions
+- expected_models: List of model names/architectures
+- expected_datasets: List of dataset names
+
+# Experimental Environment
+NVIDIA A100
+VRAM：80GB
+RAM：2048 GB
+
+# Current Research Method (Target for Experiment Design)
+{
+    "Open Problems": "1. Current subset–based accelerators such as AUTOMATA use a *fixed* fraction of the training set.  In practice the smallest subset that preserves the ranking of competing hyper–parameter (HP) configurations is task-dependent and changes during training.  \n2. When the subset is too small the scheduler (ASHA/Hyperband) receives noisy signals and kills potentially good configurations; if it is too large we lose most of the speed-up.  \n3. There is no cheap, on-the-fly criterion telling us *when* to increase the subset size or to fall back to the full data.",
+    "Methods": "We propose Dynamic Gradient Matching for Hyper-parameter Optimization (DyGraM-HPO), a one–line change to AUTOMATA that *adapts the subset size automatically.*  \n\nCore idea\n──────────\nStart from a tiny subset S₀ (e.g. 1 % of the data). At the beginning of every training epoch for a configuration θ we compute the cosine distance ∆ₜ between the full-batch gradient g_full (cached once every K epochs) and the weighted subset gradient g_S (already available from AUTOMATA):\n\n    ∆ₜ = 1 – ⟨g_full , g_S⟩ / (‖g_full‖‖g_S‖).\n\nIf ∆ₜ > τ we *double* the subset size for this configuration (S ← S ∪ S_new sampled with GradMatchPB); otherwise we keep the current subset. τ starts large (e.g. 0.2) and decays linearly to 0.05.\n\nKey modifications over AUTOMATA\n1. add one gradient-similarity test per epoch → O(1) extra cost because g_S is already computed and g_full is reused for all configs for K epochs.  \n2. call GradMatchPB with the new target subset size only when needed (at most ⌈log₂(1/fraction_min)⌉ times per config).",
+    "Experimental Setup": "Benchmarks: CIFAR-10/100 (ResNet-18), SST-2 (BiLSTM) and LIBSVM tabular sets, identical to AUTOMATA paper.  \nBaselines: FULL, RANDOM(10 %), AUTOMATA(10 %), DyGraM-HPO(1 %→10 %).  \nHyper-parameter search:   – random search 50 trials + ASHA,   – TPE 50 trials + ASHA.  \nK=5 epochs, τ₀=0.2→0.05, fraction_min=1 %.",
+    "Experimental Code": "# only the new block inside the training loop\nif epoch % K == 0:\n    g_full = accumulate_gradients(full_loader, model)   # cached\n\nfor epoch in range(num_epochs):\n    g_S = accumulate_gradients(subset_loader, model, weights)\n    delta = 1 - torch.dot(g_full, g_S)/(g_full.norm()*g_S.norm()+1e-12)\n    if delta > tau(epoch):\n        subset_size *= 2                     # grow subset\n        subset_loader = gradmatch_pb(dataset, subset_size)\n    train_one_epoch(subset_loader)",
+    "Expected Result": "• Mean wall-clock speed-up vs FULL:   AUTOMATA ≈ 6×,   DyGraM-HPO ≈ 9×.  \n• Mean test accuracy drop < 0.3 % compared with FULL and equal or better than fixed-fraction AUTOMATA.  \n• Number of subset re-computations ≤ 3 per configuration.",
+    "Expected Conclusion": "A single, gradient-based adaptive rule eliminates the need to guess the right subset fraction beforehand.  DyGraM-HPO keeps the strong anytime performance of AUTOMATA while bringing an additional 1.5-2× speed-up, pushing hyper-parameter optimisation further towards real-time usability without any model-specific tuning."
+}
+
+# Experiment Strategy
+Objective: Build a single, coherent validation pipeline that proves DyGraM-HPO is (a) faster, (b) at least as accurate, and (c) more broadly useful than fixed-subset or full-data HPO, while remaining stable to design-choice and task variations.
+
+1. Key Properties to Validate
+   1.1 Performance-Accuracy Trade-off – wall-clock speed-up vs. best-achieved test metric.
+   1.2 Ranking Fidelity – correlation between early (subset) and final (full-data) HP ranking.
+   1.3 Adaptivity Benefit – how subset sizes evolve and how often expansions occur.
+   1.4 Computational Efficiency – GPU hours, FLOPs, memory and communication overhead.
+   1.5 Robustness & Generalization – stability over seeds, tasks, model scales, HP searchers, and τ / K schedules.
+
+2. Comparison Grid (applied in every experiment)
+   • Strong baselines: FULL (no sub-sampling), RANDOM-p% (same fraction), and AUTOMATA-p% (best fixed fraction per prior work).
+   • State-of-the-art adaptive subset/HPO methods if available (e.g., HyperShrink, SHA++).
+   • Internal ablations:
+       – DyGraM-HPO-noDecay (fixed τ)
+       – DyGraM-HPO-noCache (recompute g_full each epoch) to isolate caching benefit
+       – DyGraM-HPO-fixedStart (start at 10%) to isolate starting-size choice.
+
+3. Validation Angles
+   A. Quantitative Metrics
+      • Speed-up = GPU-time(FULL)/GPU-time(method) @ equal final accuracy.
+      • Accuracy Gap = |Acc(method) – Acc(FULL)|.
+      • Ranking Spearman ρ between top-k configs under subset vs. full evaluation.
+      • Sample Efficiency = best-valid-score vs. wall-clock curve (any-time plot).
+      • Resource Usage = FLOPs, peak VRAM, number of gradient-similarity tests.
+   B. Qualitative / Diagnostic
+      • Subset-size trajectory per configuration.
+      • Δ_t (cosine distance) histogram over epochs.
+      • Survival curves of configurations under ASHA (did noise kill good ones?).
+      • Heat-maps of τ, K sensitivity.
+
+4. Multi-Perspective Demonstration Plan
+   Phase 1: Reproduce baseline numbers on CIFAR-10/100, SST-2, LIBSVM to establish trust.
+   Phase 2: Controlled speed/accuracy studies under identical HP-search budgets (50 trials, same seeds) comparing all baselines + DyGraM variants; record above metrics.
+   Phase 3: Stress-tests
+       – Larger backbone (ResNet-50) and larger dataset (ImageNet-64 subset) to test scaling.
+       – Different searchers (Random+ASHA, TPE+ASHA, BOHB) to show searcher-agnosticism.
+       – Perturbed τ/K schedules and noise-injected gradients to test robustness.
+   Phase 4: Ablation synthesis – compile results to quantify contribution of each design element.
+
+5. Success Criteria (must satisfy ALL in ≥80% of tasks/seeds)
+   • Speed-up ≥1.5× over best fixed AUTOMATA and ≥6× over FULL.
+   • Accuracy Gap ≤0.5% absolute (classification) or within 95% CI of FULL.
+   • Spearman ρ ≥0.9 for top-20% configurations after pruning.
+   • Additional gradient-similarity overhead ≤5% of total runtime.
+   • Subset expansions per config ≤log2(1/fraction_min) +1 (empirically ≤4).
+   • No catastrophic failures: worst-case gap <2% on any task/seed.
+
+6. Practical Execution Notes
+   • Use NVIDIA A100 nodes; run jobs in containers with deterministic cudnn settings; cap GPU util ≥90% to reflect realistic high-throughput workload.
+   • Record raw logs and publish scripts for full reproducibility.
+   • Employ 3 random seeds per experiment; report mean ± std.
+
+This unified strategy, applied verbatim to every benchmark, ensures that DyGraM-HPO’s claimed benefits are examined from efficiency, accuracy, robustness, and usability viewpoints, against rigorous baselines and ablations, with clear quantitative thresholds defining success.
+
+---
+
+
+# Reference Information from Previous Iteration
+
+Output:
+{
+    "experiments": [
+        {
+            "experiment_id": "exp-1",
+            "run_variations": [
+                "FULL",
+                "RANDOM-10%",
+                "AUTOMATA-10%",
+                "DyGraM-HPO",
+                "DyGraM-HPO-noDecay"
+            ],
+            "description": "Objective: End-to-end performance/accuracy validation plus key ablations of DyGraM-HPO on the core AUTOMATA benchmarks.\n\nBenchmarks & Models\n• CIFAR-10/100 → ResNet-18 (baseline) and ResNet-50 (scale-up check).\n• SST-2 (GLUE) → 2-layer BiLSTM + pre-trained GloVe.\n• LIBSVM tabular (YearPredictionMSD) → XGBoost adapted to mini-batch training.\n\nData Preparation\n• CIFAR: standardization to [0,1], random crop 32×32 + horizontal flip.\n• SST-2: lowercase, 300-dim GloVe lookup, max-len 64 tokens, pad/trim.\n• LIBSVM: z-score per feature; sparse → dense batch loader.\n\nSplits & Evaluation\n• CIFAR & SST-2: train/val/test = 45k/5k/10k (C10), 45k/5k/10k (C100), 67/8/1821 (SST-2) following GLUE.\n• LIBSVM: 80/10/10 stratified.\n\nHyper-parameter Optimisation\n• Two searchers per task: (1) Random-50 + ASHA; (2) TPE-50 + ASHA.  Max epochs 150 (CIFAR), 30 (SST-2), 100 (LIBSVM).\n• ASHA settings: grace=1, reduction=3, max_r=R_max in paper.\n• Hp space identical for all methods (lr, weight-decay, momentum, dropout, etc.).\n\nSeeds & Aggregation\n• 3 independent seeds.  Report mean±std.  Model selection = best-val checkpoint; test metric taken from that checkpoint.\n\nMetrics\nPrimary: Top-1 Acc (CIFAR), F1 (SST-2), RMSE (LIBSVM).\nSecondary: Wall-clock speed-up, GPU hours, Spearman ρ of HP ranking (top-20%), FLOPs, peak VRAM, #grad-similarity tests.\n\nComparisons\n• FULL (no sub-sampling)\n• RANDOM-10% (naïve size match)\n• AUTOMATA-10% (strong prior method)\n• DyGraM-HPO (proposed)\n• DyGraM-HPO-noDecay (τ fixed=0.1) – ablation.\n\nHyper-parameter & Robustness Analyses\n• Sensitivity grid: τ₀∈{0.3,0.2,0.1}, K∈{3,5,10}.  Heat-map of Acc gap & speed-up.\n• Noise robustness: add Gaussian N(0,0.01) to gradients every 10 steps; measure Δ performance.\n• OOD test: swap CIFAR-10 → CIFAR-10.1 test set.\n\nEfficiency Logging\n• Use ptflops to compute forward+backward FLOPs per epoch.\n• torch.cuda.max_memory_allocated() for VRAM.\n• time.perf_counter() deltas for train/infer time; aggregate to GPU-hours.\n\nSubset Diagnostics\n• Record subset_size(t) per config; plot staircase vs. epoch.\n• Histogram of Δ_t.\n• Survival curve of ASHA pruned configs across variations.\n\nReproducibility\n• Deterministic cudnn; seed torch & numpy.\n• Container base: nvcr.io/pytorch:23.05-py3.\n• Each run writes JSON log + tensorboard.\n\nExample Code Snippet (PyTorch)\n```\n# inside objective() used by Optuna/Tune\nsubset_loader = gradmatch_pb(full_train, init_frac=0.01)\nfor epoch in range(max_epochs):\n    train_one_epoch(model, subset_loader)\n    if epoch % K == 0:\n        with torch.no_grad():\n            g_full = accumulate_gradients(full_train_cached, model)\n    g_S = accumulate_gradients(subset_loader, model, weights=None)\n    delta = 1 - torch.dot(g_full, g_S) / (g_full.norm()*g_S.norm()+1e-12)\n    if (variant==\"DyGraM-HPO\" and delta > tau(epoch)) or \\\n       (variant==\"DyGraM-HPO-noDecay\" and delta > 0.1):\n        subset_loader = gradmatch_pb(full_train, new_frac=min(1.0, 2*current_frac))\n```\n\nRuntime Budget\n• Expected total GPU time on A100: ≤800 GPU-hours for all tasks×seeds×variations, fitting 1-week cluster slot.\n• Memory ≤24 GB per GPU (ResNet-50, batch 128) – within 80 GB capacity.\n\nSuccess Criteria\n1. Speed-up ≥1.5× over AUTOMATA-10% and ≥6× over FULL on ≥2/3 tasks.\n2. Accuracy gap ≤0.5% (CIFAR)/0.3 F1(SST-2)/≤0.01 RMSE (LIBSVM) vs. FULL.\n3. ρ(rank) ≥0.9.\n4. Extra overhead ≤5%.\n"
+        }
+    ],
+    "expected_models": [
+        "ResNet-18",
+        "ResNet-50",
+        "BiLSTM",
+        "XGBoost"
+    ],
+    "expected_datasets": [
+        "CIFAR-10",
+        "CIFAR-100",
+        "SST-2",
+        "YearPredictionMSD"
+    ]
+}
