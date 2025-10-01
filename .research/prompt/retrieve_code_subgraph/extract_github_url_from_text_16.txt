@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The CES method utilizes a single hold-out dataset (Des-cal) for both early stopping and conformal calibration. During training, intermediate models from a deep neural network are stored at predefined intervals (every τ epochs). For a given test point, the 'best' model is selected by minimizing an augmented loss function, which incorporates the test sample's (placeholder) outcome into the hold-out loss, ensuring exchangeability. For outlier detection and multi-class classification, this involves computing conformal p-values or prediction sets using nonconformity scores based on the selected model. For regression, the method leverages the quadratic form of the squared-error loss (or piecewise linear for pinball loss in quantile regression) to simultaneously solve for the best model across a continuum of possible test outcomes. This results in the selected model being a step function of the hypothetical test outcome. Prediction intervals are then constructed by taking the convex hull of the union of standard conformal prediction intervals generated for each step. The computational cost for model selection is O((nes-cal + ntest)·T + ntest · nes-cal) for classification and O((nes-cal + ntest) · T · log T + ntest · nes-cal) for regression, utilizing efficient divide-and-conquer algorithms for lower envelope computation.
+
+# GitHub URLs List
+['https://github.com/xinbinhuang/feature-selection_blogfeedback']
+Output:
+{
+    "index": null
+}
