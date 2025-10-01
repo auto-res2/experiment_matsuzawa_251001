@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+BOIL employs a Bayesian Optimization framework that models the joint space of input hyperparameters (x) and training iterations (t) using a Gaussian Process (GP) surrogate. It uses a product kernel and approximates training time cost with a linear regressor. The objective function is defined by compressing the full learning curve into a numeric score using a Sigmoid (Logistic) preference function, whose parameters (growth and middle point) are learned by maximizing the GP marginal likelihood. To enhance sample efficiency and model robustness, the method selectively augments training data by choosing intermediate points from the learning curve that maximize GP predictive uncertainty, while ensuring the GP covariance matrix remains well-conditioned (condition number below a threshold). An acquisition function based on Expected Improvement (EI) is used to select the next evaluation point, balancing utility, uncertainty, and cost.
+
+# GitHub URLs List
+['https://github.com/ntienvu/BOIL']
+Output:
+{
+    "index": 0
+}
