@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+DNN-MFBO constructs a multi-fidelity model by stacking deep neural networks (NNs), where each NN models one fidelity. For fidelity 'm > 1', the input to the NN `xm` is formed by concatenating the original input `x` with the output from the previous fidelity `fm-1(x)`, thus propagating information. The output of each NN is defined as `fm(x) = w_m^T φ_θm(xm)`. To quantify uncertainty, only the NN weights in the output layer (`wm`) are treated as random variables with a standard normal prior, while all other weights (`θm`) are considered hyper-parameters. A stochastic variational learning algorithm is developed to jointly estimate the posterior distribution `q(wm)` (approximated as Gaussian) and optimize hyper-parameters by maximizing the evidence lower bound (ELBO) using the reparameterization trick. The acquisition function maximizes the mutual information `I(f*, fm(x)|D)` weighted by the query cost `λm`. To handle the nonlinear coupling between fidelity outputs, the posterior distribution `p(fm(x)|D)` is approximated as a Gaussian using fidelity-wise moment matching and Gauss-Hermite quadrature. The conditional entropy `H(fm(x)|f*, D)` is approximated by `H(fm(x)|fM(x) ≤ f*, D)` for `m < M`, which is also approximated as a Gaussian via moment matching and Gauss-Hermite quadrature. Acquisition function optimization is performed using L-BFGS with automatic differentiation.
+
+# GitHub URLs List
+['https://github.com/kirthevasank/mf-gp-ucb', 'https://github.com/YehongZ/MixedTypeBO', 'https://github.com/zi-w/Max-value-Entropy-Search', 'https://github.com/automl/SMAC3']
+Output:
+{
+    "index": 2
+}
