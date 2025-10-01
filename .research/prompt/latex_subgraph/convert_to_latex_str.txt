@@ -1,0 +1,187 @@
+
+Input:
+
+You are a LaTeX expert.
+Your task is to convert each section of a research paper into plain LaTeX **content only**, without including any section titles or metadata.
+
+Below are the paper sections. For each one, convert only the **content** into LaTeX:
+
+---
+Section: title
+
+Cost-Conditioned BOIL: Stochastic Cost Modelling for Faster Hyperparameter Optimisation
+
+---
+
+---
+Section: abstract
+
+We address cost-aware Bayesian optimisation for iterative learners, where an optimiser must jointly choose hyper-parameters x and a training budget t under a hard wall-clock constraint. BOIL, the current state-of-the-art, estimates the runtime c(x,t) with a linear regressor and inserts this single point estimate into a myopic utility. When cost is a non-linear or piece-wise function of the hyper-parameters, the regressor is miss-specified; in addition, the deterministic treatment of c ignores epistemic uncertainty and can yield over-optimistic, time-wasting selections \cite{nguyen-2019-bayesian}. We propose COCO-BOIL, a two-line modification of BOIL that leaves every other component untouched. First, we replace the linear regressor with a tiny one-hidden-layer MLP (eight ReLU units, ≈200 parameters) trained on the same (x,t,c) logs. Second, at acquisition time we keep dropout active and average K=10 Monte-Carlo cost samples, turning BOIL’s penalty into E. The resulting acquisition a(x,t)=log EI(x,t)−E penalises both high and uncertain cost. Experiments on five benchmarks—CartPole-DDQN, InvertedPendulum-A2C, Reacher-A2C, SVHN-CNN and CIFAR-10-CNN—show that COCO-BOIL cuts median time-to-target by 27 % compared with BOIL, while matching its sample efficiency. Mean absolute percentage error of the cost surrogate drops from ≈35 % to <10 %, and the extra computation per BO iteration is below 3 %. Ablations confirm that the neural surrogate and the stochastic penalty provide additive gains. Because the change touches only two lines of code and incurs negligible overhead, COCO-BOIL is an immediately practical upgrade for any cost-aware BO pipeline.
+
+---
+
+---
+Section: introduction
+
+Hyper-parameter optimisation (HPO) for deep reinforcement-learning agents and large-scale vision models is dominated by wall-clock considerations: practitioners care far more about how long a tuning run occupies a GPU than about the number of configurations it evaluates. For iterative learners this is acute, because the runtime of a configuration grows with the allocated training steps and depends on hyper-parameters in complex, highly non-linear ways—for instance through batch-size induced memory pressure or data-loader throughput. Classical Bayesian optimisation (BO) gains sample efficiency by fitting a surrogate to the objective and steering exploration via an acquisition that trades exploitation against uncertainty \cite{brochu-2010-tutorial}. BOIL advanced this paradigm by exploiting intermediate learning-curve snapshots and by weighing the expected improvement (EI) against the predicted runtime of finishing the configuration \cite{nguyen-2019-bayesian}.
+
+Despite its empirical success, three practical weaknesses remain. (i) BOIL predicts c(x,t) with a linear regressor. Real runtimes vary non-linearly with learning-rate schedules, optimiser state, mixed precision settings and even subtle hardware regime changes. A linear model is badly miss-specified and extrapolates poorly. (ii) The acquisition discounts EI by the *mean* predicted cost only. Ignoring epistemic uncertainty encourages the optimiser to choose configurations whose runtime is systematically under-estimated—a single such error can burn the entire wall-clock budget. (iii) The cost model is re-trained from scratch on raw (x,t) pairs every BO iteration, without sharing statistical strength across similar hyper-parameter regions, which slows learning in sparse data regimes.
+
+We introduce COCO-BOIL, a minimal augmentation that cures these weaknesses while leaving BOIL’s Gaussian-process objective surrogate, learning-curve compression and virtual-point machinery untouched. The guiding idea is to improve *both* the fidelity *and* the calibration of the cost surrogate and to propagate that uncertainty into decision-making.
+
+Contributions (summarised)
+• Non-linear cost modelling: a tiny one-hidden-layer MLP (≈200 parameters) replaces the linear regressor, capturing non-linearities and regime changes at <0.01 s training cost per BO iteration.
+• Uncertainty-aware acquisition: we compute a(x,t)=log EI(x,t)−E by Monte-Carlo sampling under dropout, explicitly penalising high or uncertain cost.
+• Extensive evaluation on five publicly available BOIL benchmarks demonstrates a consistent 27 % reduction in median wall-clock time-to-target, with unchanged sample efficiency, <3 % overhead and robust performance across 20 seeds.
+• Detailed ablations disentangle the roles of accurate cost prediction versus uncertainty penalisation, while micro-benchmarks confirm that the added latency never exceeds 1.7 ms per BO step.
+• Because the modification alters only two lines of the original codebase, it can be dropped into any existing cost-aware BO system; future work can combine it with non-myopic tree acquisitions \cite{jiang-2020-efficient,yang-2024-accelerating}, user-guided priors \cite{hvarfner-2023-general} or multi-fidelity extensions \cite{li-2020-multi}.
+
+---
+
+---
+Section: related_work
+
+Cost-aware BO for iterative learners. BOIL first formulated the acquisition log EI − log ĉ, where ĉ stems from a linear regressor trained on observed (x,t,c) triples \cite{nguyen-2019-bayesian}. COCO-BOIL keeps this structure, but replaces the cost component by a neural surrogate and accounts for its uncertainty.
+
+Resource-allocation heuristics dispense with explicit cost modelling. Hyperband and successors such as PASHA dynamically allocate budgets by successive halving or adaptive maxima \cite{bohdal-2022-pasha}. While effective in wall-clock terms, these methods ignore hyper-parameter dependent runtime variations and cannot hedge against uncertainty.
+
+Multi-fidelity BO exploits cheap approximations of the objective. Deep neural surrogates such as DNN-MFBO or BMBO-DARN couple fidelities through rich Bayesian networks to reduce cost \cite{li-2020-multi,li-2021-batch}. COCO-BOIL is orthogonal: it focuses on improving runtime prediction *within* the single-fidelity setting of BOIL, and its surrogate could be embedded into any multi-fidelity framework.
+
+Non-myopic acquisitions plan several BO steps ahead via scenario trees \cite{jiang-2020-efficient} or multilevel Monte Carlo \cite{yang-2024-accelerating}. These approaches are powerful yet computationally heavy. COCO-BOIL delivers sizeable gains with a myopic acquisition by fixing the more basic issue of miss-specified and over-confident cost estimates.
+
+Enhancing the objective surrogate. Gradient-enhanced GPs improve scalability \cite{ament-2022-scalable}; ColaBO injects user priors on the optimizer location \cite{hvarfner-2023-general}; DyHPO and DPL model learning-curve dynamics explicitly \cite{wistuba-2022-supervising,kadra-2023-scaling}. All are complementary to COCO-BOIL, which addresses the orthogonal axis of runtime prediction.
+
+In summary, existing work advances objective modelling, fidelity allocation and non-myopic lookahead, yet overlooks the central bottleneck we target: accurate, uncertainty-aware modelling of runtime within BO for iterative learners.
+
+---
+
+---
+Section: background
+
+Bayesian optimisation maintains a probabilistic surrogate p(f|D) over an expensive objective f and selects the next evaluation by maximising an acquisition α that balances exploitation and exploration \cite{brochu-2010-tutorial}. In cost-aware settings the practitioner seeks to maximise improvement per second. BOIL formalises this for iterative learners whose state is described by hyper-parameters x and an additional training budget t≥0. A learning-curve compression function maps (x,t) to a scalar performance y; a Gaussian process models y, providing predictive mean μ(x,t) and variance σ²(x,t). Runtime is estimated by a linear regressor ĉ(x,t)=w⊤. The BOIL acquisition is
+ a(x,t)=log EI(x,t) − log ĉ(x,t),
+where EI denotes the expected improvement over the best observed compressed score \cite{nguyen-2019-bayesian}.
+
+Why linear cost models fail. Real runtimes exhibit: (i) non-linear scaling with batch size due to memory saturation; (ii) abrupt jumps when mixed precision is enabled; (iii) interactions between optimiser momentum, learning rate and hardware throughput. A linear model cannot represent such phenomena, leading to systematic under-prediction in high-cost regions. Further, using only the *mean* prediction disregards epistemic uncertainty: early in the search the regressor has little data and its error bars are large. Ignoring them can trap the optimiser in time-consuming dead ends.
+
+Our goal is therefore twofold: employ a surrogate that is flexible enough to capture non-linearities yet cheap to train, and inject its predictive uncertainty into the acquisition without disturbing the rest of BOIL’s pipeline.
+
+---
+
+---
+Section: method
+
+COCO-BOIL alters BOIL in only two lines.
+
+1. Neural cost surrogate (M1). The linear regressor is replaced by a fully-connected network with one hidden layer of eight ReLU units and an output neuron producing log-runtime. Inputs are the concatenation of hyper-parameters and the training-step count. With ≈200 parameters, the model trains for 20 epochs using Adam (learning rate 1×10⁻³) on all accumulated (x,t, log c) tuples. Training takes under 0.01 s on CPU.
+
+2. Uncertainty-aware acquisition (M2). At suggestion time dropout (rate 0.1) remains active, yielding a predictive distribution over log-cost. We draw K=10 stochastic forward passes {ℓ₁,…,ℓ_K} and compute
+ a(x,t)=log EI(x,t) − (1/K)∑ₖℓₖ.
+The Monte-Carlo average penalises both high *and* uncertain runtimes: if the network is unsure, samples spread out and the mean penalty grows.
+
+Code integration. In PyTorch the change boils down to instantiating a TinyCostNet, training it for 20 minibatches, and replacing the single call to mean_cost by an average over K dropout samples. No other BOIL component—Gaussian process, learning-curve compression, virtual points, or candidate search—is touched. The total extra latency per BO iteration is 0.92–1.7 ms (≈2.2 %), and memory overhead is 0.17 GB, negligible relative to model training footprints.
+
+---
+
+---
+Section: experimental_setup
+
+Benchmarks. We follow the original BOIL evaluation verbatim: (1) Double-DQN on CartPole-v0, (2) A2C on InvertedPendulum-v2, (3) A2C on Reacher-v2, (4) a convolutional network on SVHN, and (5) the same architecture on CIFAR-10. Search spaces, training code and performance thresholds (e.g. ≥195 cumulative reward for CartPole, ≤10.25 % test error for CIFAR-10) remain unchanged \cite{nguyen-2019-bayesian}.
+
+Baselines and ablations. We compare COCO-BOIL to BOIL, Hyperband, CM-TF-BO and random search. Four ablations isolate the contribution of each modification: (i) BOIL + MLP (M1 only), (ii) BOIL + MC expectation with the linear regressor (M2 only), (iii) COCO-BOIL without dropout (uncertainty ignored) and (iv) full COCO-BOIL.
+
+Metrics. We log every 15 s: best validation score versus wall-clock, number of finished trials, cumulative wall-clock, surrogate errors (MAPE, normalised RMSE, expected calibration error), per-iteration latency and memory use. Primary metric is median time-to-threshold; secondary metrics are area-under-curve (AUC) of best-so-far versus time and sample efficiency (best score versus completed trials). All statistics aggregate 20 random seeds per method. Significance is assessed with paired Wilcoxon signed-rank tests on time-to-threshold and AUC.
+
+Implementation details. COCO-BOIL is implemented in Python 3.11 with PyTorch 2.2. Deterministic Torch flags, fixed random seeds and SLURM-tracked commit hashes ensure reproducibility. Each optimisation run is capped at 8 h on a single NVIDIA A100; runs are distributed over 24 GPUs, totalling <1 000 GPU-hours.
+
+---
+
+---
+Section: results
+
+Wall-clock efficiency. Across all five tasks COCO-BOIL reduces the median time-to-threshold by 27 % relative to BOIL (range 23–31 %). CartPole reaches 195 reward in 242 s (COCO-BOIL) vs. 336 s (BOIL), 511 s (Hyperband) and 468 s (CM-TF-BO). CIFAR-10 attains ≤10.25 % test error in 3 h 08 m vs. 4 h 05 m for BOIL. AUC improvements average 29 %; Wilcoxon p-values are <0.01 for every benchmark.
+
+Sample efficiency. When performance is plotted against the number of finished trials, BOIL and COCO-BOIL curves overlap within 1 %, confirming that the speed-up stems from better cost management rather than more evaluations.
+
+Cost surrogate quality. The linear regressor’s MAPE 34.7 ± 3.1 % falls to 9.6 ± 1.2 % with the MLP alone and to 8.3 ± 1.0 % with full COCO-BOIL. Normalised RMSE drops from 0.241 to 0.061; expected calibration error from 0.128 to 0.043. The linear model systematically under-predicts high-cost regions, whereas COCO-BOIL’s predictions align with the identity line.
+
+Ablation analysis. M1 (better surrogate) yields a 17 % speed-up; M2 (uncertainty averaging) adds 6 %. Removing dropout from the full variant degrades the gain to 21 %. The two modifications are therefore additive and individually beneficial.
+
+Computational overhead. Training plus sampling costs 0.92–1.7 ms per BO iteration (<3 % of iteration time) and 0.17 GB GPU memory—negligible compared with model training.
+
+Robustness and generalisation. Across 20 seeds the inter-quartile width of time-to-threshold widens by only 1.8 % compared with BOIL. Under a synthetic regime change (FP32→BF16 switch) COCO-BOIL keeps MAPE ≈11 %; BOIL spikes to 54 %. On the unseen LunarLanderContinuous-v2 benchmark, COCO-BOIL still delivers a 21 % speed-up, satisfying the pre-registered ≥75 % generalisation criterion.
+
+Practical impact. With a fixed 4-hour GPU budget, practitioners recover BOIL’s final validation accuracy 1 h 15 m sooner using COCO-BOIL, freeing capacity for additional experiments. Hyperband would require ≈6 h to match the same accuracy.
+
+Limitations. Dropout-based uncertainty is approximate; fully Bayesian neural networks might further improve calibration. Our gains are orthogonal to non-myopic planning and multi-fidelity modelling, which remain promising avenues for compounding improvements.
+
+---
+
+---
+Section: conclusion
+
+COCO-BOIL shows that fixing the weakest link in BOIL—the linear, over-confident runtime model—yields immediate and substantial wall-clock gains. By swapping in a 200-parameter MLP and averaging ten dropout samples, we slash runtime prediction error below 10 %, inject cost uncertainty into the acquisition, and realise a consistent 27 % reduction in time-to-target across five diverse benchmarks, all for <3 % additional compute per BO iteration. Because the modification affects only two lines of code and leaves every other component intact, it can be adopted in minutes and combined with orthogonal advances such as non-myopic lookahead, user-guided priors or multi-fidelity scheduling. Future work will explore Bayesian cost surrogates, integrate COCO-BOIL with scenario-tree acquisitions, and extend cost conditioning beyond training steps to memory, energy and privacy budgets, moving automated HPO closer to real-time interactivity.
+
+---
+
+
+## LaTeX Formatting Rules:
+- Use \subsection{...} for any subsections within this section.
+    - Subsection titles should be distinct from the section name;
+    - Do not use '\subsection{  }', or other slight variations. Use more descriptive and unique titles.
+    - Avoid excessive subdivision. If a subsection is brief or overlaps significantly with another, consider merging them for clarity and flow.
+
+- For listing contributions, use the LaTeX \begin{itemize}...\end{itemize} format.
+    - Each item should start with a short title in \textbf{...} format.
+    - Avoid using -, *, or other Markdown bullet styles.
+
+- When including tables, use the `tabularx` environment with `\textwidth` as the target width.
+    - At least one column must use the `X` type to enable automatic width adjustment and line breaking.
+    - Include `\hline` at the top, after the header, and at the bottom. Avoid vertical lines unless necessary.
+    - To left-align content in `X` columns, define `
+ewcolumntype{Y}{>{
+aggedrightrraybackslash}X}` using the `array` package.
+
+- When writing pseudocode, use the `algorithm` and `algorithmicx` LaTeX environments.
+    - Only include pseudocode in the `Method` section. Pseudocode is not allowed in any other sections.
+    - Prefer the `\begin{algorithmic}` environment using **lowercase commands** such as `\State`, `\For`, and `\If`, to ensure compatibility and clean formatting.
+    - Pseudocode must represent actual algorithms or procedures with clear logic. Do not use pseudocode to simply rephrase narrative descriptions or repeat what has already been explained in text.
+        - Good Example:
+        ```latex
+        \State Compute transformed tokens: \(	ilde{T} \leftarrow W\,T\)
+        \State Update: \(T_{new} \leftarrow 	ilde{T} + \mu\,T_{prev}\)
+        ```
+- Figures and images are ONLY allowed in the "Results" section.
+    - Use LaTeX float option `[H]` to force placement.
+
+- All figures must be inserted using the following LaTeX format, using a `width` that reflects the filename:
+    ```latex
+    \includegraphics[width=\linewidth]{ images/filename.pdf }
+    ```
+    The `<appropriate-width>` must be selected based on the filename suffix:
+    - If the filename ends with _pair1.pdf or _pair2.pdf, use 0.48\linewidth as the width of each subfigure environment and place the figures side by side using `subcaption` package.
+    - Otherwise (default), use 0.7\linewidth
+
+- **Escaping special characters**:
+    - LaTeX special characters (`#`, `$`, `%`, `&`, `~`, `_`, `^`, `{`, `}`, `\`) must be escaped with a leading backslash when they appear in plain text (e.g., `data\_set`, `C\&C`).
+    - Underscores **must always be escaped** (`\_`) outside math mode, even in filenames (e.g., memory\_profiler), code-style words, itemize lists, or citation contexts.
+
+- Always use ASCII hyphens (`-`) instead of en-dashes (`–`) or em-dashes (`—`) to avoid spacing issues in hyphenated terms.
+- Do not include any of these higher-level commands such as \documentclass{...}, \begin{document}, and \end{document}.
+    - Additionally, avoid including section-specific commands such as \begin{abstract}, \section{  }, or any other similar environment definitions.
+- Do not modify citation placeholders:
+    - Citation placeholders appear in the format [citation_key], where citation_key contains underscores, numbers, and text (e.g., [vaswani_2017_attention], [smith_2023_deep]).
+    - You must preserve these placeholders EXACTLY as they appear in the input text.
+- If no LaTeX conversion is needed, output the content as-is without status messages like [Unchanged].
+Output:
+{
+    "title": "Cost-Conditioned BOIL: Stochastic Cost Modelling for Faster Hyperparameter Optimisation",
+    "abstract": "We address cost-aware Bayesian optimisation for iterative learners, where an optimiser must jointly choose hyper-parameters x and a training budget t under a hard wall-clock constraint. BOIL, the current state-of-the-art, estimates the runtime c(x,t) with a linear regressor and inserts this single point estimate into a myopic utility. When cost is a non-linear or piece-wise function of the hyper-parameters, the regressor is miss-specified; in addition, the deterministic treatment of c ignores epistemic uncertainty and can yield over-optimistic, time-wasting selections [nguyen-2019-bayesian]. We propose COCO-BOIL, a two-line modification of BOIL that leaves every other component untouched. First, we replace the linear regressor with a tiny one-hidden-layer MLP (eight ReLU units, $\\approx 200$ parameters) trained on the same $(x,t,c)$ logs. Second, at acquisition time we keep dropout active and average $K=10$ Monte-Carlo cost samples, turning BOIL's penalty into $\\mathbb{E}$. The resulting acquisition $a(x,t)=\\log \\mathrm{EI}(x,t)-\\mathbb{E}$ penalises both high and uncertain cost. Experiments on five benchmarks- CartPole-DDQN, InvertedPendulum-A2C, Reacher-A2C, SVHN-CNN and CIFAR-10-CNN- show that COCO-BOIL cuts median time-to-target by 27\\ \\% compared with BOIL, while matching its sample efficiency. Mean absolute percentage error of the cost surrogate drops from $\\approx 35\\ \\%$ to $<10\\ \\%$, and the extra computation per BO iteration is below 3\\ \\%. Ablations confirm that the neural surrogate and the stochastic penalty provide additive gains. Because the change touches only two lines of code and incurs negligible overhead, COCO-BOIL is an immediately practical upgrade for any cost-aware BO pipeline.",
+    "introduction": "Hyper-parameter optimisation (HPO) for deep reinforcement-learning agents and large-scale vision models is dominated by wall-clock considerations: practitioners care far more about how long a tuning run occupies a GPU than about the number of configurations it evaluates. For iterative learners this is acute, because the runtime of a configuration grows with the allocated training steps and depends on hyper-parameters in complex, highly non-linear ways- for instance through batch-size induced memory pressure or data-loader throughput. Classical Bayesian optimisation (BO) gains sample efficiency by fitting a surrogate to the objective and steering exploration via an acquisition that trades exploitation against uncertainty [brochu-2010-tutorial]. BOIL advanced this paradigm by exploiting intermediate learning-curve snapshots and by weighing the expected improvement (EI) against the predicted runtime of finishing the configuration [nguyen-2019-bayesian].\n\nDespite its empirical success, three practical weaknesses remain. (i) BOIL predicts $c(x,t)$ with a linear regressor. Real runtimes vary non-linearly with learning-rate schedules, optimiser state, mixed precision settings and even subtle hardware regime changes. A linear model is badly miss-specified and extrapolates poorly. (ii) The acquisition discounts EI by the mean predicted cost only. Ignoring epistemic uncertainty encourages the optimiser to choose configurations whose runtime is systematically under-estimated- a single such error can burn the entire wall-clock budget. (iii) The cost model is re-trained from scratch on raw $(x,t)$ pairs every BO iteration, without sharing statistical strength across similar hyper-parameter regions, which slows learning in sparse data regimes.\n\nWe introduce COCO-BOIL, a minimal augmentation that cures these weaknesses while leaving BOIL's Gaussian-process objective surrogate, learning-curve compression and virtual-point machinery untouched. The guiding idea is to improve both the fidelity and the calibration of the cost surrogate and to propagate that uncertainty into decision-making.\n\n\\subsection{Contributions}\n\\begin{itemize}\n  \\item \\textbf{Non-linear cost modelling:} a tiny one-hidden-layer MLP ($\\approx 200$ parameters) replaces the linear regressor, capturing non-linearities and regime changes at $<0.01$ s training cost per BO iteration.\n  \\item \\textbf{Uncertainty-aware acquisition:} we compute $a(x,t)=\\log \\mathrm{EI}(x,t)-\\mathbb{E}$ by Monte-Carlo sampling under dropout, explicitly penalising high or uncertain cost.\n  \\item \\textbf{Extensive evaluation:} five publicly available BOIL benchmarks demonstrate a consistent 27\\ \\% reduction in median wall-clock time-to-target, with unchanged sample efficiency, $<3\\ \\%$ overhead and robust performance across 20 seeds.\n  \\item \\textbf{Ablations and micro-benchmarks:} we disentangle the roles of accurate cost prediction versus uncertainty penalisation, while confirming that the added latency never exceeds 1.7 ms per BO step.\n  \\item \\textbf{Practicality and extensibility:} the modification alters only two lines of the original codebase, enabling drop-in use in any cost-aware BO system; it is complementary to non-myopic tree acquisitions [jiang-2020-efficient,yang-2024-accelerating], user-guided priors [hvarfner-2023-general] and multi-fidelity extensions [li-2020-multi].\n\\end{itemize}",
+    "related_work": "Cost-aware BO for iterative learners. BOIL first formulated the acquisition $\\log \\mathrm{EI} - \\log \\hat{c}$, where $\\hat{c}$ stems from a linear regressor trained on observed $(x,t,c)$ triples [nguyen-2019-bayesian]. COCO-BOIL keeps this structure, but replaces the cost component by a neural surrogate and accounts for its uncertainty.\n\nResource-allocation heuristics dispense with explicit cost modelling. Hyperband and successors such as PASHA dynamically allocate budgets by successive halving or adaptive maxima [bohdal-2022-pasha]. While effective in wall-clock terms, these methods ignore hyper-parameter dependent runtime variations and cannot hedge against uncertainty.\n\nMulti-fidelity BO exploits cheap approximations of the objective. Deep neural surrogates such as DNN-MFBO or BMBO-DARN couple fidelities through rich Bayesian networks to reduce cost [li-2020-multi,li-2021-batch]. COCO-BOIL is orthogonal: it focuses on improving runtime prediction within the single-fidelity setting of BOIL, and its surrogate could be embedded into any multi-fidelity framework.\n\nNon-myopic acquisitions plan several BO steps ahead via scenario trees [jiang-2020-efficient] or multilevel Monte Carlo [yang-2024-accelerating]. These approaches are powerful yet computationally heavy. COCO-BOIL delivers sizeable gains with a myopic acquisition by fixing the more basic issue of miss-specified and over-confident cost estimates.\n\nEnhancing the objective surrogate. Gradient-enhanced GPs improve scalability [ament-2022-scalable]; ColaBO injects user priors on the optimizer location [hvarfner-2023-general]; DyHPO and DPL model learning-curve dynamics explicitly [wistuba-2022-supervising,kadra-2023-scaling]. All are complementary to COCO-BOIL, which addresses the orthogonal axis of runtime prediction.\n\nIn summary, existing work advances objective modelling, fidelity allocation and non-myopic lookahead, yet overlooks the central bottleneck we target: accurate, uncertainty-aware modelling of runtime within BO for iterative learners.",
+    "background": "Bayesian optimisation maintains a probabilistic surrogate $p(f\\mid D)$ over an expensive objective $f$ and selects the next evaluation by maximising an acquisition $\\alpha$ that balances exploitation and exploration [brochu-2010-tutorial]. In cost-aware settings the practitioner seeks to maximise improvement per second. BOIL formalises this for iterative learners whose state is described by hyper-parameters $x$ and an additional training budget $t\\ge 0$. A learning-curve compression function maps $(x,t)$ to a scalar performance $y$; a Gaussian process models $y$, providing predictive mean $\\mu(x,t)$ and variance $\\sigma^2(x,t)$. Runtime is estimated by a linear regressor $\\hat{c}(x,t)=w^\\top\\phi(x,t)$. The BOIL acquisition is $a(x,t)=\\log \\mathrm{EI}(x,t) - \\log \\hat{c}(x,t)$, where EI denotes the expected improvement over the best observed compressed score [nguyen-2019-bayesian].\n\nWhy linear cost models fail. Real runtimes exhibit: (i) non-linear scaling with batch size due to memory saturation; (ii) abrupt jumps when mixed precision is enabled; (iii) interactions between optimiser momentum, learning rate and hardware throughput. A linear model cannot represent such phenomena, leading to systematic under-prediction in high-cost regions. Further, using only the mean prediction disregards epistemic uncertainty: early in the search the regressor has little data and its error bars are large. Ignoring them can trap the optimiser in time-consuming dead ends.\n\nOur goal is therefore twofold: employ a surrogate that is flexible enough to capture non-linearities yet cheap to train, and inject its predictive uncertainty into the acquisition without disturbing the rest of BOIL's pipeline.",
+    "method": "COCO-BOIL alters BOIL in only two lines.\n\n\\subsection{Neural cost surrogate (M1)}\nThe linear regressor is replaced by a fully-connected network with one hidden layer of eight ReLU units and an output neuron producing log-runtime. Inputs are the concatenation of hyper-parameters and the training-step count. With $\\approx 200$ parameters, the model trains for 20 epochs using Adam (learning rate $1\\times 10^{-3}$) on all accumulated $(x,t, \\log c)$ tuples. Training takes under 0.01 s on CPU.\n\n\\subsection{Uncertainty-aware acquisition (M2)}\nAt suggestion time dropout (rate 0.1) remains active, yielding a predictive distribution over log-cost. We draw $K=10$ stochastic forward passes $\\{\\ell_1,\\ldots,\\ell_K\\}$ and compute\n\\[\n a(x,t)=\\log \\mathrm{EI}(x,t) - \\frac{1}{K}\\sum_{k=1}^K \\ell_k.\n\\]\nThe Monte-Carlo average penalises both high and uncertain runtimes: if the network is unsure, samples spread out and the mean penalty grows.\n\n\\subsection{Code integration}\nIn PyTorch the change boils down to instantiating a TinyCostNet, training it for 20 minibatches, and replacing the single call to mean\\_cost by an average over $K$ dropout samples. No other BOIL component- Gaussian process, learning-curve compression, virtual points, or candidate search- is touched. The total extra latency per BO iteration is 0.92-1.7 ms ($\\approx 2.2$ \\%), and memory overhead is 0.17 GB, negligible relative to model training footprints.\n\n\\begin{algorithm}\n\\caption{COCO-BOIL acquisition and suggestion step}\n\\begin{algorithmic}[1]\n\\State Given GP surrogate for performance $y$, dataset $\\mathcal{D}=\\{(x_i,t_i, y_i, c_i)\\}_{i=1}^n$, TinyCostNet parameters $\\theta$\n\\State Train TinyCostNet on $\\{(x_i,t_i, \\log c_i)\\}$ for 20 epochs with Adam, learning rate $1\\times 10^{-3}$, dropout rate 0.1\n\\For{candidate $(x,t)$ in candidate set}\n  \\State Compute $\\mu(x,t),\\sigma^2(x,t)$ from GP and $\\mathrm{EI}(x,t)$\n  \\State Enable dropout; compute $\\ell_k=\\text{TinyCostNet}_{\\theta}^{(k)}(x,t)$ for $k=1,\\ldots,K$\n  \\State $\\widehat{\\mathbb{E}[\\ell]} \\leftarrow \\frac{1}{K}\\sum_{k=1}^K \\ell_k$\n  \\State Score $a(x,t) \\leftarrow \\log \\mathrm{EI}(x,t) - \\widehat{\\mathbb{E}[\\ell]}$\n\\EndFor\n\\State Return $(x^*,t^*)=\\arg\\max_{(x,t)} a(x,t)$\n\\end{algorithmic}\n\\end{algorithm}",
+    "experimental_setup": "\\subsection{Benchmarks}\nWe follow the original BOIL evaluation verbatim: (1) Double-DQN on CartPole-v0, (2) A2C on InvertedPendulum-v2, (3) A2C on Reacher-v2, (4) a convolutional network on SVHN, and (5) the same architecture on CIFAR-10. Search spaces, training code and performance thresholds (e.g. $\\ge 195$ cumulative reward for CartPole, $\\le 10.25\\ \\%$ test error for CIFAR-10) remain unchanged [nguyen-2019-bayesian].\n\n\\subsection{Baselines and ablations}\nWe compare COCO-BOIL to BOIL, Hyperband, CM-TF-BO and random search. Four ablations isolate the contribution of each modification: (i) BOIL + MLP (M1 only), (ii) BOIL + MC expectation with the linear regressor (M2 only), (iii) COCO-BOIL without dropout (uncertainty ignored) and (iv) full COCO-BOIL.\n\n\\subsection{Metrics}\nWe log every 15 s: best validation score versus wall-clock, number of finished trials, cumulative wall-clock, surrogate errors (MAPE, normalised RMSE, expected calibration error), per-iteration latency and memory use. Primary metric is median time-to-threshold; secondary metrics are area-under-curve (AUC) of best-so-far versus time and sample efficiency (best score versus completed trials). All statistics aggregate 20 random seeds per method. Significance is assessed with paired Wilcoxon signed-rank tests on time-to-threshold and AUC.\n\n\\subsection{Implementation details}\nCOCO-BOIL is implemented in Python 3.11 with PyTorch 2.2. Deterministic Torch flags, fixed random seeds and SLURM-tracked commit hashes ensure reproducibility. Each optimisation run is capped at 8 h on a single NVIDIA A100; runs are distributed over 24 GPUs, totalling $<1\\,000$ GPU-hours.",
+    "results": "\\subsection{Wall-clock efficiency}\nAcross all five tasks COCO-BOIL reduces the median time-to-threshold by 27\\ \\% relative to BOIL (range 23-31\\ \\%). CartPole reaches 195 reward in 242 s (COCO-BOIL) vs. 336 s (BOIL), 511 s (Hyperband) and 468 s (CM-TF-BO). CIFAR-10 attains $\\le 10.25\\ \\%$ test error in 3 h 08 m vs. 4 h 05 m for BOIL. AUC improvements average 29\\ \\%; Wilcoxon p-values are $<0.01$ for every benchmark.\n\n\\subsection{Sample efficiency}\nWhen performance is plotted against the number of finished trials, BOIL and COCO-BOIL curves overlap within 1\\ \\%, confirming that the speed-up stems from better cost management rather than more evaluations.\n\n\\subsection{Cost surrogate quality}\nThe linear regressor's MAPE $34.7 \\pm 3.1\\ \\%$ falls to $9.6 \\pm 1.2\\ \\%$ with the MLP alone and to $8.3 \\pm 1.0\\ \\%$ with full COCO-BOIL. Normalised RMSE drops from 0.241 to 0.061; expected calibration error from 0.128 to 0.043. The linear model systematically under-predicts high-cost regions, whereas COCO-BOIL's predictions align with the identity line.\n\n\\subsection{Ablation analysis}\nM1 (better surrogate) yields a 17\\ \\% speed-up; M2 (uncertainty averaging) adds 6\\ \\%. Removing dropout from the full variant degrades the gain to 21\\ \\%. The two modifications are therefore additive and individually beneficial.\n\n\\subsection{Computational overhead}\nTraining plus sampling costs 0.92-1.7 ms per BO iteration ($<3\\ \\%$ of iteration time) and 0.17 GB GPU memory- negligible compared with model training.\n\n\\subsection{Robustness and generalisation}\nAcross 20 seeds the inter-quartile width of time-to-threshold widens by only 1.8\\ \\% compared with BOIL. Under a synthetic regime change (FP32 $\\to$ BF16 switch) COCO-BOIL keeps MAPE $\\approx 11\\ \\%$; BOIL spikes to 54\\ \\%. On the unseen LunarLanderContinuous-v2 benchmark, COCO-BOIL still delivers a 21\\ \\% speed-up, satisfying the pre-registered $\\ge 75\\ \\%$ generalisation criterion.\n\n\\subsection{Practical impact}\nWith a fixed 4-hour GPU budget, practitioners recover BOIL's final validation accuracy 1 h 15 m sooner using COCO-BOIL, freeing capacity for additional experiments. Hyperband would require $\\approx 6$ h to match the same accuracy.\n\n\\subsection{Limitations}\nDropout-based uncertainty is approximate; fully Bayesian neural networks might further improve calibration. Our gains are orthogonal to non-myopic planning and multi-fidelity modelling, which remain promising avenues for compounding improvements.",
+    "conclusion": "COCO-BOIL shows that fixing the weakest link in BOIL- the linear, over-confident runtime model- yields immediate and substantial wall-clock gains. By swapping in a 200-parameter MLP and averaging ten dropout samples, we slash runtime prediction error below 10\\ \\%, inject cost uncertainty into the acquisition, and realise a consistent 27\\ \\% reduction in time-to-target across five diverse benchmarks, all for $<3\\ \\%$ additional compute per BO iteration. Because the modification affects only two lines of code and leaves every other component intact, it can be adopted in minutes and combined with orthogonal advances such as non-myopic lookahead, user-guided priors or multi-fidelity scheduling. Future work will explore Bayesian cost surrogates, integrate COCO-BOIL with scenario-tree acquisitions, and extend cost conditioning beyond training steps to memory, energy and privacy budgets, moving automated HPO closer to real-time interactivity."
+}
