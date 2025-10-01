@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The core methodology involves reframing the HPO surrogate model training as a Learning to Rank (L2R) problem, rather than a regression task. The proposed Deep Ranking Ensembles (DRE) consist of an ensemble of diverse neural networks (MLPs) that output ranking scores for hyperparameter configurations. These networks are optimized using a weighted list-wise L2R loss, which assigns higher penalties to top-performing configurations to prioritize their correct ranking. Uncertainty estimation, crucial for BO's exploration-exploitation trade-off, is achieved by training multiple diverse neural scorers within the ensemble using stochastic gradient descent. To enhance performance and mitigate negative transfer, DRE meta-learns its surrogates from previous datasets and incorporates dataset meta-features, extracted by a Deep Set architecture, as additional input to the scorer functions. The outputs (mean and variance of estimated ranks) from the DRE ensemble are then used by acquisition functions like Expected Improvement (EI) within the BO loop to select the next optimal hyperparameter configuration.
+
+# GitHub URLs List
+['https://github.com/releaunifreiburg/HPO-B', 'https://github.com/huawei-noah/HEBO']
+Output:
+{
+    "index": 0
+}
