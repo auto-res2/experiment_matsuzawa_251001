@@ -1,0 +1,10 @@
+{
+  "research_topic": "Improving efficiency of hyperparameter optimization",
+  "queries": [
+    "Bayesian optimization acceleration",
+    "multi-fidelity hyperparameter optimization",
+    "parallel hyperparameter search",
+    "early-stopping hyperparameter tuning",
+    "surrogate-assisted HPO"
+  ]
+}
