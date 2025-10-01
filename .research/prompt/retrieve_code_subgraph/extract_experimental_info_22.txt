@@ -1,0 +1,1609 @@
+
+Input:
+You are a researcher with expertise in engineering in the field of machine learning.
+
+# Instructions
+- The content described in “Repository Content” corresponds to the GitHub repository of the method described in “Method.”
+- Please extract the following two pieces of information from “Repository Content”:
+    - experimental_code：Extract the implementation sections that are directly related to the method described in “Method.”
+    - experimental_info：Extract and output the experimental settings related to the method described in “Method.”
+
+# Method
+The core methodology involves training an ensemble of diverse neural network 'scorers' (MLPs) to predict the ranking score of hyperparameter configurations. These scorers are optimized using a weighted list-wise L2R loss, where higher penalties are assigned to top-performing configurations. Uncertainty estimation is achieved by training multiple diverse scorers (10 MLPs) using the Deep Ensemble paradigm, with diversity encouraged by different per-scorer seeds. The method incorporates meta-learning where surrogates are transferred from evaluations on previous datasets, and dataset meta-features (extracted by a DeepSet architecture) are used as an additional input to condition the scorers, enhancing transfer quality. Bayesian Optimization (BO) is guided by acquisition functions like Expected Improvement (EI), which leverages the ensemble's mean and variance of estimated ranks.
+
+# Repository Content
+File Path: benchmark_plot.py
+Content:
+import os
+import matplotlib.pyplot as plt
+try:
+    import ujson as json
+except:
+    import json
+import numpy as np
+import pandas as pd
+from .cd_diagram import draw_cd_diagram as draw
+from matplotlib.ticker import MaxNLocator
+from .hpob_handler import HPOBHandler
+
+this_dir = os.path.abspath(os.path.dirname(__file__))
+
+
+class BenchmarkPlotter:
+
+    def __init__(self, experiments=None, seeds = None, draw_std=True, draw_per_space=True, n_trials = 100,
+                    name="benchmark_plot",
+                    output_path=os.path.join(this_dir, "plots/"),
+                    results_path = os.path.join(this_dir, "results/"),
+                    data_path = os.path.join(this_dir, "data/")):
+
+        super(BenchmarkPlotter, self).__init__()
+
+        assert experiments is not None, "Provide the name of the experiments to plot"
+        assert n_trials<101,"The maximum value for max_bo_iters is 101"
+
+        self.experiments = experiments
+        self.seeds = seeds if seeds is not None else ["test0", "test1", "test2", "test3", "test4"]
+        self.draw_std = draw_std
+        self.draw_per_space = draw_per_space
+        self.path = output_path
+        self.name = name
+        self.results_path = results_path
+        self.data_path = data_path
+        self.n_trials = n_trials + 1
+
+        self.load_results()
+
+        with open(data_path+"meta-test-tasks-per-space.json", "r") as f:
+            self.task_list_per_space = json.load(f)
+
+        self.search_spaces = list(self.task_list_per_space.keys())
+
+    def plot(self):
+
+        self.generate_rank_and_regret()
+        self.generate_plots_per_search_space( name= self.name+"_per_space")
+        self.generate_aggregated_plots(name= self.name+"_aggregated")
+
+    def make_rank_and_regret_plot(self, rank_list, regret_list, axis_rank, axis_regret, title=""):
+
+        rank = np.array(rank_list)
+        regret = np.array(regret_list)
+        sample_size, n_experiments, n_bo_iters = rank.shape
+
+        rank_mean = np.nanmean(rank,axis=0)
+        regret_mean = np.nanmean(regret,axis=0)
+        rank_std = np.nanstd(rank,axis=0)
+        regret_std = np.nanstd(regret,axis=0)
+        ci_factor = 1.96/np.sqrt(sample_size)
+
+        self.plots_on_axis(axis_rank, rank_mean, rank_std, ci_factor, title, "Average Rank", self.draw_std)
+        self.plots_on_axis(axis_regret, regret_mean, regret_std, ci_factor, title, "Average Regret",  self.draw_std, scale="log")
+
+    def load_results(self):
+
+        self.results = {}
+
+        for experiment in self.experiments:
+            with open(self.results_path+experiment+".json") as f:
+                temp_data = json.load(f)
+            self.results[experiment] =  temp_data
+
+        return self.results
+
+    def plots_on_axis(self, axis, mean, std, ci_factor, title="", y_label="Average Rank", draw_std=False, scale = "linear"):
+
+
+        for k in range(mean.shape[0]):
+            x = mean[k,:]
+            axis.plot(x, linewidth=5)
+
+            if draw_std:
+                x_std = std[k,:]*ci_factor*0.5
+                ci1 = x-x_std
+                ci2 = x+x_std
+                axis.fill_between( np.arange(x.shape[0]), ci1, ci2, alpha=.1)
+
+        axis.set_yscale(scale)
+        axis.set_title(title, fontsize=38)
+        axis.set_xlabel("Number of trials", fontsize=38)
+        axis.set_ylabel(y_label, fontsize=38)
+        axis.tick_params(axis="x", labelsize=38)
+        axis.tick_params(axis="y", labelsize=38)
+        axis.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+    def generate_rank_and_regret(self):
+
+        self.rank_per_space = {}
+        self.regret_per_space = {}
+        self.all_ranks = []
+        self.all_regrets = []
+
+        for _, search_space in enumerate(self.search_spaces):
+
+            results_data = {}
+            for experiment in self.experiments:
+                results_data[experiment] = {}
+            self.rank_per_space[search_space] = []
+            self.regret_per_space[search_space] = []
+
+            for task in self.task_list_per_space[search_space]:
+                for seed in self.seeds:
+                    task_seed_results = []
+                    complete_results_task_seed =  True
+
+                    for experiment in self.experiments:
+                        try:
+                            regret = [1-x for x in  self.results[experiment][search_space][task][seed]]
+
+                            if len(regret)< self.n_trials and regret[-1]==0:
+                                regret += [0]*(self.n_trials-len(regret))
+
+                            assert len(regret) >= self.n_trials, "The task {} should have length {} in experiment {} for space {} and seed {}".format(task, self.n_trials,  experiment, search_space, seed)
+                            regret = regret[:self.n_trials]
+
+                            task_seed_results.append(regret)
+                        except Exception as e:
+                            complete_results_task_seed = False
+                            print(e)
+                            print("The taks {} was probably not found for experiment {}, search space {} and seed {}".format(task, experiment, search_space, seed))
+
+                    if complete_results_task_seed:
+                            rank_df = pd.DataFrame(1-np.array(task_seed_results).round(8)).rank(axis=0, ascending=False)
+
+                            self.rank_per_space[search_space].append(rank_df.to_numpy().tolist())
+                            self.regret_per_space[search_space].append(task_seed_results)
+
+            self.all_ranks.extend(self.rank_per_space[search_space])
+            self.all_regrets.extend(self.regret_per_space[search_space])
+
+        return self.rank_per_space, self.regret_per_space, self.all_ranks, self.all_regrets
+
+    def generate_plots_per_search_space(self, name = None, path = None):
+
+        name = name if name is not None else self.name
+        path = path if path is not None else self.path
+
+        fig, axis_rank = plt.subplots(4,4, figsize=(40,32))
+        fig2, axis_regret = plt.subplots(4,4, figsize=(40,32))
+
+        for i, search_space in enumerate(self.search_spaces):
+            index0 = i//4
+            index1 = i%4
+
+            if len(self.rank_per_space[search_space])>0:
+                self.make_rank_and_regret_plot(self.rank_per_space[search_space], self.regret_per_space[search_space], axis_rank[index0, index1], axis_regret[index0, index1], title = "Search space No. "+search_space,)
+
+
+        fig.legend(self.experiments,loc="lower center", bbox_to_anchor=(0.55, -0.05), ncol=5, fontsize=32)
+        fig2.legend(self.experiments,loc="lower center", bbox_to_anchor=(0.55, -0.05), ncol=5, fontsize=32)
+
+        fig.subplots_adjust(wspace=0.4, hspace=0.4)
+        fig2.subplots_adjust(wspace=0.4, hspace=0.4)
+
+        plt.tight_layout()
+        plt.draw()
+
+        fig.savefig(path+name+"_rank.png", bbox_inches="tight")
+        fig2.savefig(path+name+"_regret.png", bbox_inches="tight")
+
+
+    def generate_aggregated_plots(self, name = None, path = None):
+
+        name = name if name is not None else self.name
+        path = path if path is not None else self.path
+
+
+        fig, ax= plt.subplots(1,2, figsize=(20,10))
+        self.make_rank_and_regret_plot(self.all_ranks, self.all_regrets, ax[0], ax[1], title = "")
+
+        fig.legend(self.experiments,loc="lower center", bbox_to_anchor=(0.55, -0.15), ncol=5, fontsize=32)
+        plt.tight_layout()
+        plt.draw()
+        fig.savefig(path+name+".png", bbox_inches="tight")
+
+
+    def draw_cd_diagram(self,  bo_iter=50, name="Rank", path=None):
+
+        path = path if path is not None else self.path
+        df = pd.DataFrame(np.array(self.all_ranks )[:,:,bo_iter].T.tolist()).T
+        df.columns = self.experiments
+        df = df.stack().reset_index()
+        df.columns = ["dataset_name", "classifier_name", "accuracy"]
+        df.accuracy = -df.accuracy
+        draw(df, path_name= path+name+".png", title=name)
+
+
+    def generate_results (self, method, n_trials, new_method_name, search_spaces=None, seeds=None, *args):
+
+        hpob_hdlr = HPOBHandler(root_dir=self.data_path, mode="v3-test")
+
+        search_spaces = hpob_hdlr.get_search_spaces() if search_spaces is None else search_spaces
+        seeds = hpob_hdlr.get_seeds() if seeds is None else seeds
+
+        results = {}
+
+        for search_space_id in search_spaces:
+
+            if search_space_id not in results.keys():
+                results[search_space_id] = {}
+
+            for dataset_id in hpob_hdlr.get_datasets(search_space_id):
+
+                if dataset_id not in results[search_space_id].keys():
+                    results[search_space_id][dataset_id] = {}
+
+                for seed in seeds:
+
+                    if hasattr(method, "initialize"):
+                        method.initialize(*args)
+
+                    results[search_space_id][dataset_id][seed]  = hpob_hdlr.evaluate(method, search_space_id = search_space_id,
+                                                            dataset_id = dataset_id,
+                                                            seed = seed,
+                                                            n_trials = n_trials )
+
+
+        with open(self.results_path+new_method_name, "w") as f:
+            json.dump(results, f)
+
+
+if __name__=="__main__":
+
+    data_path = "hpob-data/"
+    results_path = "results/"
+    output_path = "plots/"
+    name = "benchmark_plot"
+    experiments = ["Random", "FSBO", "TST", "DGP", "RGPE" , "BOHAMIANN", "DNGO", "TAF", "GP"]
+
+    benchmark_plotter  = BenchmarkPlotter(experiments=experiments,
+                                            name = name,
+                                            results_path=results_path,
+                                            output_path=output_path,
+                                            data_path = data_path)
+
+    benchmark_plotter.plot()
+    benchmark_plotter.draw_cd_diagram(bo_iter=25, name="Rank@25")
+    benchmark_plotter.draw_cd_diagram(bo_iter=50, name="Rank@50")
+    benchmark_plotter.draw_cd_diagram(bo_iter=100, name="Rank@100")
+
+    print("Finished")
+
+File Path: continuous/train-surrogates.py
+Content:
+#code for training surrogates (unpolished)
+
+import numpy as np
+import pandas as pd
+import json
+import matplotlib.pyplot as plt
+import xgboost as xgb
+from sklearn.metrics import mean_squared_error as mse
+import seaborn as sns; sns.set_theme()
+from sklearn.preprocessing import MinMaxScaler
+from matplotlib import cm
+from xgboost import cv
+
+def train_and_save_xgb(X, y, surrogates_path="saved-surrogates/", model_name="surrogate-X.", num_round = 10, param={'max_depth':6, 'eta':0.1, 'objective':'reg:squarederror' } , logs_file="logs/train-info.txt"):
+
+    dtrain = xgb.DMatrix(X, label=y)
+    bst = xgb.train(param, dtrain, num_round)
+    preds = bst.predict(dtrain)    
+    error = mse(preds, y)
+    bst.save_model(surrogates_path+model_name+".json")
+
+    with open(logs_file, "a") as file_object:
+        file_object.write("MSE="+str(round(error, 5))+" for "+model_name+ " with eta="+ str(param["eta"]) + " and rounds=" +str(num_round)+ "\n")
+
+def tune_hyperparemeters(data_matrix, objective):
+   
+    grid_search_results = []
+    for eta in [0.001, 0.01, 0.1, 0.5]:
+        for rounds in [ 20, 50, 100, 500]:
+            params ={'max_depth':6, 'eta':eta, 'objective':objective }
+            xgb_cv = cv(dtrain=data_matrix, params=params, nfold=5, num_boost_round=rounds, early_stopping_rounds=10, metrics="rmse", as_pandas=True, seed=123)
+            grid_search_results.append((eta, rounds, np.array(xgb_cv["test-rmse-mean"])[-1]))
+
+    amin=np.array(grid_search_results)[:,-1].argmin()
+    best_eta, best_rounds = np.array(grid_search_results)[amin,:2] 
+
+    return best_eta, best_rounds
+
+num_round = 10
+data_path = "../transfer-HPO/data/hpob-data/"
+surrogates_path = "saved-surrogates/"
+objective = 'reg:squarederror'
+#objective = 'reg:logistic'
+normalize = False
+logs_file = "logs/train-info.txt"
+
+with open(data_path+"/meta-train-dataset-augmented.json", "r") as f:
+    hpo_data_train = json.load(f) 
+
+with open(data_path+"/meta-test-dataset.json", "r") as f:
+    hpo_data_test = json.load(f) 
+
+with open(data_path+"/meta-validation-dataset.json", "r") as f:
+    hpo_data_validation = json.load(f) 
+
+for hpo_data in [hpo_data_train, hpo_data_test, hpo_data_validation]:
+    for search_space in hpo_data.keys():
+        for task in hpo_data[search_space].keys():
+            
+
+            print("Training surrogate for search space:", search_space, " and task ", task)
+            X = np.array(hpo_data[search_space][task]["X"])
+            y = np.array(hpo_data[search_space][task]["y"])
+
+            if normalize:
+                y = MinMaxScaler().fit_transform(y)
+            data_matrix = xgb.DMatrix(X, label=y)
+            eta, rounds = tune_hyperparemeters(data_matrix, objective)
+            param={'max_depth':6, 'eta':eta, 'objective': objective} 
+            train_and_save_xgb(X,y, surrogates_path=surrogates_path, model_name="surrogate-"+search_space+"-"+task, num_round=int(rounds), param=param, logs_file=logs_file)
+
+
+
+
+File Path: example_benchmark.py
+Content:
+
+import numpy as np
+import json
+from benchmark_plot import BenchmarkPlotter
+from methods.pygpgo import RandomForest
+
+
+
+if __name__ == "__main__":
+
+    data_path = "hpob-data/"
+    results_path = "results/"
+    output_path = "plots/"
+    name = "RF_benchmark"
+    new_method_name = "RF.json"
+    experiments = ["Random", "FSBO", "TST", "DGP", "RGPE" , "BOHAMIANN", "DNGO", "TAF", "GP"]
+    n_trials = 5
+
+    method = RandomForest(acq_name="ProbabilityImprovement")
+
+    benchmark_plotter  = BenchmarkPlotter(experiments = experiments, 
+                                            name = name,
+                                            n_trials = n_trials,
+                                            results_path = results_path, 
+                                            output_path = output_path, 
+                                            data_path = data_path)
+
+    benchmark_plotter.generate_results(method, n_trials, new_method_name)
+    benchmark_plotter.plot()
+    benchmark_plotter.draw_cd_diagram(bo_iter=5, name="Rank@5")
+
+File Path: example_botorch.py
+Content:
+import matplotlib.pyplot as plt
+import numpy as np
+from hpob_handler import HPOBHandler
+from methods.botorch import GaussianProcess
+from methods.random_search import RandomSearch
+
+valid_acquisitions = ["UCB", "EI", "PM", "PI", "qEI"]
+seeds = ["test0", "test1", "test2", "test3", "test4"]
+acc_list = []
+n_trials = 20
+
+hpob_hdlr = HPOBHandler(root_dir="hpob-data/", mode="v3-test")
+search_space_id =  hpob_hdlr.get_search_spaces()[0]
+dataset_id = hpob_hdlr.get_datasets(search_space_id)[0]
+
+for acq_name in valid_acquisitions:
+    acc_per_method = []
+    for seed in seeds:
+        print("Using ", acq_name, " as acquisition function...")
+
+        #define the HPO method
+        method = GaussianProcess(acq_name=acq_name)
+
+        #evaluate the HPO method
+        acc = hpob_hdlr.evaluate(method, search_space_id = search_space_id, 
+                                                dataset_id = dataset_id,
+                                                seed = seed,
+                                                n_trials = n_trials )
+
+        acc_per_method.append(acc)
+
+    plt.plot(np.array(acc_per_method).mean(axis=0))
+plt.legend(valid_acquisitions)
+plt.show()
+
+File Path: example_fsbo.py
+Content:
+import matplotlib.pyplot as plt
+import numpy as np
+from hpob_handler import HPOBHandler
+from methods.fsbo.fsbo_modules import DeepKernelGP
+import os 
+
+randomInitializer = np.random.RandomState(0) 
+hpob_hdlr = HPOBHandler(root_dir="hpob-data/", mode="v3-test")
+search_space_id =  hpob_hdlr.get_search_spaces()[0]
+dataset_id = hpob_hdlr.get_datasets(search_space_id)[0]
+seed  = "test0"
+n_trials = 20
+load_model = True #if load_Model == False the DeepKernel is randomly initialized 
+
+
+dim = hpob_hdlr.get_search_space_dim(search_space_id)
+torch_seed = randomInitializer.randint(0,100000)
+
+rootdir     = os.path.dirname(os.path.realpath(__file__))
+log_dir     = os.path.join(rootdir,"methods", "fsbo","logs",f"seed-{seed}")
+os.makedirs(log_dir,exist_ok=True)
+log_dir = os.path.join(log_dir, f"{dataset_id}.txt")
+
+#loads pretran model from the checkpoint "FSBO",
+checkpoint = os.path.join(rootdir,"methods","fsbo","checkpoints","FSBO", f"{search_space_id}")
+
+#define the DeepKernelGP as HPO method
+method = DeepKernelGP(dim, log_dir, torch_seed, epochs = 1000, load_model = load_model, checkpoint = checkpoint, verbose = True)
+
+#evaluate the HPO method
+acc = hpob_hdlr.evaluate(method, search_space_id = search_space_id, 
+                                        dataset_id = dataset_id,
+                                        seed = seed,
+                                        n_trials = n_trials )
+
+        
+
+plt.plot(np.array(acc))
+plt.show()
+
+File Path: example_pygpgo.py
+Content:
+import matplotlib.pyplot as plt
+import numpy as np
+from hpob_handler import HPOBHandler
+from methods.pygpgo import RandomForest
+
+valid_acquisitions = ["Entropy", "ExpectedImprovement", "IntegratedExpectedImprovement", "ProbabilityImprovement", "IntegratedProbabilityImprovement", "UCB", "IntegratedUCB"]
+seeds = ["test0", "test1", "test2", "test3", "test4"]
+acc_list = []
+n_trials = 20
+
+hpob_hdlr = HPOBHandler(root_dir="hpob-data/", mode="v3-test")
+search_space_id =  hpob_hdlr.get_search_spaces()[0]
+dataset_id = hpob_hdlr.get_datasets(search_space_id)[0]
+
+for acq_name in valid_acquisitions:
+    acc_per_method = []
+    for seed in seeds:
+        print("Using ", acq_name, " as acquisition function...")
+
+        #define the HPO method
+        method = RandomForest(acq_name=acq_name)
+
+        #evaluate the HPO method
+        acc = hpob_hdlr.evaluate(method, search_space_id = search_space_id, 
+                                                dataset_id = dataset_id,
+                                                seed = seed,
+                                                n_trials = n_trials )
+        acc_per_method.append(acc)
+
+    plt.plot(np.array(acc_per_method).mean(axis=0))
+plt.legend(valid_acquisitions)
+plt.show()
+
+File Path: hpob_handler.py
+Content:
+import numpy as np
+try:
+    import ujson as json
+except:
+    import json
+import os
+import xgboost as xgb
+
+this_dir = os.path.abspath(os.path.dirname(__file__))
+
+
+class HPOBHandler:
+
+    def __init__(self,
+        root_dir = os.path.join(this_dir, "hpob-data/"),
+        mode = "v3-test",
+        surrogates_dir="saved-surrogates/"):
+
+        """
+        Constructor for the HPOBHandler.
+        Inputs:
+            * root_dir: path to directory with the benchmark data.
+            * mode: mode name indicating how to load the data. Options:
+                - v1: Loads HPO-B-v1
+                - v2: Loads HPO-B-v2
+                - v3: Loads HPO-B-v3
+                - v3-test: Loads only the meta-test split from HPO-B-v3
+                - v3-train-augmented: Loads all splits from HPO-B-v3, but augmenting the meta-train data with the less frequent search-spaces.
+            * surrogates_dir: path to directory with surrogates models.
+
+        """
+
+        print("Loading HPO-B handler")
+        self.mode = mode
+        self.surrogates_dir = surrogates_dir
+        self.seeds = ["test0", "test1", "test2", "test3", "test4"]
+
+        if self.mode == "v3-test":
+            self.load_data(root_dir, only_test=True)
+        elif self.mode == "v3-train-augmented":
+            self.load_data(root_dir, only_test=False, augmented_train=True)
+        elif self.mode in ["v1", "v2", "v3"]:
+            self.load_data(root_dir, version = self.mode, only_test=False)
+        else:
+            raise ValueError("Provide a valid mode")
+
+        surrogates_file = surrogates_dir+"summary-stats.json"
+        if os.path.isfile(surrogates_file):
+            with open(surrogates_file) as f:
+                self.surrogates_stats = json.load(f)
+
+
+
+
+
+    def load_data(self, rootdir="", version = "v3", only_test = True, augmented_train = False):
+
+        """
+        Loads data with some specifications.
+        Inputs:
+            * root_dir: path to directory with the benchmark data.
+            * version: name indicating what HPOB version to use. Options: v1, v2, v3).
+            * Only test: Whether to load only testing data (valid only for version v3).  Options: True/False
+            * augmented_train: Whether to load the augmented train data (valid only for version v3). Options: True/False
+
+        """
+
+        print("Loading data...")
+        meta_train_augmented_path = os.path.join(rootdir, "meta-train-dataset-augmented.json")
+        meta_train_path = os.path.join(rootdir, "meta-train-dataset.json")
+        meta_test_path = os.path.join(rootdir,"meta-test-dataset.json")
+        meta_validation_path = os.path.join(rootdir, "meta-validation-dataset.json")
+        bo_initializations_path = os.path.join(rootdir, "bo-initializations.json")
+
+        with open(meta_test_path, "rb") as f:
+            self.meta_test_data = json.load(f)
+
+        with open(bo_initializations_path, "rb") as f:
+            self.bo_initializations = json.load(f)
+
+        if not only_test:
+            if augmented_train or version=="v1":
+                with open(meta_train_augmented_path, "rb") as f:
+                    self.meta_train_data = json.load(f)
+            else:
+                with open(meta_train_path, "rb") as f:
+                    self.meta_train_data = json.load(f)
+            with open(meta_validation_path, "rb") as f:
+                self.meta_validation_data = json.load(f)
+
+        if version != "v3":
+            temp_data = {}
+            for search_space in self.meta_train_data.keys():
+                temp_data[search_space] = {}
+
+                for dataset in self.meta_train_data[search_space].keys():
+                    temp_data[search_space][dataset] =  self.meta_train_data[search_space][dataset]
+
+                if search_space in self.meta_test_data.keys():
+                    for dataset in self.meta_test_data[search_space].keys():
+                        temp_data[search_space][dataset] = self.meta_test_data[search_space][dataset]
+
+                    for dataset in self.meta_validation_data[search_space].keys():
+                        temp_data[search_space][dataset] = self.meta_validation_data[search_space][dataset]
+
+            self.meta_train_data = None
+            self.meta_validation_data = None
+            self.meta_test_data = temp_data
+
+        self.search_space_dims = {}
+
+        for search_space in self.meta_test_data.keys():
+            dataset = list(self.meta_test_data[search_space].keys())[0]
+            X = self.meta_test_data[search_space][dataset]["X"][0]
+            self.search_space_dims[search_space] = len(X)
+
+
+    def normalize(self, y, y_min = None, y_max=None):
+
+        if y_min is None:
+            return (y-np.min(y))/(np.max(y)-np.min(y))
+        else:
+            return(y-y_min)/(y_max-y_min)
+
+    def evaluate (self, bo_method = None, search_space_id = None, dataset_id = None, seed = None, n_trials = 10):
+
+        """
+        Evaluates a method on the benchmark with discretized search-spaces.
+        Inputs:
+            * bo_method: object to evaluate. It should have a function (class method) named 'observe_and_suggest'.
+            * search_space_id: Identifier of the search spaces for the evaluation. Option: see original paper.
+            * dataset_id: Identifier of the dataset for the evaluation. Options: see original paper.
+            * seed: Identifier of the seed for the evaluation. Options: test0, test1, test2, test3, test4.
+            * trails: Number of trials (iterations on the opoitmization).
+        Ooutput:
+            * a list with the maximumu performance (incumbent) for every trial.
+
+        """
+
+        assert bo_method!=None, "Provide a valid method object for evaluation."
+        assert hasattr(bo_method, "observe_and_suggest"), "The provided  object does not have a method called ´observe_and_suggest´"
+        assert search_space_id!= None, "Provide a valid search space id. See documentatio for valid obptions."
+        assert dataset_id!= None, "Provide a valid dataset_id. See documentation for valid options."
+        assert seed!=None, "Provide a valid initialization. Valid options are: test0, test1, test2, test3, test4."
+
+        try:
+            X = np.array(self.meta_test_data[search_space_id][dataset_id]["X"])
+            y = np.array(self.meta_test_data[search_space_id][dataset_id]["y"])
+        except KeyError:
+            print(self.meta_test_data.keys())
+            raise
+        y = self.normalize(y)
+        data_size = len(X)
+
+        pending_evaluations = list(range(data_size))
+        current_evaluations = []
+
+        init_ids = self.bo_initializations[search_space_id][dataset_id][seed]
+
+        for i in range(len(init_ids)):
+            idx = init_ids[i]
+            pending_evaluations.remove(idx)
+            current_evaluations.append(idx)
+
+        max_accuracy_history = [np.max(y[current_evaluations])]
+        for i in range(n_trials):
+            idx = bo_method.observe_and_suggest(
+                X_obs=X[current_evaluations],
+                y_obs=y[current_evaluations],
+                X_pen=X[pending_evaluations],
+            )
+            idx = pending_evaluations[idx]
+            pending_evaluations.remove(idx)
+            current_evaluations.append(idx)
+            max_accuracy_history.append(np.max(y[current_evaluations]))
+
+            if max(y) in max_accuracy_history:
+                break
+
+        max_accuracy_history+=[max(y).item()]*(n_trials-i-1)
+
+        return max_accuracy_history
+
+    def evaluate_continuous(self, bo_method = None, search_space_id = None, dataset_id = None, seed = None, n_trials = 10):
+
+        """
+        Evaluates a method on the benchmark with continuous search-spaces.
+        Inputs:
+            * bo_method: object to evaluate. It should have a function (class method) named 'observe_and_suggest'.
+            * search_space_id: Identifier of the search spaces for the evaluation. Option: see original paper.
+            * dataset_id: Identifier of the dataset for the evaluation. Options: see original paper.
+            * seed: Identifier of the seed for the evaluation. Options: test0, test1, test2, test3, test4.
+            * trails: Number of trials (iterations on the opoitmization).
+        Ooutput:
+            * a list with the maximum performance (incumbent) for every trial.
+
+        """
+
+        assert bo_method!=None, "Provide a valid method object for evaluation."
+        assert hasattr(bo_method, "observe_and_suggest"), "The provided  object does not have a method called ´observe_and_suggest´"
+        assert search_space_id!= None, "Provide a valid search space id. See documentatio for valid obptions."
+        assert dataset_id!= None, "Provide a valid dataset_id. See documentation for valid options."
+        assert seed!=None, "Provide a valid initialization. Valid options are: test0, test1, test2, test3, test4."
+
+        surrogate_name='surrogate-'+search_space_id+'-'+dataset_id
+        bst_surrogate = xgb.Booster()
+        bst_surrogate.load_model(self.surrogates_dir+surrogate_name+'.json')
+
+        X = np.array(self.meta_test_data[search_space_id][dataset_id]["X"])
+        y = np.array(self.meta_test_data[search_space_id][dataset_id]["y"])
+        y_min = self.surrogates_stats[surrogate_name]["y_min"]
+        y_max = self.surrogates_stats[surrogate_name]["y_max"]
+        dim = X.shape[1]
+        current_evaluations = []
+        init_ids = self.bo_initializations[search_space_id][dataset_id][seed]
+
+        for i in range(len(init_ids)):
+            idx = init_ids[i]
+            current_evaluations.append(idx)
+
+        x_observed = X[current_evaluations]
+        y_observed = y[current_evaluations]
+
+        max_accuracy_history = []
+
+        for i in range(n_trials):
+            y_tf_observed = self.normalize(y_observed, y_min, y_max)
+            y_tf_observed = np.clip(y_tf_observed, 0, 1)
+            best_f = np.max(y_tf_observed)
+            max_accuracy_history.append(best_f)
+
+            new_x = bo_method.observe_and_suggest(x_observed, y_tf_observed)
+            x_q = xgb.DMatrix(new_x.reshape(-1,dim))
+            new_y = bst_surrogate.predict(x_q)
+
+            y_observed = np.append(y_observed, new_y).reshape(-1,1)
+            x_observed = np.append(x_observed, new_x).reshape(-1,x_observed.shape[1])
+
+            if max(y_observed) >= y_max:
+                break
+
+        y_tf_observed = self.normalize(y_observed, y_min, y_max)
+        y_tf_observed = np.clip(y_tf_observed, 0, 1)
+        max_accuracy_history.append(best_f)
+        max_accuracy_history+=[1]*(n_trials-i-1)
+
+        return max_accuracy_history
+
+    def get_search_spaces(self):
+        return list(self.meta_test_data.keys())
+
+    def get_datasets(self, search_space):
+        return list(self.meta_test_data[search_space].keys())
+
+    def get_seeds(self):
+        return self.seeds
+
+    def get_search_space_dim(self, search_space):
+
+        return self.search_space_dims[search_space]
+
+File Path: meta-dataset-creation/data_extraction.py
+Content:
+import pandas as pd
+from collections import defaultdict
+import numpy as np
+import openml
+import json
+
+task_tag = "Verified_Supervised_Classification"
+
+flows = openml.flows.list_flows(tag = task_tag)
+flows_id = [flow["id"] for flow in flows.values()]
+
+#### PART 1: Extraction of available run ids
+step = 100 #this step is necessary as querying a lot of runs simultaneously may cause problems
+runs = openml.runs.list_runs(flow = flows_id[:step])
+for idx in range(0, len(flows_id),step):
+    print(idx)
+    temp_runs = openml.runs.list_runs(flow = flows_id[idx:idx+step])
+    runs.update(temp_runs)
+
+#Matrix to group flow id and task
+matrix = defaultdict(lambda: defaultdict(list))#or 
+
+for run in runs.values():
+    matrix[run["flow_id"]][run["task_id"]].append(run['run_id']) 
+
+df = pd.DataFrame.from_dict(data=matrix, orient='columns')
+
+run_counts = np.zeros(df.shape)
+
+#Keep in mind: columns are flows
+for i, dataset in enumerate(list(df.index)):
+    for j, flow in enumerate(list(df.columns)):
+        if df[flow].loc[dataset] is not np.nan:
+            run_counts[i][j] = len(df[flow].loc[dataset])
+
+#checkpoints the created matrix in case it fails in the next steps
+np.save("meta_data_checkpoint.npy", matrix)
+
+
+#### PART 2: Filtering flows and datasets by specific conditions
+print(np.max(run_counts))
+n_min_evaluations = 5
+n_min_datasets_per_flow = 1
+n_min_flows_per_dataset = 1
+n_flows, n_datasets = run_counts.shape
+
+
+def select_elements(run_counts, n_min_evaluations, n_min_datasets_per_flow, n_min_flows_per_dataset):
+
+    n_datasets, n_flows = run_counts.shape
+    valid_evaluations_flag = run_counts>n_min_evaluations
+    valid_flows_flag = np.sum(valid_evaluations_flag, axis=0)>n_min_datasets_per_flow
+    valid_dataset_flag = np.sum(valid_evaluations_flag, axis=1)>n_min_flows_per_dataset
+    dataset_flag = np.tile(np.array(valid_dataset_flag), (n_flows,1)).T
+    flow_flag = np.tile(np.array(valid_flows_flag), (n_datasets,1))
+
+    selected_elements = np.multiply(valid_evaluations_flag, dataset_flag, flow_flag)
+    selected_datasets, selected_flows = np.where(selected_elements>0)
+
+
+    n_valid_flows =  np.unique(selected_flows).shape[0]
+    n_valid_datasets = np.unique(selected_datasets).shape[0]
+
+    return selected_flows, selected_datasets, n_valid_flows, n_valid_datasets
+
+selected_flows, selected_datasets, n_flows, n_datasets= select_elements(run_counts, n_min_evaluations, n_min_datasets_per_flow, n_min_flows_per_dataset)
+
+selected_flows_ids = df.columns[selected_flows] 
+print("Selected flows ids:", selected_flows_ids)
+
+selected_datasets_ids = df.index[selected_datasets] 
+print("Selected datasets ids:", selected_datasets_ids)
+
+
+### PART 3: Create the raw version of the meta-dataset
+
+
+def process_run_settings (settings):
+    parameter_dict ={}
+    for setting in settings:
+        value = setting["oml:value"]
+        parameter_dict[setting["oml:name"]] = value
+
+    return parameter_dict
+
+
+meta_dataset = defaultdict(lambda: defaultdict(set))
+
+#Defines the starting index of the selected datasets and flows. 
+#In case the extraction takes too long, it is recommended to use several starting idx
+starting_idx = 0
+
+for idx, (dataset, flow) in enumerate(zip(selected_datasets_ids[starting_idx:], selected_flows_ids[starting_idx:])):
+    print("Processing dataset:", dataset, " and flow: ", flow, " position index:",idx)
+    meta_dataset[dataset][flow] = []
+    
+    
+    run_list = list(matrix[flow][dataset])
+    
+    for run_list_idx in range(0, max(2000,len(run_list)), 1000):
+
+        
+        current_runs = openml.runs.get_runs(list(run_list)[run_list_idx:run_list_idx+1000])
+
+        for i, current_run in enumerate(current_runs):
+
+            if (i%100==0):
+                print("Processing :", i, " out of ", len(matrix[flow][dataset]), " from running list idx:", run_list_idx )
+
+
+            temp_dict = {}
+            temp_dict["run_id"] = run_list[i]
+            temp_dict["task_id"] = current_run.task_id
+            temp_dict["flow_name"] = current_run.flow_name
+            temp_dict["accuracy"] = current_run.evaluations["predictive_accuracy"]
+            temp_dict["parameter_settings"] =  process_run_settings (current_run.parameter_settings)
+            meta_dataset[dataset][flow].append(temp_dict)
+
+
+with open('meta_data_openml.json', 'w') as outfile:
+    json.dump(meta_dataset, outfile)
+File Path: meta-dataset-creation/data_splitting.py
+Content:
+import json
+import numpy as np
+import pandas as pd
+
+
+with open("meta_dataset.json") as f:
+    meta_dataset = json.load(f)
+
+search_spaces = list(meta_dataset.keys())
+
+for flow in meta_dataset.keys():
+    for dataset in meta_dataset[flow].keys():
+        
+        df_X = pd.DataFrame(meta_dataset[flow][dataset]["X"])
+        df_y = pd.DataFrame(meta_dataset[flow][dataset]["y"])
+        
+        duplicated = df_X.duplicated()
+        X = df_X[~duplicated]
+        y = df_y[~duplicated]
+        meta_dataset[flow][dataset] = {"X": X.to_numpy().tolist(), "y": y.to_numpy().tolist()}
+
+
+n_min_datasets = 10
+train_pct = 0.8
+val_pct = 0.9
+
+meta_dataset_train_augmented = {}
+meta_dataset_train = {}
+meta_dataset_validation = {}
+meta_dataset_test = {}
+
+for flow in meta_dataset.keys():
+
+    datasets = list(meta_dataset[flow].keys())
+    n_datasets = len(datasets)
+    
+    datasets_shape = []
+    for dataset in datasets:
+        datasets_shape.append(len(meta_dataset[flow][dataset]["X"]))
+    
+    sorted_datasets = np.array(datasets)[np.argsort(datasets_shape)]
+    sorted_shape = np.array(datasets_shape)[np.argsort(datasets_shape)]
+    
+   
+    print("For flow ", flow, " number of datasets:", n_datasets)
+    i0 = int(np.ceil(train_pct*n_datasets))
+    i1 = int(np.ceil(val_pct*n_datasets))
+
+    
+    meta_dataset_train_augmented[flow] = {}
+    meta_dataset_train[flow] = {}
+    
+    if n_datasets>np.ceil(train_pct*n_datasets):
+        meta_dataset_validation[flow] = {}
+    
+    if n_datasets>n_min_datasets and 99<sorted_shape[i1]:
+        meta_dataset_test[flow] = {}
+        
+
+    
+    for i, dataset in enumerate(sorted_datasets.tolist()):
+        
+        df = pd.DataFrame(meta_dataset[flow][dataset]["X"])
+        meta_dataset[flow][dataset]["X"] = df.to_numpy().tolist()
+        
+        if n_min_datasets>n_datasets:
+            meta_dataset_train_augmented[flow][dataset] = meta_dataset[flow][dataset]
+            
+        else:
+
+            if i<i0:
+
+                if n_datasets>n_min_datasets and 99<sorted_shape[i1]:
+                    meta_dataset_train[flow][dataset] = meta_dataset[flow][dataset]
+                else:
+
+                    meta_dataset_train_augmented[flow][dataset] = meta_dataset[flow][dataset]
+
+
+            elif i<i1:
+
+                if n_datasets>n_min_datasets and 99<sorted_shape[i1]:
+                    meta_dataset_validation[flow][dataset] = meta_dataset[flow][dataset]
+                else:
+                    meta_dataset_train_augmented[flow][dataset] = meta_dataset[flow][dataset]
+
+
+            else:
+
+                if n_datasets>n_min_datasets and 99<sorted_shape[i1]:
+                    meta_dataset_test[flow][dataset] = meta_dataset[flow][dataset]   
+                else:
+                    meta_dataset_train_augmented[flow][dataset] = meta_dataset[flow][dataset]
+
+
+with open('meta-train-dataset.json', 'w') as outfile:
+    json.dump(meta_dataset_train, outfile)
+
+with open('meta-test-dataset.json', 'w') as outfile:
+    json.dump(meta_dataset_test, outfile)
+
+with open('meta-validation-dataset.json', 'w') as outfile:
+    json.dump(meta_dataset_validation, outfile)
+
+with open('meta-train-dataset-augmented.json', 'w') as outfile:
+    json.dump(meta_dataset_train_augmented, outfile)
+
+File Path: methods/botorch.py
+Content:
+
+from botorch.acquisition.analytic import ConstrainedExpectedImprovement
+from botorch.acquisition.monte_carlo import qExpectedImprovement
+from botorch.acquisition.multi_step_lookahead import _construct_sample_weights
+from botorch.sampling.samplers import SobolQMCNormalSampler
+import matplotlib.pyplot as plt
+from botorch.models import SingleTaskGP
+from botorch.fit import fit_gpytorch_model
+from gpytorch.mlls import ExactMarginalLogLikelihood
+from botorch.acquisition import UpperConfidenceBound, ExpectedImprovement, ProbabilityOfImprovement, PosteriorMean
+import torch
+import numpy as np
+from botorch.optim import optimize_acqf
+
+class GaussianProcess:
+
+    def __init__(self, acq_name="UCB"):
+        print("Using Gaussian Process as method...")
+
+        self.acq_name = acq_name        
+        #initialize acquisition functions
+
+    def get_acquisition(self, gp = None, best_f =0.0):
+
+        assert gp != None, "The model was not correctly specified"
+        
+
+        if self.acq_name == "UCB":
+            return UpperConfidenceBound(gp, beta=0.1)
+        
+        elif self.acq_name == "EI":
+            return ExpectedImprovement(gp, best_f=best_f)
+
+        elif self.acq_name == "PM":
+            return PosteriorMean(gp)
+
+        elif self.acq_name == "PI":
+            return ProbabilityOfImprovement(gp, best_f=best_f)
+
+        elif self.acq_name == "qEI":
+            sampler = SobolQMCNormalSampler(1000)
+            return qExpectedImprovement(gp, best_f=best_f, sampler=sampler)
+            
+    def observe_and_suggest(self, X_obs, y_obs, X_pen=None):
+
+        #fit the gaussian process
+        dim = X_obs.shape[1]
+        X_obs = torch.FloatTensor(X_obs)
+        y_obs = torch.FloatTensor(y_obs)
+        
+        gp = SingleTaskGP(X_obs, y_obs)
+        mll = ExactMarginalLogLikelihood(gp.likelihood, gp)
+        fit_gpytorch_model(mll)
+        best_f = torch.max(y_obs)
+        acq = self.get_acquisition( gp=gp, best_f=best_f)
+
+        if X_pen is not None:
+            #eval acquisition function
+            X_pen = torch.FloatTensor(X_pen).reshape(-1,1,dim)
+            eval_acq = acq( X_pen).detach().numpy()
+            
+            return np.argmax(eval_acq)
+
+        else:
+            dim = len(X_obs[0])
+            bounds = tuple([(0,1) for _ in range(dim)])
+            bounds = torch.FloatTensor(bounds).T
+            candidates, _ = optimize_acqf(
+                acq_function=acq,
+                bounds=bounds,
+                q=1,
+                num_restarts=20,
+                options={"batch_limit": 5, "maxiter": 200},
+                raw_samples=100,
+            )
+            # observe new values 
+            new_x = candidates.detach()
+            
+            return new_x.numpy()
+
+
+
+
+        
+
+File Path: methods/fsbo/__init__.py
+Content:
+from . import fsbo_utils, fsbo_modules, fsbo_metatrain
+File Path: methods/fsbo/fsbo_metatrain.py
+Content:
+from genericpath import exists
+import torch
+from fsbo_modules import FSBO
+import numpy as np
+import os
+import json
+import argparse
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
+
+def main(args):
+    
+    rootdir     = os.path.dirname(os.path.realpath(__file__))
+    np.random.seed(123)
+    torch.manual_seed(123)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False 
+
+
+    path = os.path.join(rootdir,"../..", "data","hpob-data")
+
+    with open(path+"/meta-validation-dataset.json", "r") as f:
+        valid_data = json.load(f) 
+        valid_data = valid_data[args.space]    
+
+    with open(path+"/meta-train-dataset.json", "r") as f:
+        train_data = json.load(f) 
+        train_data = train_data[args.space]
+
+    os.makedirs(os.path.join(rootdir,"checkpoints"), exist_ok=True)
+    checkpoint_path = os.path.join(rootdir,"checkpoints","FSBO2", f"{args.space}")
+    fsbo_model = FSBO(train_data = train_data, valid_data = valid_data, checkpoint_path = checkpoint_path)
+    fsbo_model.meta_train(epochs=args.epochs)
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--space', help='Search Space Id', type=str, default="4796")
+    parser.add_argument('--epochs', help='Meta-Train epochs', type=str, default=100000)
+
+    args = parser.parse_args()
+
+    main(args)
+File Path: methods/fsbo/fsbo_modules.py
+Content:
+
+"""
+This FSBO implementation is based on the original implementation from Hadi Samer Jomaa
+for his work on "Transfer Learning for Bayesian HPO with End-to-End Landmark Meta-Features"
+at the NeurIPS 2021 MetaLearning Workshop 
+
+"""
+
+import torch
+import torch.nn as nn
+from sklearn.preprocessing import MinMaxScaler
+import copy 
+import numpy as np
+import os
+from torch.utils.tensorboard import SummaryWriter
+import time
+import gpytorch
+import logging
+from fsbo_utils import totorch, Metric, EI
+
+np.random.seed(1203)
+RandomQueryGenerator= np.random.RandomState(413)
+RandomSupportGenerator= np.random.RandomState(413)
+RandomTaskGenerator = np.random.RandomState(413)
+
+
+class DeepKernelGP(nn.Module):
+    def __init__(self, input_size, log_dir,seed, hidden_size = [32,32,32,32],
+                         max_patience = 16, kernel="matern", ard = False, nu =2.5, loss_tol = 0.0001,
+                         lr = 0.001, load_model = False, checkpoint = None, epochs = 10000,
+                         verbose = False, eval_batch_size = 1000):
+        super(DeepKernelGP, self).__init__()
+        torch.manual_seed(seed)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.feature_extractor = MLP(self.input_size, hidden_size = self.hidden_size).to(self.device)
+        self.kernel_config = {"kernel": kernel, "ard": ard, "nu": nu}
+        self.max_patience = max_patience
+        self.lr  = lr
+        self.load_model = load_model
+        assert checkpoint != None, "Provide a checkpoint"
+        self.checkpoint = checkpoint
+        self.epochs = epochs
+        self.verbose = verbose
+        self.loss_tol = loss_tol
+        self.eval_batch_size = eval_batch_size
+
+        self.get_model_likelihood_mll(1)
+        
+        logging.basicConfig(filename=log_dir, level=logging.DEBUG)
+
+    def get_model_likelihood_mll(self, train_size):
+        
+        train_x=torch.ones(train_size, self.feature_extractor.out_features).to(self.device)
+        train_y=torch.ones(train_size).to(self.device)
+
+        likelihood = gpytorch.likelihoods.GaussianLikelihood()
+        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, config=self.kernel_config,dims = self.feature_extractor.out_features)
+        self.model = model.to(self.device)
+        self.likelihood = likelihood.to(self.device)
+        self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model).to(self.device)
+
+
+
+    def train(self):
+
+        if self.load_model:
+            assert(self.checkpoint is not None)
+            print("Model_loaded")
+            self.load_checkpoint(os.path.join(self.checkpoint,"weights"))
+            
+
+        losses = [np.inf]
+        best_loss = np.inf
+        starttime = time.time()
+        weights = copy.deepcopy(self.state_dict())
+        patience=0
+        optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': self.lr},
+                                {'params': self.feature_extractor.parameters(), 'lr': self.lr}])
+                    
+        for _ in range(self.epochs):
+            optimizer.zero_grad()
+            z = self.feature_extractor(self.X_obs)
+            self.model.set_train_data(inputs=z, targets=self.y_obs, strict=False)
+            predictions = self.model(z)
+            try:
+                loss = -self.mll(predictions, self.model.train_targets)
+                loss.backward()
+                optimizer.step()
+            except Exception as e:
+                logging.info(f"Exception {e}")
+                break
+            
+            if self.verbose:
+                print("Iter {iter}/{epochs} - Loss: {loss:.5f}   noise: {noise:.5f}".format(
+                    iter=_+1,epochs=self.epochs,loss=loss.item(),noise=self.likelihood.noise.item()))                
+            losses.append(loss.detach().to("cpu").item())
+            if best_loss>losses[-1]:
+                best_loss = losses[-1]
+                weights = copy.deepcopy(self.state_dict())
+            if np.allclose(losses[-1],losses[-2],atol=self.loss_tol):
+                patience+=1
+            else:
+                patience=0
+            if patience>self.max_patience:
+                break
+        self.load_state_dict(weights)
+        logging.info(f"Current Iteration: {len(self.y_obs)} | Incumbent {max(self.y_obs)} | Duration {np.round(time.time()-starttime)} | Epochs {_} | Noise {self.likelihood.noise.item()}")
+        return losses
+    
+    def load_checkpoint(self, checkpoint):
+        ckpt = torch.load(checkpoint,map_location=torch.device(self.device))
+        self.model.load_state_dict(ckpt['gp'],strict=False)
+        self.likelihood.load_state_dict(ckpt['likelihood'],strict=False)
+        self.feature_extractor.load_state_dict(ckpt['net'],strict=False)
+        
+
+    def predict(self, X_pen):
+        
+        self.model.eval()
+        self.feature_extractor.eval()
+        self.likelihood.eval()        
+
+        z_support = self.feature_extractor(self.X_obs).detach()
+        self.model.set_train_data(inputs=z_support, targets=self.y_obs, strict=False)
+
+        with torch.no_grad():
+            z_query = self.feature_extractor(X_pen).detach()
+            pred    = self.likelihood(self.model(z_query))
+
+            
+        mu    = pred.mean.detach().to("cpu").numpy().reshape(-1,)
+        stddev = pred.stddev.detach().to("cpu").numpy().reshape(-1,)
+        
+        return mu,stddev
+
+    def observe_and_suggest(self, X_obs, y_obs, X_pen):
+
+        self.X_obs, self.y_obs, X_pen = totorch(X_obs, self.device), totorch(y_obs, self.device).reshape(-1), totorch(X_pen, self.device)
+        n_samples = len(X_pen)
+        scores = []
+
+        self.train()
+
+        for i in range(self.eval_batch_size, n_samples+self.eval_batch_size, self.eval_batch_size):
+            temp_X = X_pen[range(i-self.eval_batch_size,min(i,n_samples))]
+            mu, stddev = self.predict(temp_X)
+            score   =  EI(max(y_obs), mu, stddev)
+            scores += score.tolist()
+
+        scores = np.array(scores)
+        candidate = np.argmax(scores) 
+
+        return candidate
+
+    
+class FSBO(nn.Module):
+    def __init__(self, train_data,valid_data, checkpoint_path, batch_size = 64, test_batch_size = 64,
+                 n_inner_steps = 1, kernel = "matern", ard = False, nu=2.5, hidden_size = [32,32,32,32] ):
+        super(FSBO, self).__init__()
+        self.train_data = train_data
+        self.valid_data = valid_data
+        self.batch_size = batch_size
+        self.test_batch_size = test_batch_size
+        self.n_inner_steps = n_inner_steps
+        self.checkpoint_path = checkpoint_path
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        first_dataset = list(self.train_data.keys())[0]
+        self.input_size = len(train_data[first_dataset]["X"][0])
+        self.hidden_size = hidden_size
+        self.feature_extractor =  MLP(self.input_size, hidden_size = self.hidden_size).to(self.device)
+        self.kernel_config = {"kernel": kernel, "ard": ard, "nu": nu}
+        self.get_model_likelihood_mll(self.batch_size)
+        self.mse        = nn.MSELoss()
+        self.curr_valid_loss = np.inf
+        self.get_tasks()
+        self.setup_writers()
+        
+        self.train_metrics = Metric()
+        self.valid_metrics = Metric(prefix="valid: ")
+        os.makedirs(self.checkpoint_path,exist_ok=True)
+        logging.basicConfig(filename=os.path.join(self.checkpoint_path,"log.txt"), level=logging.DEBUG)
+
+        print(self)
+        
+        
+    def setup_writers(self,):
+        train_log_dir = os.path.join(self.checkpoint_path,"train")
+        os.makedirs(train_log_dir,exist_ok=True)
+        self.train_summary_writer = SummaryWriter(train_log_dir)
+        
+        valid_log_dir = os.path.join(self.checkpoint_path,"valid")
+        os.makedirs(valid_log_dir,exist_ok=True)
+        self.valid_summary_writer = SummaryWriter(valid_log_dir)        
+        
+    def get_tasks(self,):
+
+        self.tasks = list(self.train_data.keys())
+        self.valid_tasks = list(self.valid_data.keys())
+        
+
+    def get_model_likelihood_mll(self, train_size):
+        
+        train_x=torch.ones(train_size, self.feature_extractor.out_features).to(self.device)
+        train_y=torch.ones(train_size).to(self.device)
+
+        likelihood = gpytorch.likelihoods.GaussianLikelihood()
+        model = ExactGPLayer(train_x = train_x, train_y = train_y, likelihood = likelihood, config = self.kernel_config, dims = self.feature_extractor.out_features)
+        self.model = model.to(self.device)
+        self.likelihood = likelihood.to(self.device)
+        self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model).to(self.device)
+
+
+    def epoch_end(self):
+        RandomTaskGenerator.shuffle(self.tasks)
+
+
+    def meta_train(self, epochs = 50000, lr = 0.0001):
+
+        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, epochs, eta_min=1e-7)
+
+        for epoch in range(epochs):
+            self.train_loop(epoch, optimizer, scheduler)
+        
+    def train_loop(self, epoch, optimizer, scheduler=None):
+        
+
+        self.epoch_end()
+        assert(self.training)
+        for task in self.tasks:
+            inputs, labels = self.get_batch(task)
+            for _ in range(self.n_inner_steps):
+                optimizer.zero_grad()
+                z = self.feature_extractor(inputs)
+                self.model.set_train_data(inputs=z, targets=labels, strict=False)
+                predictions = self.model(z)
+                loss = -self.mll(predictions, self.model.train_targets)
+                loss.backward()
+                optimizer.step()
+                mse = self.mse(predictions.mean, labels)
+                self.train_metrics.update(loss,self.model.likelihood.noise,mse)
+        if scheduler:
+            scheduler.step()
+        
+        training_results = self.train_metrics.get()
+        for k,v in training_results.items():
+            self.train_summary_writer.add_scalar(k, v, epoch)
+        for task in self.valid_tasks:
+            mse,loss = self.test_loop(task,train=False)
+            self.valid_metrics.update(loss,np.array(0),mse,)
+            
+        logging.info(self.train_metrics.report() + " " + self.valid_metrics.report())
+        validation_results = self.valid_metrics.get()
+        for k,v in validation_results.items():
+            self.valid_summary_writer.add_scalar(k, v, epoch)
+        self.feature_extractor.train()
+        self.likelihood.train()
+        self.model.train()
+        
+        if validation_results["loss"] < self.curr_valid_loss:
+            self.save_checkpoint(os.path.join(self.checkpoint_path,"weights"))
+            self.curr_valid_loss = validation_results["loss"]
+        self.valid_metrics.reset()       
+        self.train_metrics.reset()
+            
+    def test_loop(self, task, train): # no optimizer needed for GP
+        (x_support, y_support),(x_query,y_query) = self.get_support_and_queries(task,train)
+        z_support = self.feature_extractor(x_support).detach()
+        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)
+        self.model.eval()        
+        self.feature_extractor.eval()
+        self.likelihood.eval()
+
+        with torch.no_grad():
+            z_query = self.feature_extractor(x_query).detach()
+            pred    = self.likelihood(self.model(z_query))
+            loss = -self.mll(pred, y_query)
+            lower, upper = pred.confidence_region() #2 standard deviations above and below the mean
+
+        mse = self.mse(pred.mean, y_query)
+
+        return mse,loss
+
+    def get_batch(self,task):
+        # we want to fit the gp given context info to new observations
+        # task is an algorithm/dataset pair
+        Lambda,response =     np.array(self.train_data[task]["X"]), MinMaxScaler().fit_transform(np.array(self.train_data[task]["y"])).reshape(-1,)
+
+        card, dim = Lambda.shape
+        
+        support_ids = RandomSupportGenerator.choice(np.arange(card),
+                                              replace=False,size= min(self.batch_size, card))
+
+        
+        inputs,labels = Lambda[support_ids], response[support_ids]
+        inputs,labels = totorch(inputs,device=self.device), totorch(labels.reshape(-1,),device=self.device)
+        return inputs, labels
+        
+    def get_support_and_queries(self,task, train=False):
+        
+        # task is an algorithm/dataset pair
+        
+        hpo_data = self.valid_data if not train else self.train_data
+        Lambda,response =     np.array(hpo_data[task]["X"]), MinMaxScaler().fit_transform(np.array(hpo_data[task]["y"])).reshape(-1,)
+        card, dim = Lambda.shape
+
+        support_ids = RandomSupportGenerator.choice(np.arange(card),
+                                              replace=False,size=min(self.batch_size, card))
+        diff_set = np.setdiff1d(np.arange(card),support_ids)
+        query_ids = RandomQueryGenerator.choice(diff_set,replace=False,size=min(self.batch_size, len(diff_set)))
+        
+        support_x,support_y = Lambda[support_ids], response[support_ids]
+        query_x,query_y = Lambda[query_ids], response[query_ids]
+        
+        return (totorch(support_x,self.device),totorch(support_y.reshape(-1,),self.device)),\
+    (totorch(query_x,self.device),totorch(query_y.reshape(-1,),self.device))
+        
+    def save_checkpoint(self, checkpoint):
+        # save state
+        gp_state_dict         = self.model.state_dict()
+        likelihood_state_dict = self.likelihood.state_dict()
+        nn_state_dict         = self.feature_extractor.state_dict()
+        torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 'net':nn_state_dict}, checkpoint)
+
+    def load_checkpoint(self, checkpoint):
+        ckpt = torch.load(checkpoint)
+        self.model.load_state_dict(ckpt['gp'])
+        self.likelihood.load_state_dict(ckpt['likelihood'])
+        self.feature_extractor.load_state_dict(ckpt['net'])
+
+class ExactGPLayer(gpytorch.models.ExactGP):
+    def __init__(self, train_x, train_y, likelihood,config,dims ):
+        super(ExactGPLayer, self).__init__(train_x, train_y, likelihood)
+        self.mean_module  = gpytorch.means.ConstantMean()
+
+        ## RBF kernel
+        if(config["kernel"]=='rbf' or config["kernel"]=='RBF'):
+            self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel(ard_num_dims=dims if config["ard"] else None))
+        elif(config["kernel"]=='matern'):
+            self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.MaternKernel(nu=config["nu"],ard_num_dims=dims if config["ard"] else None))
+        ## Spectral kernel
+        else:
+            raise ValueError("[ERROR] the kernel '" + str(config["kernel"]) + "' is not supported for regression, use 'rbf' or 'spectral'.")
+            
+    def forward(self, x):
+        mean_x  = self.mean_module(x)
+        covar_x = self.covar_module(x)
+        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)
+    
+
+class MLP(nn.Module):
+    def __init__(self, input_size, hidden_size=[32,32,32,32], dropout=0.0):
+        
+        super(MLP, self).__init__()
+        self.nonlinearity = nn.ReLU()
+        self.fc = nn.ModuleList([nn.Linear(in_features=input_size, out_features=hidden_size[0])])
+        for d_out in hidden_size[1:]:
+            self.fc.append(nn.Linear(in_features=self.fc[-1].out_features, out_features=d_out))
+        self.out_features = hidden_size[-1]
+        self.dropout = nn.Dropout(dropout)
+    def forward(self,x):
+        
+        for fc in self.fc[:-1]:
+            x = fc(x)
+            x = self.dropout(x)
+            x = self.nonlinearity(x)
+        x = self.fc[-1](x)
+        x = self.dropout(x)
+        return x
+
+File Path: methods/fsbo/fsbo_utils.py
+Content:
+
+import numpy as np
+from scipy.stats import norm
+import torch
+
+
+
+def EI(incumbent, mu, stddev):
+    
+    mu             = mu.reshape(-1,)
+    stddev         = stddev.reshape(-1,)
+
+    with np.errstate(divide='warn'):
+        imp = mu - incumbent
+        Z = imp / stddev
+        score = imp * norm.cdf(Z) + stddev * norm.pdf(Z)
+
+    return score
+    
+    
+class Metric(object):
+    def __init__(self,prefix='train: '):
+        self.reset()
+        self.message=prefix + "loss: {loss:.2f} - noise: {log_var:.2f} - mse: {mse:.2f}"
+        
+    def update(self,loss,noise,mse):
+        self.loss.append(np.asscalar(loss))
+        self.noise.append(np.asscalar(noise))
+        self.mse.append(np.asscalar(mse))
+    
+    def reset(self,):
+        self.loss = []
+        self.noise = []
+        self.mse = []
+    
+    def report(self):
+        return self.message.format(loss=np.mean(self.loss),
+                            log_var=np.mean(self.noise),
+                            mse=np.mean(self.mse))
+    
+    def get(self):
+        return {"loss":np.mean(self.loss),
+                "noise":np.mean(self.noise),
+                "mse":np.mean(self.mse)}
+    
+def totorch(x,device):
+
+    return torch.Tensor(x).to(device)    
+
+File Path: methods/pygpgo.py
+Content:
+import numpy as np
+from pyGPGO.acquisition import Acquisition
+from pyGPGO.surrogates import RandomForest as RF
+
+class RandomForest:
+
+    def __init__(self, acq_name="Entropy"):
+
+        print("Using Random Forest as method...")
+
+        self.surrogate = RF.ExtraForest()
+        self.acquistion = Acquisition(mode=acq_name)
+
+    
+    def observe_and_suggest(self, X_obs, y_obs, X_pen):
+        
+        self.surrogate.fit(X_obs, y_obs.reshape(-1))
+        tau = np.max(y_obs).reshape(-1)
+        mean, std = self.surrogate.predict(X_pen, return_std=True)
+        eval_acq = self.acquistion.eval(tau, mean, std)
+
+        return np.argmax(eval_acq) 
+
+File Path: methods/random_search.py
+Content:
+import random
+import numpy as np
+
+class RandomSearch:
+
+    def __init__(self):
+
+        print("Using random search method...")
+
+    def observe_and_suggest(self, X_obs, y_obs, X_pen=None):
+
+        if X_pen is not None:
+            size_pending_eval = len(X_pen)
+            idx = random.randint(0, size_pending_eval-1)
+            return idx
+
+        else:
+            dim = len(X_obs[0])
+            bounds = tuple([(0,1) for i in range(dim)])
+            x_new = np.array([random.uniform(lower, upper) for upper, lower in bounds]).reshape(-1, dim)
+
+            return x_new
+
+
+
+
+Output:
+{
+    "experimental_code": "import torchimport torch.nn as nnfrom sklearn.preprocessing import MinMaxScalerimport copy import numpy as npimport osfrom torch.utils.tensorboard import SummaryWriterimport timeimport gpytorchimport loggingfrom fsbo_utils import totorch, Metric, EInp.random.seed(1203)RandomQueryGenerator= np.random.RandomState(413)RandomSupportGenerator= np.random.RandomState(413)RandomTaskGenerator = np.random.RandomState(413)class DeepKernelGP(nn.Module):    def __init__(self, input_size, log_dir,seed, hidden_size = [32,32,32,32],                         max_patience = 16, kernel='matern', ard = False, nu =2.5, loss_tol = 0.0001,                         lr = 0.001, load_model = False, checkpoint = None, epochs = 10000,                         verbose = False, eval_batch_size = 1000):        super(DeepKernelGP, self).__init__()        torch.manual_seed(seed)        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')        self.input_size = input_size        self.hidden_size = hidden_size        self.feature_extractor = MLP(self.input_size, hidden_size = self.hidden_size).to(self.device)        self.kernel_config = {'kernel': kernel, 'ard': ard, 'nu': nu}        self.max_patience = max_patience        self.lr  = lr        self.load_model = load_model        assert checkpoint != None, 'Provide a checkpoint'        self.checkpoint = checkpoint        self.epochs = epochs        self.verbose = verbose        self.loss_tol = loss_tol        self.eval_batch_size = eval_batch_size        self.get_model_likelihood_mll(1)                logging.basicConfig(filename=log_dir, level=logging.DEBUG)    def get_model_likelihood_mll(self, train_size):                train_x=torch.ones(train_size, self.feature_extractor.out_features).to(self.device)        train_y=torch.ones(train_size).to(self.device)        likelihood = gpytorch.likelihoods.GaussianLikelihood()        model = ExactGPLayer(train_x=train_x, train_y=train_y, likelihood=likelihood, config=self.kernel_config,dims = self.feature_extractor.out_features)        self.model = model.to(self.device)        self.likelihood = likelihood.to(self.device)        self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model).to(self.device)    def train(self):        if self.load_model:            assert(self.checkpoint is not None)            print('Model_loaded')            self.load_checkpoint(os.path.join(self.checkpoint,'weights'))                        losses = [np.inf]        best_loss = np.inf        starttime = time.time()        weights = copy.deepcopy(self.state_dict())        patience=0        optimizer = torch.optim.Adam([{'params': self.model.parameters(), 'lr': self.lr},                                {'params': self.feature_extractor.parameters(), 'lr': self.lr}])                            for _ in range(self.epochs):            optimizer.zero_grad()            z = self.feature_extractor(self.X_obs)            self.model.set_train_data(inputs=z, targets=self.y_obs, strict=False)            predictions = self.model(z)            try:                loss = -self.mll(predictions, self.model.train_targets)                loss.backward()                optimizer.step()            except Exception as e:                logging.info(f'Exception {e}')                break                        if self.verbose:                print('Iter {iter}/{epochs} - Loss: {loss:.5f}   noise: {noise:.5f}'.format(                    iter=_+1,epochs=self.epochs,loss=loss.item(),noise=self.likelihood.noise.item()))                losses.append(loss.detach().to('cpu').item())            if best_loss>losses[-1]:                best_loss = losses[-1]                weights = copy.deepcopy(self.state_dict())            if np.allclose(losses[-1],losses[-2],atol=self.loss_tol):                patience+=1            else:                patience=0            if patience>self.max_patience:                break        self.load_state_dict(weights)        logging.info(f'Current Iteration: {len(self.y_obs)} | Incumbent {max(self.y_obs)} | Duration {np.round(time.time()-starttime)} | Epochs {_} | Noise {self.likelihood.noise.item()}')        return losses        def load_checkpoint(self, checkpoint):        ckpt = torch.load(checkpoint,map_location=torch.device(self.device))        self.model.load_state_dict(ckpt['gp'],strict=False)        self.likelihood.load_state_dict(ckpt['likelihood'],strict=False)        self.feature_extractor.load_state_dict(ckpt['net'],strict=False)                def predict(self, X_pen):                self.model.eval()        self.feature_extractor.eval()        self.likelihood.eval()                z_support = self.feature_extractor(self.X_obs).detach()        self.model.set_train_data(inputs=z_support, targets=self.y_obs, strict=False)        with torch.no_grad():            z_query = self.feature_extractor(X_pen).detach()            pred    = self.likelihood(self.model(z_query))                        mu    = pred.mean.detach().to('cpu').numpy().reshape(-1,)        stddev = pred.stddev.detach().to('cpu').numpy().reshape(-1,)                return mu,stddev    def observe_and_suggest(self, X_obs, y_obs, X_pen):        self.X_obs, self.y_obs, X_pen = totorch(X_obs, self.device), totorch(y_obs, self.device).reshape(-1), totorch(X_pen, self.device)        n_samples = len(X_pen)        scores = []        self.train()        for i in range(self.eval_batch_size, n_samples+self.eval_batch_size, self.eval_batch_size):            temp_X = X_pen[range(i-self.eval_batch_size,min(i,n_samples))]            mu, stddev = self.predict(temp_X)            score   =  EI(max(y_obs), mu, stddev)            scores += score.tolist()        scores = np.array(scores)        candidate = np.argmax(scores)         return candidate    class FSBO(nn.Module):    def __init__(self, train_data,valid_data, checkpoint_path, batch_size = 64, test_batch_size = 64,                 n_inner_steps = 1, kernel = 'matern', ard = False, nu=2.5, hidden_size = [32,32,32,32] ):        super(FSBO, self).__init__()        self.train_data = train_data        self.valid_data = valid_data        self.batch_size = batch_size        self.test_batch_size = test_batch_size        self.n_inner_steps = n_inner_steps        self.checkpoint_path = checkpoint_path        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')        first_dataset = list(self.train_data.keys())[0]        self.input_size = len(train_data[first_dataset]['X'][0])        self.hidden_size = hidden_size        self.feature_extractor =  MLP(self.input_size, hidden_size = self.hidden_size).to(self.device)        self.kernel_config = {'kernel': kernel, 'ard': ard, 'nu': nu}        self.get_model_likelihood_mll(self.batch_size)        self.mse        = nn.MSELoss()        self.curr_valid_loss = np.inf        self.get_tasks()        self.setup_writers()                self.train_metrics = Metric()        self.valid_metrics = Metric(prefix='valid: ')        os.makedirs(self.checkpoint_path,exist_ok=True)        logging.basicConfig(filename=os.path.join(self.checkpoint_path,'log.txt'), level=logging.DEBUG)        print(self)            def setup_writers(self,):        train_log_dir = os.path.join(self.checkpoint_path,'train')        os.makedirs(train_log_dir,exist_ok=True)        self.train_summary_writer = SummaryWriter(train_log_dir)                valid_log_dir = os.path.join(self.checkpoint_path,'valid')        os.makedirs(valid_log_dir,exist_ok=True)        self.valid_summary_writer = SummaryWriter(valid_log_dir)                def get_tasks(self,):        self.tasks = list(self.train_data.keys())        self.valid_tasks = list(self.valid_data.keys())            def get_model_likelihood_mll(self, train_size):                train_x=torch.ones(train_size, self.feature_extractor.out_features).to(self.device)        train_y=torch.ones(train_size).to(self.device)        likelihood = gpytorch.likelihoods.GaussianLikelihood()        model = ExactGPLayer(train_x = train_x, train_y = train_y, likelihood = likelihood, config = self.kernel_config, dims = self.feature_extractor.out_features)        self.model = model.to(self.device)        self.likelihood = likelihood.to(self.device)        self.mll        = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, model).to(self.device)    def epoch_end(self):        RandomTaskGenerator.shuffle(self.tasks)    def meta_train(self, epochs = 50000, lr = 0.0001):        optimizer = torch.optim.Adam(self.parameters(), lr=lr)        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, epochs, eta_min=1e-7)        for epoch in range(epochs):            self.train_loop(epoch, optimizer, scheduler)        def train_loop(self, epoch, optimizer, scheduler=None):                self.epoch_end()        assert(self.training)        for task in self.tasks:            inputs, labels = self.get_batch(task)            for _ in range(self.n_inner_steps):                optimizer.zero_grad()                z = self.feature_extractor(inputs)                self.model.set_train_data(inputs=z, targets=labels, strict=False)                predictions = self.model(z)                loss = -self.mll(predictions, self.model.train_targets)                loss.backward()                optimizer.step()                mse = self.mse(predictions.mean, labels)                self.train_metrics.update(loss,self.model.likelihood.noise,mse)        if scheduler:            scheduler.step()                training_results = self.train_metrics.get()        for k,v in training_results.items():            self.train_summary_writer.add_scalar(k, v, epoch)        for task in self.valid_tasks:            mse,loss = self.test_loop(task,train=False)            self.valid_metrics.update(loss,np.array(0),mse,)                    logging.info(self.train_metrics.report() + ' ' + self.valid_metrics.report())        validation_results = self.valid_metrics.get()        for k,v in validation_results.items():            self.valid_summary_writer.add_scalar(k, v, epoch)        self.feature_extractor.train()        self.likelihood.train()        self.model.train()                if validation_results['loss'] < self.curr_valid_loss:            self.save_checkpoint(os.path.join(self.checkpoint_path,'weights'))            self.curr_valid_loss = validation_results['loss']        self.valid_metrics.reset()               self.train_metrics.reset()            def test_loop(self, task, train): # no optimizer needed for GP        (x_support, y_support),(x_query,y_query) = self.get_support_and_queries(task,train)        z_support = self.feature_extractor(x_support).detach()        self.model.set_train_data(inputs=z_support, targets=y_support, strict=False)        self.model.eval()                self.feature_extractor.eval()        self.likelihood.eval()        with torch.no_grad():            z_query = self.feature_extractor(x_query).detach()            pred    = self.likelihood(self.model(z_query))            loss = -self.mll(pred, y_query)            lower, upper = pred.confidence_region() #2 standard deviations above and below the mean        mse = self.mse(pred.mean, y_query)        return mse,loss    def get_batch(self,task):        # we want to fit the gp given context info to new observations        # task is an algorithm/dataset pair        Lambda,response =     np.array(self.train_data[task]['X']), MinMaxScaler().fit_transform(np.array(self.train_data[task]['y'])).reshape(-1,)        card, dim = Lambda.shape                support_ids = RandomSupportGenerator.choice(np.arange(card),                                              replace=False,size= min(self.batch_size, card))                        inputs,labels = Lambda[support_ids], response[support_ids]        inputs,labels = totorch(inputs,device=self.device), totorch(labels.reshape(-1,),device=self.device)        return inputs, labels            def get_support_and_queries(self,task, train=False):                # task is an algorithm/dataset pair                hpo_data = self.valid_data if not train else self.train_data        Lambda,response =     np.array(hpo_data[task]['X']), MinMaxScaler().fit_transform(np.array(hpo_data[task]['y'])).reshape(-1,)        card, dim = Lambda.shape        support_ids = RandomSupportGenerator.choice(np.arange(card),                                              replace=False,size=min(self.batch_size, card))        diff_set = np.setdiff1d(np.arange(card),support_ids)        query_ids = RandomQueryGenerator.choice(diff_set,replace=False,size=min(self.batch_size, len(diff_set)))                support_x,support_y = Lambda[support_ids], response[support_ids]        query_x,query_y = Lambda[query_ids], response[query_ids]                return (totorch(support_x,self.device),totorch(support_y.reshape(-1,),self.device)),\n    (totorch(query_x,self.device),totorch(query_y.reshape(-1,),self.device))            def save_checkpoint(self, checkpoint):        # save state        gp_state_dict         = self.model.state_dict()        likelihood_state_dict = self.likelihood.state_dict()        nn_state_dict         = self.feature_extractor.state_dict()        torch.save({'gp': gp_state_dict, 'likelihood': likelihood_state_dict, 'net':nn_state_dict}, checkpoint)    def load_checkpoint(self, checkpoint):        ckpt = torch.load(checkpoint)        self.model.load_state_dict(ckpt['gp'])        self.likelihood.load_state_dict(ckpt['likelihood'])        self.feature_extractor.load_state_dict(ckpt['net'])class ExactGPLayer(gpytorch.models.ExactGP):    def __init__(self, train_x, train_y, likelihood,config,dims ):        super(ExactGPLayer, self).__init__(train_x, train_y, likelihood)        self.mean_module  = gpytorch.means.ConstantMean()        ## RBF kernel        if(config['kernel']=='rbf' or config['kernel']=='RBF'):            self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.RBFKernel(ard_num_dims=dims if config['ard'] else None))        elif(config['kernel']=='matern'):            self.covar_module = gpytorch.kernels.ScaleKernel(gpytorch.kernels.MaternKernel(nu=config['nu'],ard_num_dims=dims if config['ard'] else None))        ## Spectral kernel        else:            raise ValueError('[ERROR] the kernel \";' + str(config['kernel']) + '\"; is not supported for regression, use \";rbf\"; or \";spectral\".')                def forward(self, x):        mean_x  = self.mean_module(x)        covar_x = self.covar_module(x)        return gpytorch.distributions.MultivariateNormal(mean_x, covar_x)    class MLP(nn.Module):    def __init__(self, input_size, hidden_size=[32,32,32,32], dropout=0.0):                super(MLP, self).__init__()        self.nonlinearity = nn.ReLU()        self.fc = nn.ModuleList([nn.Linear(in_features=input_size, out_features=hidden_size[0])])        for d_out in hidden_size[1:]:            self.fc.append(nn.Linear(in_features=self.fc[-1].out_features, out_features=d_out))        self.out_features = hidden_size[-1]        self.dropout = nn.Dropout(dropout)    def forward(self,x):                for fc in self.fc[:-1]:            x = fc(x)            x = self.dropout(x)            x = self.nonlinearity(x)        x = self.fc[-1](x)        x = self.dropout(x)        return xfrom genericpath import existsimport torchfrom fsbo_modules import FSBOimport numpy as npimport osimport jsonimport argparseimport warningswarnings.filterwarnings('ignore', category=UserWarning)def main(args):        rootdir     = os.path.dirname(os.path.realpath(__file__))    np.random.seed(123)    torch.manual_seed(123)    torch.backends.cudnn.deterministic = True    torch.backends.cudnn.benchmark = False     path = os.path.join(rootdir,'../..', 'data','hpob-data')    with open(path+'/meta-validation-dataset.json', 'r') as f:        valid_data = json.load(f)         valid_data = valid_data[args.space]        with open(path+'/meta-train-dataset.json', 'r') as f:        train_data = json.load(f)         train_data = train_data[args.space]    os.makedirs(os.path.join(rootdir,'checkpoints'), exist_ok=True)    checkpoint_path = os.path.join(rootdir,'checkpoints','FSBO2', f'{args.space}')    fsbo_model = FSBO(train_data = train_data, valid_data = valid_data, checkpoint_path = checkpoint_path)    fsbo_model.meta_train(epochs=args.epochs)if __name__ == '__main__':    parser = argparse.ArgumentParser()    parser.add_argument('--space', help='Search Space Id', type=str, default='4796')    parser.add_argument('--epochs', help='Meta-Train epochs', type=str, default=100000)    args = parser.parse_args()    main(args)import numpy as npfrom scipy.stats import normimport torchdef EI(incumbent, mu, stddev):        mu             = mu.reshape(-1,)    stddev         = stddev.reshape(-1,)    with np.errstate(divide='warn'):        imp = mu - incumbent        Z = imp / stddev        score = imp * norm.cdf(Z) + stddev * norm.pdf(Z)    return score        class Metric(object):    def __init__(self,prefix='train: '):        self.reset()        self.message=prefix + 'loss: {loss:.2f} - noise: {log_var:.2f} - mse: {mse:.2f}'            def update(self,loss,noise,mse):        self.loss.append(np.asscalar(loss))        self.noise.append(np.asscalar(noise))        self.mse.append(np.asscalar(mse))        def reset(self,):        self.loss = []        self.noise = []        self.mse = []        def report(self):        return self.message.format(loss=np.mean(self.loss),                            log_var=np.mean(self.noise),                            mse=np.mean(self.mse))        def get(self):        return {'loss':np.mean(self.loss),                'noise':np.mean(self.noise),                'mse':np.mean(self.mse)}        def totorch(x,device):    return torch.Tensor(x).to(device)",
+    "experimental_info": "The extracted experimental code implements the FSBO (Transfer Learning for Bayesian HPO with End-to-End Landmark Meta-Features) method, which aligns with several components of the described method (MLPs, meta-learning, BO with EI, uncertainty estimation). However, there are some notable differences from the 'Method' description:  1. The 'Method' describes 'training an ensemble of diverse neural network 'scorers' (MLPs) to predict the ranking score of hyperparameter configurations' and 'optimized using a weighted list-wise L2R loss'. The FSBO implementation uses an MLP as a feature extractor for a Gaussian Process (GP) surrogate model, which performs regression (predicts mean and standard deviation) rather than directly predicting ranking scores, and uses Marginal Log-Likelihood (mll) and Mean Squared Error (MSE) as loss functions, not list-wise L2R loss.  2. The 'Method' mentions 'Uncertainty estimation is achieved by training multiple diverse scorers (10 MLPs) using the Deep Ensemble paradigm'. The provided FSBO code trains a single MLP feature extractor and a single GP. While diversity could be introduced by running the method with different seeds (which DeepKernelGP supports via its 'seed' parameter), an explicit ensemble of 10 MLPs is not directly implemented.  3. The 'Method' states 'dataset meta-features (extracted by a DeepSet architecture) are used as an additional input to condition the scorers'. The FSBO implementation uses an MLP as a feature extractor for the input, but it does not explicitly use a DeepSet architecture for extracting dataset meta-features to condition the scorers.  Experimental settings observed in the code include:  Global seeds in fsbo_metatrain.py: np.random.seed(123), torch.manual_seed(123).  Global seeds in fsbo_modules.py: np.random.seed(1203), RandomQueryGenerator=np.random.RandomState(413), RandomSupportGenerator=np.random.RandomState(413), RandomTaskGenerator=np.random.RandomState(413).  FSBO meta-training parameters (fsbo_metatrain.py): Default 'space' argument is '4796', default 'epochs' for meta_train is 100000. The learning rate for the Adam optimizer during meta_train is 0.0001.  FSBO class parameters (fsbo_modules.py, defaults): batch_size = 64, test_batch_size = 64, n_inner_steps = 1, kernel = 'matern', ard = False, nu = 2.5, hidden_size = [32,32,32,32].  DeepKernelGP class parameters (fsbo_modules.py, defaults): hidden_size = [32,32,32,32], max_patience = 16, kernel = 'matern', ard = False, nu = 2.5, loss_tol = 0.0001, lr = 0.001 (for inner GP training), epochs = 10000 (for inner GP training), eval_batch_size = 1000."
+}
