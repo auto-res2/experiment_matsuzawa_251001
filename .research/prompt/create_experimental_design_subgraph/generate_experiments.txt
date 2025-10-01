@@ -1,0 +1,175 @@
+
+Input:
+You are a cutting-edge AI researcher. Based on the new method described in # New Methods and the experimental policy outlined in # Experiment Strategy, please generate 1 distinct Experiment objects.
+
+# Instructions
+- Generate 1 major experimental lines (Experiment objects) based on the experimental strategy.
+- Each Experiment (identified by experiment_id) represents a different experimental perspective or validation angle.
+- Within each Experiment, run_variations are the variations that will be compared against each other (e.g., ["baseline", "proposed"], ["full-method", "ablation-A", "ablation-B"]).
+- Keep run_variations to 3-5 variations per experiment (including baseline and proposed method) to ensure reasonable execution time and resource usage.
+- Each Experiment should:
+    - Have a unique experiment_id (e.g., "exp-1", "exp-2", "exp-3")
+    - Have a clear description of its objective or hypothesis
+    - Have a list of run_variations that will be compared within this experiment
+    - Cover different aspects of validating the proposed method
+- The experiments should be complementary and cover various validation angles such as:
+    - Main performance validation
+    - Ablation studies
+    - Robustness tests
+    - Comparison with baselines
+    - Hyperparameter sensitivity analysis
+    - Computational efficiency analysis
+- Each experiment will have its own GitHub branch and code.
+- The run_variations within each experiment define different configurations or conditions to test (e.g., different hyperparameters, different baselines, different datasets).
+
+- Design the details of each experiment assuming the execution environment specified in "Experimental Environment."
+- The experimental details should include the following for each experiment:
+    - Machine learning / deep learning models to be used
+        - If necessary, also include baseline models.
+    - Datasets
+    - Dataset preprocessing methods
+    - Data splitting method (train/val/test, cross-validation)
+    - Number of repetitions (number of seeds), averaging method, and selection criteria (best-val, last, early stopping)
+    - Evaluation metrics
+        - Primary and secondary metrics
+        - Examples: Accuracy / F1 / AUROC (classification), RMSE / MAE (regression), mAP (detection), mIoU (segmentation), BLEU / ROUGE / METEOR (generation), NDCG / MRR (ranking), ECE / Brier Score (calibration)
+    - Comparisons
+        - Prior methods (strong baselines, SOTA, simple baselines), etc.
+        - If there are implementation or configuration differences, note the adjustments in footnotes.
+    - Methods for analyzing important hyperparameters (e.g., learning rate, temperature, k, thresholds)
+    - Methods for assessing robustness
+        - Resistance to noise injection, distribution shift (OOD), adversarial perturbations, and domain transfer
+    - Computation of FLOPs, training/inference time, memory usage, and cost / wall-clock time
+    - Example experimental code
+- Avoid excessive redundancy across experiments. When a single experiment can cover multiple validation items, integrate them appropriately.
+- NO-FALLBACK CONSTRAINT: Never suggest using synthetic/dummy/placeholder data.
+- Also provide:
+    - expected_models: A list of specific model names/architectures that will be used across all experiments (e.g., ["ResNet-50", "BERT-base", "GPT-3.5-turbo"])
+    - expected_datasets: A list of specific dataset names that will be used across all experiments (e.g., ["CIFAR-10", "ImageNet", "IMDB Reviews"])
+
+## Output Format
+Please provide:
+- experiments: A list of 1 Experiment objects, each with:
+    - experiment_id: Unique identifier
+    - run_variations: List of variation names/identifiers for this experiment
+    - description: Detailed description including all aspects mentioned in the instructions
+- expected_models: List of model names/architectures
+- expected_datasets: List of dataset names
+
+# Experimental Environment
+NVIDIA Tesla T4
+VRAM：16 GB
+RAM：500 MB
+
+# Current Research Method (Target for Experiment Design)
+{
+    "Open Problems": "BOIL converts every learning curve into a single scalar through a logistic (sigmoid) compression whose midpoint m and growth g are learned jointly with the GP surrogate.  \n1.  m and g must be optimised by expensive marginal-likelihood search every few BO steps – a bottleneck when curves are short or very noisy.  \n2.  A poor initial guess for (m,g) makes the compressed targets almost constant, degrading the GP fit and causing ill-conditioning.  \n3.  The same (m,g) pair is applied to all tasks although different curves can plateau at very different levels or speeds.  \nA minimal, task-independent, parameter-free curve compression could remove this weakness while keeping BOIL’s advantages.",
+    "Methods": "Adaptive Area-Under-Curve Compression (AAUC-BOIL)  \nReplace BOIL’s sigmoid-based scalar   s(m,g; r_{1:T})  with a parameter-free scalar that measures the *cumulative* normalised progress of the learning curve:  \n1.  Let r_t be the raw reward/accuracy at iteration t and r_max = max_t r_t.  \n2.  Form the normalised sequence  \\bar r_t = (r_t – r_0) / (r_max – r_0 + ε).  \n3.  Define the compression score   \n     AAUC = \\frac{1}{T} Σ_{t=1}^{T} \\bar r_t · w_t,   w_t = 1 – e^{-α(t/T)} (α=4 fixed)  \n   – a simple trapezoidal approximation of the (discounted) area under the curve that (i) is smooth, (ii) gives larger weight to late iterations (via w_t) while still using the whole curve, and (iii) contains **no learnable parameters**.  \n4.  Plug AAUC in place of the sigmoid score everywhere in BOIL – no change to virtual-observation logic, GP kernel, or acquisition function.  \nTheoretical motivation: AAUC is a bounded (0-1), Lipschitz, strictly monotone function of the entire curve; it therefore preserves the ordering of configurations by their *overall* training quality while eliminating the unstable optimisation of (m,g).",
+    "Experimental Setup": "• Task: tune learning-rate and dropout of an MLP on MNIST.  \n• Baseline: original BOIL (sigmoid score with learnt m,g).  \n• Proposed: AAUC-BOIL (same code-base, single line change in score function).  \n• 10 random seeds, 20 BO iterations, same initial Sobol points.  \n• Metrics: (i) best test accuracy found after 20 iterations; (ii) wall-clock time per BO iteration; (iii) GP condition-number (log-det) statistics.  \nExpectation: AAUC-BOIL reaches higher accuracy in fewer iterations and shows lower variance across seeds, with ~25 % reduction in time per BO step (no m,g optimisation).",
+    "Experimental Code": "import numpy as np\n\ndef aauc_score(curve, alpha=4.):\n    \"\"\"Parameter-free compression of a learning curve.\n    curve: list/np.array of rewards r_t, length T >=1\"\"\"\n    r = np.asarray(curve, dtype=float)\n    r0, rmax = r[0], r.max()\n    norm = (r - r0) / (rmax - r0 + 1e-8)\n    T = len(r)\n    t = np.arange(1, T + 1)\n    w = 1.0 - np.exp(-alpha * t / T)\n    return np.sum(norm * w) / T\n\n# drop-in replacement inside BOIL -----------------------------------------\n# old line: y_original = sigmoid_score(curve, m, g)\n# new line:\ny_original = aauc_score(curve)",
+    "Expected Result": "• Mean best-accuracy after 20 BO steps rises from 98.1 % (±0.15) to 98.4 % (±0.07).  \n• Average time per BO step drops from 3.8 s to 2.9 s (≈-24 %).  \n• Log-condition-number of the GP kernel reduced by ~1.2 on average, indicating better numerical stability.  \nThese gains come solely from replacing the two-parameter sigmoid with the AAUC score.",
+    "Expected Conclusion": "AAUC-BOIL shows that a *parameter-free* curve compression can remove the main practical pain-point of BOIL – repeatedly optimising the sigmoid parameters – while improving both robustness and speed.  The change touches only the curve-to-scalar function, so existing BOIL implementations can adopt it with a single line of code, yet it yields measurable accuracy gains and lower computational overhead, making hyperparameter optimisation over iterative learners even more efficient."
+}
+
+# Experiment Strategy
+Objective
+Demonstrate, in a principled and statistically-sound manner, that replacing BOIL’s learnt-sigmoid compression with the proposed parameter-free AAUC compression (AAUC-BOIL) leads to (i) equal-or-better optimisation quality, (ii) lower computational overhead, (iii) improved robustness to noise/curve length, and (iv) wider task-level generalisation – all on hardware no stronger than a single NVIDIA-T4 with 16 GB VRAM and 0.5 GB system RAM.
+
+Core Hypotheses to Validate
+1. Effectiveness – AAUC-BOIL finds better (or at worst equal) objective values within the same Bayesian-optimisation (BO) budget.
+2. Efficiency – AAUC-BOIL reduces per-iteration wall-clock time and GP hyper-parameter optimisation time by ≥20 %.
+3. Robustness – AAUC-BOIL is less sensitive to
+   a. random seeds,
+   b. noisy/short curves, and
+   c. miss-scaled rewards, than sigmoid-BOIL.
+4. Generalisation – performance and efficiency gains hold across algorithm families, data domains, and curve lengths without task-specific tuning.
+
+Common Experimental Axes
+A. Quantitative optimisation quality: best-so-far validation/test score after a fixed BO budget; area-under-best-curve (AUBC) across iterations.
+B. Computational cost: (i) wall-clock per BO step, (ii) total wall-clock until budget exhaustion, (iii) GPU utilisation %, (iv) peak RAM/VRAM.
+C. Numerical stability: GP kernel log-condition-number, number of Cholesky failures / jitter injections.
+D. Robustness: standard deviation and inter-quartile range of the above over ≥10 seeds; performance degradation when Gaussian noise or early truncation is injected in the learning curves.
+E. Ablation sensitivity: effect of discount factor α, weight schedule w_t, and alternative simple compressions (e.g. last-value, raw AUC) to isolate contributions.
+
+Comparative Baselines (applied in every experiment)
+1. Sigmoid-BOIL (original implementation) – primary baseline.
+2. Pure random search – sanity check.
+3. State-of-the-art curve-aware BO methods without learnable compression (e.g. FABOLAS, Hyperband) – to situate AAUC-BOIL versus broader literature.
+4. Ablations of AAUC-BOIL:
+   a. No discount (w_t ≡1),
+   b. Uniform α values (α∈{1,2,4,8}),
+   c. AAUC with rescaled inputs (to test scale-invariance).
+
+Task Suite (scalable to the hardware envelope)
+1. Vision: MNIST and CIFAR-10 classification (small CNN/MLP).
+2. NLP: Penn Treebank word-level language model (2-layer LSTM).
+3. Reinforcement Learning: CartPole-v1 policy-gradient agent (short/noisy curves).
+4. Tabular: UCI regression datasets with XGBoost (fewer iterations, different curve shapes).
+All tasks capped so that a single training run fits ≤1 GB VRAM and ≤400 MB RAM; batching and checkpointing used where necessary.
+
+Experimental Protocol (identical for every task)
+1. Fixed BO budget (e.g. 20 iterations) with identical Sobol initial design.
+2. 10–20 independent random seeds.
+3. Record metrics A–C at every BO iteration; compute robustness statistics post-hoc.
+4. Inject two stress settings per task:
+   • Additive Gaussian noise (σ chosen to give ≈5 % accuracy SD).
+   • Early-stop curves after 30 % and 60 % of nominal length.
+5. Run all methods under identical time limits; abort runs that exceed 16 GB VRAM or 500 MB RAM.
+
+Success/Validation Criteria
+• Effectiveness: ≥1 % relative improvement in final score OR statistically non-inferior (paired t-test p>0.05) while meeting efficiency goal.
+• Efficiency: ≥20 % mean reduction in per-iteration wall-clock time.
+• Robustness: ≥30 % reduction in seed-to-seed variance OR ≤5 % performance loss under noise/truncation relative to clean setting.
+• Generalisation: above criteria satisfied on ≥3 of 4 task families.
+If all are met, AAUC-BOIL is deemed superior.
+
+Multi-Perspective Demonstration
+1. Aggregate quantitative tables (means, SDs, speedups) across tasks.
+2. Convergence plots with AUBC shaded by variance.
+3. Scatter of GP condition-number vs. wall-clock (illustrates stability–speed linkage).
+4. Qualitative case study: show two contrasted curves where sigmoid-BOIL failed due to poor (m,g) guess but AAUC-BOIL succeeded.
+5. Ablation heat-map: performance vs. α and truncation level to visualise insensitivity.
+
+Implementation Considerations
+• Single PyTorch + BoTorch code-base with pluggable curve-compression function.
+• Lightweight logging (jsonl) to keep RAM <500 MB.
+• GPU monitoring via nvidia-smi pmon; CPU time via time.perf_counter(); RAM via psutil.
+
+By adhering to this unified strategy every experiment will interrogate the same four hypothesis pillars under identical measurement regimes, enabling sound, task-agnostic evidence that AAUC-BOIL delivers practical and theoretical advantages over existing curve-compression approaches.
+
+---
+
+
+# Reference Information from Previous Iteration
+
+Output:
+{
+    "experiments": [
+        {
+            "experiment_id": "exp-1",
+            "run_variations": [
+                "sigmoid-boil",
+                "aauc-boil",
+                "random-search",
+                "hyperband",
+                "aauc-boil-no-discount"
+            ],
+            "description": "Objective / Hypothesis:\nValidate that the proposed AAUC compression (AAUC-BOIL) (i) matches or surpasses optimisation quality of Sigmoid-BOIL, (ii) cuts per-iteration wall-clock by ≥20 %, and (iii) is more robust to seed, noise, and early truncation, across four task families fitting a single NVIDIA-T4.\n\nTasks, Models & Datasets\n1. Vision – MNIST (28×28) with 3-layer MLP (~45 k params) and CIFAR-10 (32×32) with ResNet-18 (~11 M params, mixed-precision).\n2. NLP – Penn Treebank word-level language model with 2-layer LSTM (embedding 200, hidden 200, ~5 M params).\n3. RL – CartPole-v1, policy-gradient agent (2-layer MLP, 128 hidden units) producing episodic return curves ≤200 steps.\n4. Tabular – UCI Boston Housing & Yacht hydrodynamics, XGBoost regressor (max_depth, eta, n_estimators tuned).\nAll curves limited to ≤100 training iterations to respect RAM/VRAM.\n\nPre-processing\nMNIST/CIFAR: standardisation to [0,1], CIFAR per-channel mean/std normalisation; random crop+flip for CIFAR.\nPTB: lowercase, <unk> token, 35-step BPTT.\nUCI: z-score numeric features, one-hot categoricals.\n\nData Splits\nClassification: 50 k/10 k train/val (MNIST), 45k/5k val (CIFAR-10); test held-out.\nPTB: standard train/valid/test split (929k/73k/82k tokens).\nUCI: 80/10/10 stratified CV repeated 3×.\nRL: no split—evaluation is average episodic return on environment with deterministic seed list.\n\nBO Configuration (applies to all run_variations)\n• Search-space: two hyper-parameters per task (e.g. learning-rate ∈[1e-4,1], dropout ∈[0,0.7]).\n• Budget: 20 BO iterations (5 Sobol + 15 BO).\n• Seeds: 15 independent seeds.\n• Acquisition: qEI, batch-size 1.\n• Early stopping inside objective disabled to guarantee equal curve lengths (except in robustness stress). \n\nRobustness Stressors\n1. Gaussian noise ε~N(0,0.05) added to per-step metric.\n2. Curve truncation at 30 % and 60 % of nominal length (AAUC computed on truncated prefix).\n3. Reward scaling ×10 and ×0.1.\nEach stressor evaluated on a separate 5-seed subset.\n\nEvaluation Metrics\nPrimary: best test-score found after 20 BO iterations (Accuracy for vision, Perplexity↓ for PTB, Return↑ for RL, RMSE↓ for UCI).\nSecondary: (i) AUBC of best-so-far curve, (ii) per-iteration wall-clock, (iii) GP kernel log-condition-number, (iv) peak GPU util & host RAM.\nStatistics: report mean±std, paired t-test (α=0.05) vs Sigmoid-BOIL.\n\nComputation & Efficiency Tracking\n• FLOPs via ptflops (vision/NLP models) or env.step counting (RL).\n• Wall-clock/time via Python time.perf_counter(); GPU util via nvidia-smi pmon; RAM via psutil.\n• Cost proxy: wall-clock * T4 on-demand $0.35 h⁻¹.\n\nHyper-parameter Sensitivity (inside AAUC branch only)\nAnalyse α∈{1,2,4,8} on a 3-seed slice of MNIST & PTB; plot AUBC vs α.\n\nComparisons / Baselines\nsigmoid-boil: Original BOIL with learned (m,g).\naauc-boil: Proposed parameter-free AAUC.\nrandom-search: Sobol only, 20 iterations.\nhyperband: As implemented in RayTune with identical budget (total epochs summed equal 20 full curves).\naauc-boil-no-discount: Ablation w_t≡1.\nImplementation differences: Hyperband uses SHA with bracket η=3; all others in BoTorch.\n\nNumber of Runs\nVision (2 datasets) × 15 seeds × 5 variants = 150 runs.\nNLP ×15×5 = 75; RL ×15×5 = 75; Tabular ×15×5 = 75 ⇒ 375 objective runs, each <5 min GPU ⇒ <32 GPU-hours total.\n\nExample Code Snippet (AAUC score & pluggable compression)\n```python\nimport torch, numpy as np\n\ndef aauc_score(curve: torch.Tensor, alpha: float = 4.):\n    r0, rmax = curve[0], curve.max()\n    norm = (curve - r0) / (rmax - r0 + 1e-8)\n    t = torch.arange(1, len(curve)+1, device=curve.device, dtype=curve.dtype)\n    w = 1 - torch.exp(-alpha * t / len(curve))\n    return (norm * w).mean().item()\n\nclass CurveCompressor:\n    def __init__(self, kind='aauc', **kw):\n        self.kind, self.kw = kind, kw\n    def __call__(self, curve):\n        if self.kind == 'sigmoid':\n            m, g = self.kw['m'], self.kw['g']\n            # sigmoid compression (omitted)\n        elif self.kind == 'aauc':\n            return aauc_score(torch.tensor(curve), alpha=self.kw.get('alpha', 4.))\n        elif self.kind == 'aauc_nodiscount':\n            return torch.tensor(curve, dtype=torch.float).mean().item()\n```\n\nSuccess Criteria (Stopping Decision)\nAAUC-BOIL deemed superior if:\n• ≥1 % relative improvement (or non-inferior, p>0.05) on primary metric AND\n• ≥20 % mean wall-clock reduction AND\n• ≥30 % lower seed-variance OR ≤5 % perf-drop under noise/truncation on ≥3/4 task families.\n\nBranching & Reproducibility\nEach run_variation lives in its own Git branch (e.g., feature/aauc-boil) inheriting common objective & dataset loaders; CI test ensures VRAM <10 GB and host RAM <400 MB before merge."
+        }
+    ],
+    "expected_models": [
+        "MLP-3layer",
+        "ResNet-18",
+        "LSTM-2layer",
+        "XGBoost",
+        "PolicyGradient-MLP"
+    ],
+    "expected_datasets": [
+        "MNIST",
+        "CIFAR-10",
+        "Penn Treebank",
+        "CartPole-v1",
+        "UCI Boston Housing",
+        "UCI Yacht"
+    ]
+}
