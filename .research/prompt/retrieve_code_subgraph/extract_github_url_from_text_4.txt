@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+ColaBO is a Bayesian-principled framework that extends Gaussian Process (GP) based BO by allowing the injection of user-defined prior beliefs over function properties (e.g., optimum location, optimal value) into the surrogate model. It defines an augmented user belief `ρ(f)` which acts as a likelihood, forming a belief-weighted prior `p(f|ρ)`. This `p(f|ρ)` is updated with observed data `D` to a belief-weighted posterior `p(f|D, ρ)`, which is proportional to `ρ(f)p(f|D)`. The framework leverages *pathwise updates* from decoupled posterior sampling, where the user belief `ρ` influences the draw from the prior and observed data `D` affects a deterministic update. Due to the non-Gaussian nature of the belief-weighted posteriors, ColaBO integrates with Monte Carlo (MC) acquisition functions. It adapts MC-Expected Improvement (MC-EI) and Max-Value Entropy Search (MES) by weighting samples from the posterior according to `ρ(f_l)`. Samples are drawn from the prior, retained based on their probability under `ρ`, and then pathwise updated using observed data. The framework uses Random Fourier Features (RFF) for scalable approximate function draws.
+
+# GitHub URLs List
+['https://github.com/hvarfner/colabo', 'https://github.com/automl/mf-prior-bench', 'https://github.com/automl/mf-prior-bench']
+Output:
+{
+    "index": 0
+}
