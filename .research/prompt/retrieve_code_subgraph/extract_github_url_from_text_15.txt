@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The proposed method, Few-Shot Bayesian Optimization (FSBO), uses a deep kernel network (a neural network `phi` transforming input `x` to a latent representation, combined with a standard kernel) for a Gaussian Process (GP) surrogate. This deep kernel is meta-learned in an end-to-end fashion across a collection of training datasets to approximate response functions. Model-agnostic meta-learning (MAML) adapted for GPs is employed, where task-independent deep kernel parameters (`theta` and `w`) are optimized by maximizing the log marginal likelihood of all source tasks using stochastic gradient ascent. A key innovation is a task augmentation strategy that randomly scales labels for each batch during training, making the model invariant to various offsets and ranges, thereby addressing label normalization issues for target tasks with few examples. At test time, the deep kernel parameters are fine-tuned on the target task's data. Expected Improvement is used as the acquisition function. The paper also details an evolutionary algorithm for data-driven warm-start initialization, which finds a set of initial hyperparameter settings by minimizing normalized regret on source tasks, using the meta-learned surrogate to approximate function values.
+
+# GitHub URLs List
+['https://github.com/boschresearch/MetaBO']
+Output:
+{
+    "index": 0
+}
