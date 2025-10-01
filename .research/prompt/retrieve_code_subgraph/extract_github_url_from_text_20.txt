@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+BOIL models the cost-sensitive black-box function, which considers hyperparameters and training iterations, using a Gaussian Process (GP) with a product kernel. The cost function is approximated by a linear regressor. An acquisition function, a modified Expected Improvement criterion, is used to select the next evaluation point by balancing function value, uncertainty, and cost. A key component is the training curve compression, where a Sigmoid (Logistic) preference function is used to transform the entire learning curve into a single utility score, with its growth and middle point parameters learned directly from data by maximizing the GP's log marginal likelihood. To improve sample efficiency and avoid ill-conditioning, an active learning-based data augmentation technique selectively adds intermediate observations to the GP model, choosing samples at maximum predictive uncertainty, while adaptively controlling the number of samples to maintain a well-conditioned covariance matrix.
+
+# GitHub URLs List
+['https://github.com/ntienvu/BOIL']
+Output:
+{
+    "index": 0
+}
