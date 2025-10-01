@@ -29,7 +29,7 @@ Output:
         "BERT: Pre-training of deep bidirectional transformers for language understanding",
         "Speeding up automatic hyperparameter optimization of deep neural networks by extrapolation of learning curves",
         "Nas-bench-201: Extending the scope of reproducible neural architecture search",
-        "BOHB: Robust and efﬁcient hyperparameter opti- mization at scale",
+        "BOHB: Robust and efﬁcient hyperparameter optimization at scale",
         "Deep residual learning for image recognition",
         "Cost-aware adversarial best arm identiﬁcation",
         "Non-stochastic best arm identiﬁcation and hyperparameter optimization",
@@ -47,6 +47,6 @@ Output:
         "PC-DARTS: Partial channel connections for memory-efﬁcient architecture search",
         "A resource-efﬁcient method for repeated HPO and NAS problems",
         "EcoNAS: Finding proxies for economical neural architecture search",
-        "Auto-PyTorch Tabular: Multi-ﬁdelity metalearn- ing for efﬁcient and robust AutoDL"
+        "Auto-PyTorch Tabular: Multi-ﬁdelity metalearning for efﬁcient and robust AutoDL"
     ]
 }
