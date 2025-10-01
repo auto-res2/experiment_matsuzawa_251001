@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The methodology leverages MLMC to approximate analytically intractable multi-step look-ahead acquisition functions formulated as Markov Decision Processes (MDPs). It uses a nested Sample Average Approximation (SAA) to handle nested optimization and Monte Carlo (MC) estimations. MLMC constructs a telescoping sum of estimators from low to high accuracy, performing most simulations with low-accuracy and low-cost to reduce overall computational complexity. An antithetic coupling approach is introduced to further improve the convergence rate. The approach is applied to approximate the maximizer of the acquisition function directly, as well as the acquisition function itself (for theoretical analysis), within a Gaussian Process-based BO framework.
+
+# GitHub URLs List
+['https://github.com/Shangda-Yang/MLMCBO']
+Output:
+{
+    "index": 0
+}
