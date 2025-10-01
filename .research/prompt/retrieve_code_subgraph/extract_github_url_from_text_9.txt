@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+DPL models learning curves as power-law functions of the form ˆf(λ, b) := αλ + βλ b−γλ, where α, β, and γ are coefficients. Instead of fitting a separate power law for each configuration, a single parametric neural network is used to condition these coefficients on the hyperparameter configuration λ. An ensemble of K=5 such neural networks is trained using L1 loss and stochastic gradient descent, with different initial weights and mini-batch sequences, to provide probabilistic predictions (posterior mean and variance). This ensemble serves as a surrogate model within a Bayesian Optimization framework. The acquisition function used is Expected Improvement (EI), applied to estimate performance at the maximum budget. A novel multi-fidelity strategy incrementally advances selected configurations by a small budget (e.g., one epoch) rather than running them to full convergence, allowing for dynamic resource allocation and efficient exploration.
+
+# GitHub URLs List
+['https://github.com/releaunifreiburg/DPL', 'https://github.com/karpathy/nanoGPT', 'https://github.com/automl/LCBench', 'https://github.com/automl/HpBandSter', 'https://github.com/automl/DEHB', 'https://github.com/shib0li/DNN-MFBO', 'https://github.com/automl/SMAC3']
+Output:
+{
+    "index": 0
+}
