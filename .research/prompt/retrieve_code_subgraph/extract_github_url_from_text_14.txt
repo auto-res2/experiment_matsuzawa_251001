@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+DyHPO is built upon Gaussian Process (GP) based Bayesian Optimization. It uses a deep kernel that explicitly takes the hyperparameter configuration, past learning curve, and budget information as input. The deep kernel's feature extractor employs linear layers and a one-dimensional convolutional layer with global max pooling for processing the learning curve. A squared exponential kernel is used as the base kernel. Model parameters are optimized via maximum likelihood estimation using gradient descent with the Adam optimizer. The method utilizes a Multi-Fidelity Expected Improvement (EIMF) acquisition function to dynamically select the next promising configuration and its incremental budget for evaluation. The algorithm iteratively expands the training budget for selected candidates, adds new observations, and updates the surrogate model.
+
+# GitHub URLs List
+['https://github.com/releaunifreiburg/DyHPO', 'https://github.com/automl/LCBench', 'https://github.com/google-research/google-research', 'https://github.com/D-X-Y/NAS-Bench-201', 'https://github.com/automl/HpBandSter', 'https://github.com/automl/DEHB', 'https://github.com/dragonfly/dragonfly', 'https://github.com/shib0li/DNN-MFBO']
+Output:
+{
+    "index": 0
+}
