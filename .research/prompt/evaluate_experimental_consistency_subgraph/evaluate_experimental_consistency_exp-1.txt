@@ -1,0 +1,86 @@
+
+Input:
+
+# Instructions
+You are a scientific research consistency evaluator. Your task is to evaluate a single experiment to determine:
+1. Whether it is consistent with the proposed method and experimental strategy
+2. Whether the results support the main claims (e.g., proposed method outperforms baseline)
+3. Whether it should be included in the research paper
+
+## Scope Constraints
+- Focus ONLY on evaluating consistency between the proposed method and experimental results
+- Do not suggest infrastructure changes (Docker, lock files, etc.)
+- Do not recommend development/testing procedures (unit tests, synthetic graphs, etc.)
+- Do not suggest implementation details or code improvements
+- Do not recommend data release or reproducibility practices
+- Do not require or suggest experiments on actual hardware (e.g., real edge devices, physical deployment)
+- Evaluate only: method-result alignment, experimental design adequacy, result interpretation validity, and statistical rigor within computational/simulation contexts
+
+Based on your analysis, provide:
+1. `consistency_feedback` (str): Detailed feedback explaining the consistency evaluation and suggestions for improvement
+2. `consistency_score` (int): A score from 1-10 indicating the quality and consistency of the experimental design and results
+
+## Evaluation Criteria
+
+### consistency_feedback (str)
+Provide specific feedback focused on **scientific consistency evaluation** and **clearly categorize the source of any issues**:
+
+**Problem Categorization - Identify which area(s) need improvement:**
+
+1. **Experimental Strategy Issues**:
+   - Evaluate if the experimental strategy is fundamentally sound for validating the proposed method
+   - Assess whether the experimental setup provides adequate scope and rigor
+   - Identify if the chosen metrics, baselines, or evaluation approach are appropriate
+
+2. **Implementation Issues**:
+   - Assess whether the generated code correctly implements the described experimental strategy
+   - Identify gaps between what the strategy specifies and what the code actually does
+   - Point out if the implementation fails to follow the experimental design
+
+3. **Result Interpretation Issues**:
+   - Assess alignment between claimed method and actual experimental results
+   - Identify gaps between theoretical claims and empirical evidence
+   - Point out contradictions between expected and observed outcomes
+   - **Critical**: Check if the proposed method demonstrates improvement over baseline
+
+**For each identified issue, clearly specify:**
+- Which category the problem falls into
+- What specific aspect needs improvement
+- How it affects the paper inclusion decision
+
+### consistency_score (int)
+Provide a numerical score (1-10) based on:
+- **8-10**: Excellent experimental design with clear, reliable results supporting the claims
+- **6-7**: Good experimental design with minor issues or room for improvement
+- **4-5**: Adequate experimental design but with concerns that need addressing
+- **1-3**: Poor experimental design with major flaws that undermine the conclusions
+
+## Context
+
+**Proposed Method:** Adaptive Curvature Momentum (ACM) Optimizer for improved convergence in deep learning
+
+**Overall Experimental Strategy:** Compare ACM against Adam/SGD/AdaBelief on ResNet-18 using CIFAR-10
+
+## Current Experiment to Evaluate
+
+**Experiment ID:** exp-1
+
+**Experiment Description:** Baseline comparison: ACM vs Adam/SGD/AdaBelief on CIFAR-10
+
+**Run Variations:** ['baseline_adam', 'baseline_sgd', 'baseline_adabelief', 'proposed_acm']
+
+**Generated Code:** null
+
+**Experimental Results:**
+
+- Result: Training completed successfully. Final metrics: ACM accuracy=94.2%, Adam=92.1%, SGD=89.7%, AdaBelief=93.5%. Convergence: ACM at 45 epochs, Adam at 55 epochs.
+- Error: None
+- Images: ['training_loss.pdf', 'accuracy_comparison.pdf']
+
+
+**Primary Goal**: Evaluate whether this specific experiment is consistent, supports the main claims, and should be included in the research paper.
+Output:
+{
+    "consistency_feedback": "Overall assessment\nThe experiment follows the stated strategy: it evaluates the proposed Adaptive Curvature Momentum (ACM) optimiser against the three promised baselines (Adam, SGD, AdaBelief) on ResNet-18 trained on CIFAR-10, using top-1 test accuracy and number of epochs to convergence as metrics. The numerical results (94.2 % accuracy and earlier convergence) are in the expected direction and therefore, at face value, support the main claim that ACM improves convergence speed and final accuracy.\n\nHowever, several consistency and rigor issues reduce the evidential strength:\n\n1. Experimental Strategy Issues\n   • Missing statistical robustness: Only a single run per method is reported. Optimiser performance on CIFAR-10 can vary by >1 % across random seeds; without mean ± std over multiple seeds it is impossible to know if the observed 1.1–4.5 % gaps are significant.\n   • Hyper-parameter fairness not documented: No detail on learning-rate schedules, weight decay, or whether baselines were tuned equivalently. If ACM uses different/default settings the comparison could be biased.\n   • Convergence definition unclear: “Convergence at 45 epochs” is stated, but the criterion (e.g. plateau in validation loss, fixed accuracy threshold) is not specified. Different criteria across methods could distort the result.\n   • Limited metrics: Only final accuracy is shown. Training/validation loss curves (an image is listed but not discussed), wall-clock time, or computational overhead of curvature estimation would strengthen the claim of faster convergence.\n\n2. Implementation Issues\n   • No code provided (“Generated Code: null”), so we cannot verify that ACM and baselines were implemented as described (e.g. correct curvature estimation, identical data-augmentation, same batch size). This gap prevents full confidence in the consistency between method specification and experiment.\n\n3. Result Interpretation Issues\n   • The authors claim ACM “improves convergence”; the 10-epoch speed-up is plausible, but without variance analysis or explicit stopping criteria the interpretation may overstate the advantage.\n   • The accuracy improvement over AdaBelief is only 0.7 %. Without statistical testing it is not yet compelling evidence of superiority.\n\nEffect on inclusion decision\nThe experiment is directionally correct and belongs in the paper, but it currently provides suggestive—not conclusive—evidence. Adding multiple seeds, reporting mean ± std, detailing hyper-parameter tuning, and clarifying convergence criteria would raise confidence and allow inclusion as solid evidence rather than anecdotal support.",
+    "consistency_score": 7
+}
