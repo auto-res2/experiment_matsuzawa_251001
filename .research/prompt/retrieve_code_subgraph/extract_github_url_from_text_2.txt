@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The core methodology relies on implicit differentiation tailored for non-smooth Lasso-type problems by exploiting the fixed-point equations inherent in proximal BCD algorithms. Unlike classical implicit differentiation, which inverts a Hessian matrix, the proposed method (Algorithm 2) works in two steps: first, it solves the inner optimization problem to compute the regression coefficients (ˆβ) and identify their support (ˆS). Second, it applies forward differentiation recursion steps, restricted only to the active support, to compute the Jacobian (ˆJ) of ˆβ with respect to the hyperparameters. This approach avoids explicitly forming or inverting large, potentially ill-conditioned dense matrices. Theoretical propositions demonstrate that this implicit forward differentiation converges linearly to the true Jacobian for Lasso and weighted Lasso models once the support is identified. The method can be used with any Lasso solver and is applied within a bi-level optimization framework for hyperparameter selection via gradient descent.
+
+# GitHub URLs List
+['https://github.com/QB3/sparse-ho', 'https://github.com/fabianp/hoag', 'https://github.com/SMTorg/smt']
+Output:
+{
+    "index": 0
+}
