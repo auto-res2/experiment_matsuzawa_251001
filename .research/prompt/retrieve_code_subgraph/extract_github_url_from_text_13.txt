@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The methodology frames hyperparameter optimization as a bi-level optimization problem, where the outer problem minimizes a criterion C(ˆβ(λ)) and the inner problem finds ˆβ(λ) by solving a Lasso-type regularized optimization. The core innovation lies in efficiently computing the weak Jacobian ˆJ(λ) (gradient of ˆβ(λ) with respect to hyperparameters λ). The proposed 'Implicit Forward Iterative Differentiation' (Algorithm 2) leverages the fixed-point iteration property of proximal Block Coordinate Descent (BCD) algorithms. It first computes the regression coefficients ˆβ using any state-of-the-art convex solver. Subsequently, it computes the Jacobian by applying forward differentiation recursion steps, but crucially, restricts these updates to the identified support (non-zero coefficients), avoiding large matrix inversions. This approach ensures linear convergence of the Jacobian once the support is identified. The regularization parameters are parametrized as e^λ to avoid positivity constraints. For comparison, the paper also considers standard implicit differentiation (solving a sparse linear system), forward iterative differentiation (jointly computing coefficients and Jacobian), and backward iterative differentiation (computing the hypergradient directly).
+
+# GitHub URLs List
+['https://github.com/QB3/sparse-ho', 'https://github.com/fabianp/hoag', 'https://github.com/SMTorg/smt']
+Output:
+{
+    "index": 0
+}
