@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+BOIL frames hyperparameter tuning as a global optimization problem based on noisy evaluations of a black-box function f, modeling it with a Gaussian Process (GP) surrogate over the joint space of hyperparameters x and training iterations t, using a product kernel k(x,x') × k(t,t'). The training time cost c(x,t) is approximated by a linear regressor. It uses a modified Expected Improvement (EI) acquisition function to select the next hyperparameter-iteration pair by balancing expected utility against predicted cost. A core technique is 'training curve compression', which transforms the raw learning curve into a single numeric score using a Sigmoid (Logistic) preference function. The parameters of this Sigmoid function (growth parameter g0 and middle point m0) are learned dynamically by maximizing the GP's log marginal likelihood. To improve sample-efficiency and prevent GP covariance matrix ill-conditioning, BOIL employs a selective data augmentation technique, adding a subset of points from observed training curves based on maximum GP predictive uncertainty, adaptively chosen to keep the log condition number of the covariance matrix below a threshold.
+
+# GitHub URLs List
+['https://github.com/ntienvu/BOIL']
+Output:
+{
+    "index": 0
+}
