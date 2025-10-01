@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+DPL utilizes an ensemble of neural network models conditioned to predict performance following a power-law scaling pattern. Specifically, for a configuration \u03bb and budget b, the validation loss is modeled as \u00eaf(\u03bb, b) := g(\u03bb)\u03b1 + g(\u03bb)\u03b2 b^-g(\u03bb)\u03b3, where g is a neural network mapping \u03bb to the coefficients (\u03b1, \u03b2, \u03b3). An ensemble of K such surrogates is trained to provide posterior mean and variance, which are then used by an Expected Improvement (EI) acquisition function within a Bayesian Optimization framework. A multi-fidelity strategy advances selected configurations by small budget increments (e.g., one epoch) rather than running to full convergence.
+
+# GitHub URLs List
+['https://github.com/releaunifreiburg/DPL', 'https://github.com/karpathy/nanoGPT', 'https://github.com/automl/LCBench', 'https://github.com/automl/HpBandSter', 'https://github.com/automl/DEHB', 'https://github.com/shib0li/DNN-MFBO', 'https://github.com/automl/SMAC3']
+Output:
+{
+    "index": 0
+}
