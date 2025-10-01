@@ -20,26 +20,6 @@ Please extract all reference paper titles and return them as a list of strings.
 Output:
 {
     "reference_titles": [
-        "Parameter adaptation in stochastic optimization",
-        "Online learning rate adaptation with hypergradient descent",
-        "Gradient-based optimization of hyperparameters",
-        "Generic methods for optimization-based modeling",
-        "Adaptive subgradient methods for online learning and stochastic optimization",
-        "Hyperparameter Optimization",
-        "Forward and reverse gradient-based hyperparameter optimization",
-        "Caltech-256 object category dataset",
-        "Deep residual learning for image recognition",
-        "torch-rnn",
-        "Visualizing and understanding recurrent networks",
-        "Adam: A method for stochastic optimization",
-        "Learning multiple layers of features from tiny images",
-        "Gradient-based learning applied to document recognition",
-        "Scalable gradient-based tuning of continuous regularization hyperparameters",
-        "Gradient-based hyperparameter optimization through reversible learning",
-        "Training deep networks without learning rates through coin betting",
-        "Convergence analysis of an adaptive method of gradient descent",
-        "Deepobs: A deep learning optimizer benchmark suite",
-        "Painless stochastic gradient: Interpolation, line-search, and convergence rates",
-        "ADADELTA: An adaptive learning rate method"
+        "Parameter adaptation in stochastic optimization"
     ]
 }
