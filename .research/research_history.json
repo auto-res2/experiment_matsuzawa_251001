@@ -639,7 +639,545 @@
         "Reacher-v2",
         "SVHN",
         "CIFAR-10"
-      ]
+      ],
+      "external_resources": {
+        "hugging_face": {
+          "models": [
+            {
+              "id": "pfunk/CartPole-v1-CP_DDQN-seed111",
+              "author": "pfunk",
+              "sha": "510c516c8ead93aa43960175e37afed5e1ae708b",
+              "created_at": "2023-03-21T05:57:32+00:00",
+              "last_modified": "2023-03-21T05:57:35+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 0,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "CP_DDQN.cleanrl_model"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "dqn.py"
+                },
+                {
+                  "rfilename": "events.out.tfevents.1679374407.redi.2607611.0"
+                },
+                {
+                  "rfilename": "poetry.lock"
+                },
+                {
+                  "rfilename": "pyproject.toml"
+                },
+                {
+                  "rfilename": "replay.mp4"
+                },
+                {
+                  "rfilename": "videos/CartPole-v1__CP_DDQN__111__1679374402-eval/rl-video-episode-0.mp4"
+                },
+                {
+                  "rfilename": "videos/CartPole-v1__CP_DDQN__111__1679374402-eval/rl-video-episode-1.mp4"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "library_name": "cleanrl",
+                "tags": [
+                  "CartPole-v1",
+                  "deep-reinforcement-learning",
+                  "reinforcement-learning",
+                  "custom-implementation"
+                ],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "cleanrl",
+                "tensorboard",
+                "CartPole-v1",
+                "deep-reinforcement-learning",
+                "reinforcement-learning",
+                "custom-implementation",
+                "model-index",
+                "region:us"
+              ],
+              "pipeline_tag": "reinforcement-learning",
+              "library_name": "cleanrl",
+              "readme": "---\ntags:\n- CartPole-v1\n- deep-reinforcement-learning\n- reinforcement-learning\n- custom-implementation\nlibrary_name: cleanrl\nmodel-index:\n- name: DQN\n  results:\n  - task:\n      type: reinforcement-learning\n      name: reinforcement-learning\n    dataset:\n      name: CartPole-v1\n      type: CartPole-v1\n    metrics:\n    - type: mean_reward\n      value: 500.00 +/- 0.00\n      name: mean_reward\n      verified: false\n---\n\n# (CleanRL) **DQN** Agent Playing **CartPole-v1**\n\nThis is a trained model of a DQN agent playing CartPole-v1.\nThe model was trained by using [CleanRL](https://github.com/vwxyzjn/cleanrl) and the most up-to-date training code can be\nfound [here](https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/CP_DDQN.py).\n\n## Get Started\n\nTo use this model, please install the `cleanrl` package with the following command:\n\n```\npip install \"cleanrl[CP_DDQN]\"\npython -m cleanrl_utils.enjoy --exp-name CP_DDQN --env-id CartPole-v1\n```\n\nPlease refer to the [documentation](https://docs.cleanrl.dev/get-started/zoo/) for more detail.\n\n\n## Command to reproduce the training\n\n```bash\ncurl -OL https://huggingface.co/pfunk/CartPole-v1-CP_DDQN-seed111/raw/main/dqn.py\ncurl -OL https://huggingface.co/pfunk/CartPole-v1-CP_DDQN-seed111/raw/main/pyproject.toml\ncurl -OL https://huggingface.co/pfunk/CartPole-v1-CP_DDQN-seed111/raw/main/poetry.lock\npoetry install --all-extras\npython dqn.py --track --wandb-entity pfunk --wandb-project-name dqpn --capture-video true --save-model true --upload-model true --hf-entity pfunk --exp-name CP_DDQN --double-learning --seed 111\n```\n\n# Hyperparameters\n```python\n{'alg_type': 'dqn.py',\n 'batch_size': 256,\n 'buffer_size': 300000,\n 'capture_video': True,\n 'cuda': True,\n 'double_learning': True,\n 'end_e': 0.1,\n 'env_id': 'CartPole-v1',\n 'exp_name': 'CP_DDQN',\n 'exploration_fraction': 0.2,\n 'gamma': 1.0,\n 'hf_entity': 'pfunk',\n 'learning_rate': 0.0001,\n 'learning_starts': 1000,\n 'max_gradient_norm': inf,\n 'save_model': True,\n 'seed': 111,\n 'start_e': 1.0,\n 'target_network_frequency': 100,\n 'target_tau': 1.0,\n 'torch_deterministic': True,\n 'total_timesteps': 500000,\n 'track': True,\n 'train_frequency': 1,\n 'upload_model': True,\n 'wandb_entity': 'pfunk',\n 'wandb_project_name': 'dqpn'}\n```\n    ",
+              "extracted_code": "{'alg_type': 'dqn.py',\n 'batch_size': 256,\n 'buffer_size': 300000,\n 'capture_video': True,\n 'cuda': True,\n 'double_learning': True,\n 'end_e': 0.1,\n 'env_id': 'CartPole-v1',\n 'exp_name': 'CP_DDQN',\n 'exploration_fraction': 0.2,\n 'gamma': 1.0,\n 'hf_entity': 'pfunk',\n 'learning_rate': 0.0001,\n 'learning_starts': 1000,\n 'max_gradient_norm': inf,\n 'save_model': True,\n 'seed': 111,\n 'start_e': 1.0,\n 'target_network_frequency': 100,\n 'target_tau': 1.0,\n 'torch_deterministic': True,\n 'total_timesteps': 500000,\n 'track': True,\n 'train_frequency': 1,\n 'upload_model': True,\n 'wandb_entity': 'pfunk',\n 'wandb_project_name': 'dqpn'}"
+            },
+            {
+              "id": "sb3/a2c-Pendulum-v1",
+              "author": "sb3",
+              "sha": "8f40f1fba73d239a7c11487ef3c39d37295fe1a7",
+              "created_at": "2022-06-02T15:28:57+00:00",
+              "last_modified": "2022-10-11T15:07:30+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 15,
+              "likes": 1,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "a2c-Pendulum-v1.zip"
+                },
+                {
+                  "rfilename": "a2c-Pendulum-v1/_stable_baselines3_version"
+                },
+                {
+                  "rfilename": "a2c-Pendulum-v1/data"
+                },
+                {
+                  "rfilename": "a2c-Pendulum-v1/policy.optimizer.pth"
+                },
+                {
+                  "rfilename": "a2c-Pendulum-v1/policy.pth"
+                },
+                {
+                  "rfilename": "a2c-Pendulum-v1/pytorch_variables.pth"
+                },
+                {
+                  "rfilename": "a2c-Pendulum-v1/system_info.txt"
+                },
+                {
+                  "rfilename": "args.yml"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "library_name": "stable-baselines3",
+                "tags": [
+                  "Pendulum-v1",
+                  "deep-reinforcement-learning",
+                  "reinforcement-learning",
+                  "stable-baselines3"
+                ],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "stable-baselines3",
+                "Pendulum-v1",
+                "deep-reinforcement-learning",
+                "reinforcement-learning",
+                "model-index",
+                "region:us"
+              ],
+              "pipeline_tag": "reinforcement-learning",
+              "library_name": "stable-baselines3",
+              "readme": "---\nlibrary_name: stable-baselines3\ntags:\n- Pendulum-v1\n- deep-reinforcement-learning\n- reinforcement-learning\n- stable-baselines3\nmodel-index:\n- name: A2C\n  results:\n  - metrics:\n    - type: mean_reward\n      value: -203.15 +/- 125.77\n      name: mean_reward\n    task:\n      type: reinforcement-learning\n      name: reinforcement-learning\n    dataset:\n      name: Pendulum-v1\n      type: Pendulum-v1\n---\n\n# **A2C** Agent playing **Pendulum-v1**\nThis is a trained model of a **A2C** agent playing **Pendulum-v1**\nusing the [stable-baselines3 library](https://github.com/DLR-RM/stable-baselines3)\nand the [RL Zoo](https://github.com/DLR-RM/rl-baselines3-zoo).\n\nThe RL Zoo is a training framework for Stable Baselines3\nreinforcement learning agents,\nwith hyperparameter optimization and pre-trained agents included.\n\n## Usage (with SB3 RL Zoo)\n\nRL Zoo: https://github.com/DLR-RM/rl-baselines3-zoo<br/>\nSB3: https://github.com/DLR-RM/stable-baselines3<br/>\nSB3 Contrib: https://github.com/Stable-Baselines-Team/stable-baselines3-contrib\n\n```\n# Download model and save it into the logs/ folder\npython -m rl_zoo3.load_from_hub --algo a2c --env Pendulum-v1 -orga sb3 -f logs/\npython enjoy.py --algo a2c --env Pendulum-v1  -f logs/\n```\n\n## Training (with the RL Zoo)\n```\npython train.py --algo a2c --env Pendulum-v1 -f logs/\n# Upload the model and generate video (when possible)\npython -m rl_zoo3.push_to_hub --algo a2c --env Pendulum-v1 -f logs/ -orga sb3\n```\n\n## Hyperparameters\n```python\nOrderedDict([('ent_coef', 0.0),\n             ('gae_lambda', 0.9),\n             ('gamma', 0.99),\n             ('learning_rate', 'lin_7e-4'),\n             ('max_grad_norm', 0.5),\n             ('n_envs', 8),\n             ('n_steps', 8),\n             ('n_timesteps', 1000000.0),\n             ('normalize', True),\n             ('normalize_advantage', False),\n             ('policy', 'MlpPolicy'),\n             ('policy_kwargs', 'dict(log_std_init=-2, ortho_init=False)'),\n             ('use_rms_prop', True),\n             ('use_sde', True),\n             ('vf_coef', 0.4),\n             ('normalize_kwargs', {'norm_obs': True, 'norm_reward': False})])\n```\n",
+              "extracted_code": "OrderedDict([('ent_coef', 0.0),\n             ('gae_lambda', 0.9),\n             ('gamma', 0.99),\n             ('learning_rate', 'lin_7e-4'),\n             ('max_grad_norm', 0.5),\n             ('n_envs', 8),\n             ('n_steps', 8),\n             ('n_timesteps', 1000000.0),\n             ('normalize', True),\n             ('normalize_advantage', False),\n             ('policy', 'MlpPolicy'),\n             ('policy_kwargs', 'dict(log_std_init=-2, ortho_init=False)'),\n             ('use_rms_prop', True),\n             ('use_sde', True),\n             ('vf_coef', 0.4),\n             ('normalize_kwargs', {'norm_obs': True, 'norm_reward': False})])"
+            },
+            {
+              "id": "microsoft/resnet-18",
+              "author": "microsoft",
+              "sha": "65a5785d9156231087c481e0c7dd33a5ff6f7e3e",
+              "created_at": "2022-03-16T15:40:26+00:00",
+              "last_modified": "2024-04-08T11:06:50+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 123791,
+              "likes": 58,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "config.json"
+                },
+                {
+                  "rfilename": "model.safetensors"
+                },
+                {
+                  "rfilename": "preprocessor_config.json"
+                },
+                {
+                  "rfilename": "pytorch_model.bin"
+                },
+                {
+                  "rfilename": "tf_model.h5"
+                }
+              ],
+              "card_data": {
+                "license": "apache-2.0",
+                "language": [],
+                "tags": [
+                  "vision",
+                  "image-classification"
+                ],
+                "datasets": [
+                  "imagenet-1k"
+                ],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": [
+                  {
+                    "src": "https://huggingface.co/datasets/mishig/sample_images/resolve/main/tiger.jpg",
+                    "example_title": "Tiger"
+                  },
+                  {
+                    "src": "https://huggingface.co/datasets/mishig/sample_images/resolve/main/teapot.jpg",
+                    "example_title": "Teapot"
+                  },
+                  {
+                    "src": "https://huggingface.co/datasets/mishig/sample_images/resolve/main/palace.jpg",
+                    "example_title": "Palace"
+                  }
+                ]
+              },
+              "tags": [
+                "transformers",
+                "pytorch",
+                "tf",
+                "safetensors",
+                "resnet",
+                "image-classification",
+                "vision",
+                "dataset:imagenet-1k",
+                "arxiv:1512.03385",
+                "license:apache-2.0",
+                "autotrain_compatible",
+                "endpoints_compatible",
+                "region:us"
+              ],
+              "pipeline_tag": "image-classification",
+              "library_name": "transformers",
+              "readme": "---\nlicense: apache-2.0\ntags:\n- vision\n- image-classification\n\ndatasets:\n- imagenet-1k\n\nwidget:\n- src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/tiger.jpg\n  example_title: Tiger\n- src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/teapot.jpg\n  example_title: Teapot\n- src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/palace.jpg\n  example_title: Palace\n\n---\n\n# ResNet\n\nResNet model trained on imagenet-1k. It was introduced in the paper [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385) and first released in [this repository](https://github.com/KaimingHe/deep-residual-networks). \n\nDisclaimer: The team releasing ResNet did not write a model card for this model so this model card has been written by the Hugging Face team.\n\n## Model description\n\nResNet introduced residual connections, they allow to train networks with an unseen number of layers (up to 1000). ResNet won the 2015 ILSVRC & COCO competition, one important milestone in deep computer vision.\n\n![model image](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/resnet_architecture.png)\n\n## Intended uses & limitations\n\nYou can use the raw model for image classification. See the [model hub](https://huggingface.co/models?search=resnet) to look for\nfine-tuned versions on a task that interests you.\n\n### How to use\n\nHere is how to use this model:\n\n```python\n>>> from transformers import AutoImageProcessor, AutoModelForImageClassification\n>>> import torch\n>>> from datasets import load_dataset\n\n>>> dataset = load_dataset(\"huggingface/cats-image\")\n>>> image = dataset[\"test\"][\"image\"][0]\n\n>>> image_processor = AutoImageProcessor.from_pretrained(\"microsoft/resnet-18\")\n>>> model = AutoModelForImageClassification.from_pretrained(\"microsoft/resnet-18\")\n\n>>> inputs = image_processor(image, return_tensors=\"pt\")\n\n>>> with torch.no_grad():\n...     logits = model(**inputs).logits\n\n>>> # model predicts one of the 1000 ImageNet classes\n>>> predicted_label = logits.argmax(-1).item()\n>>> print(model.config.id2label[predicted_label])\ntiger cat\n```\n\n\n\nFor more code examples, we refer to the [documentation](https://huggingface.co/docs/transformers/master/en/model_doc/resnet).",
+              "extracted_code": "from transformers import AutoImageProcessor, AutoModelForImageClassification\nimport torch\nfrom datasets import load_dataset\n\ndataset = load_dataset(\"huggingface/cats-image\")\nimage = dataset[\"test\"][\"image\"][0]\n\nimage_processor = AutoImageProcessor.from_pretrained(\"microsoft/resnet-18\")\nmodel = AutoModelForImageClassification.from_pretrained(\"microsoft/resnet-18\")\n\ninputs = image_processor(image, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    logits = model(**inputs).logits\n\n# model predicts one of the 1000 ImageNet classes\npredicted_label = logits.argmax(-1).item()\nprint(model.config.id2label[predicted_label])"
+            },
+            {
+              "id": "timm/resnet18.tv_in1k",
+              "author": "timm",
+              "sha": "bbd144b3e5565108aad885f145491d11bc6ce807",
+              "created_at": "2023-04-05T18:04:15+00:00",
+              "last_modified": "2025-01-21T21:39:10+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 31424,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "config.json"
+                },
+                {
+                  "rfilename": "model.safetensors"
+                },
+                {
+                  "rfilename": "pytorch_model.bin"
+                }
+              ],
+              "card_data": {
+                "license": "bsd-3-clause",
+                "language": [],
+                "library_name": "timm",
+                "tags": [
+                  "image-classification",
+                  "timm",
+                  "transformers"
+                ],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "timm",
+                "pytorch",
+                "safetensors",
+                "image-classification",
+                "transformers",
+                "arxiv:1512.03385",
+                "license:bsd-3-clause",
+                "region:us"
+              ],
+              "pipeline_tag": "image-classification",
+              "library_name": "timm",
+              "readme": "---\nlicense: bsd-3-clause\nlibrary_name: timm\ntags:\n- image-classification\n- timm\n- transformers\n---\n# Model card for resnet18.tv_in1k\n\nA ResNet-B image classification model.\n\nThis model features:\n * ReLU activations\n * single layer 7x7 convolution with pooling\n * 1x1 convolution shortcut downsample\n\nTrained on ImageNet-1k, original torchvision model weight.\n\n\n## Model Details\n- **Model Type:** Image classification / feature backbone\n- **Model Stats:**\n  - Params (M): 11.7\n  - GMACs: 1.8\n  - Activations (M): 2.5\n  - Image size: 224 x 224\n- **Papers:**\n  - Deep Residual Learning for Image Recognition: https://arxiv.org/abs/1512.03385\n- **Original:** https://github.com/pytorch/vision\n\n## Model Usage\n### Image Classification\n```python\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model('resnet18.tv_in1k', pretrained=True)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\ntop5_probabilities, top5_class_indices = torch.topk(output.softmax(dim=1) * 100, k=5)\n```\n\n### Feature Map Extraction\n```python\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.tv_in1k',\n    pretrained=True,\n    features_only=True,\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\nfor o in output:\n    # print shape of each feature map in output\n    # e.g.:\n    #  torch.Size([1, 64, 112, 112])\n    #  torch.Size([1, 64, 56, 56])\n    #  torch.Size([1, 128, 28, 28])\n    #  torch.Size([1, 256, 14, 14])\n    #  torch.Size([1, 512, 7, 7])\n\n    print(o.shape)\n```\n\n### Image Embeddings\n```python\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.tv_in1k',\n    pretrained=True,\n    num_classes=0,  # remove classifier nn.Linear\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # output is (batch_size, num_features) shaped tensor\n\n# or equivalently (without needing to set num_classes=0)\n\noutput = model.forward_features(transforms(img).unsqueeze(0))\n# output is unpooled, a (1, 512, 7, 7) shaped tensor\n\noutput = model.forward_head(output, pre_logits=True)\n# output is a (1, num_features) shaped tensor\n```\n\n## Model Comparison\nExplore the dataset and runtime metrics of this model in timm [model results](https://github.com/huggingface/pytorch-image-models/tree/main/results).\n\n|model                                     |img_size|top1 |top5 |param_count|gmacs|macts|img/sec|\n|------------------------------------------|--------|-----|-----|-----------|-----|-----|-------|\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k_288](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k_288)|320     |86.72|98.17|93.6       |35.2 |69.7 |451    |\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k_288](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k_288)|288     |86.51|98.08|93.6       |28.5 |56.4 |560    |\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k)|288     |86.49|98.03|93.6       |28.5 |56.4 |557    |\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k)|224     |85.96|97.82|93.6       |17.2 |34.2 |923    |\n|[resnext101_32x32d.fb_wsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x32d.fb_wsl_ig1b_ft_in1k)|224     |85.11|97.44|468.5      |87.3 |91.1 |254    |\n|[resnetrs420.tf_in1k](https://huggingface.co/timm/resnetrs420.tf_in1k)|416     |85.0 |97.12|191.9      |108.4|213.8|134    |\n|[ecaresnet269d.ra2_in1k](https://huggingface.co/timm/ecaresnet269d.ra2_in1k)|352     |84.96|97.22|102.1      |50.2 |101.2|291    |\n|[ecaresnet269d.ra2_in1k](https://huggingface.co/timm/ecaresnet269d.ra2_in1k)|320     |84.73|97.18|102.1      |41.5 |83.7 |353    |\n|[resnetrs350.tf_in1k](https://huggingface.co/timm/resnetrs350.tf_in1k)|384     |84.71|96.99|164.0      |77.6 |154.7|183    |\n|[seresnextaa101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.ah_in1k)|288     |84.57|97.08|93.6       |28.5 |56.4 |557    |\n|[resnetrs200.tf_in1k](https://huggingface.co/timm/resnetrs200.tf_in1k)|320     |84.45|97.08|93.2       |31.5 |67.8 |446    |\n|[resnetrs270.tf_in1k](https://huggingface.co/timm/resnetrs270.tf_in1k)|352     |84.43|96.97|129.9      |51.1 |105.5|280    |\n|[seresnext101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101d_32x8d.ah_in1k)|288     |84.36|96.92|93.6       |27.6 |53.0 |595    |\n|[seresnet152d.ra2_in1k](https://huggingface.co/timm/seresnet152d.ra2_in1k)|320     |84.35|97.04|66.8       |24.1 |47.7 |610    |\n|[resnetrs350.tf_in1k](https://huggingface.co/timm/resnetrs350.tf_in1k)|288     |84.3 |96.94|164.0      |43.7 |87.1 |333    |\n|[resnext101_32x8d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x8d.fb_swsl_ig1b_ft_in1k)|224     |84.28|97.17|88.8       |16.5 |31.2 |1100   |\n|[resnetrs420.tf_in1k](https://huggingface.co/timm/resnetrs420.tf_in1k)|320     |84.24|96.86|191.9      |64.2 |126.6|228    |\n|[seresnext101_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101_32x8d.ah_in1k)|288     |84.19|96.87|93.6       |27.2 |51.6 |613    |\n|[resnext101_32x16d.fb_wsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x16d.fb_wsl_ig1b_ft_in1k)|224     |84.18|97.19|194.0      |36.3 |51.2 |581    |\n|[resnetaa101d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa101d.sw_in12k_ft_in1k)|288     |84.11|97.11|44.6       |15.1 |29.0 |1144   |\n|[resnet200d.ra2_in1k](https://huggingface.co/timm/resnet200d.ra2_in1k)|320     |83.97|96.82|64.7       |31.2 |67.3 |518    |\n|[resnetrs200.tf_in1k](https://huggingface.co/timm/resnetrs200.tf_in1k)|256     |83.87|96.75|93.2       |20.2 |43.4 |692    |\n|[seresnextaa101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.ah_in1k)|224     |83.86|96.65|93.6       |17.2 |34.2 |923    |\n|[resnetrs152.tf_in1k](https://huggingface.co/timm/resnetrs152.tf_in1k)|320     |83.72|96.61|86.6       |24.3 |48.1 |617    |\n|[seresnet152d.ra2_in1k](https://huggingface.co/timm/seresnet152d.ra2_in1k)|256     |83.69|96.78|66.8       |15.4 |30.6 |943    |\n|[seresnext101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101d_32x8d.ah_in1k)|224     |83.68|96.61|93.6       |16.7 |32.0 |986    |\n|[resnet152d.ra2_in1k](https://huggingface.co/timm/resnet152d.ra2_in1k)|320     |83.67|96.74|60.2       |24.1 |47.7 |706    |\n|[resnetrs270.tf_in1k](https://huggingface.co/timm/resnetrs270.tf_in1k)|256     |83.59|96.61|129.9      |27.1 |55.8 |526    |\n|[seresnext101_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101_32x8d.ah_in1k)|224     |83.58|96.4 |93.6       |16.5 |31.2 |1013   |\n|[resnetaa101d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa101d.sw_in12k_ft_in1k)|224     |83.54|96.83|44.6       |9.1  |17.6 |1864   |\n|[resnet152.a1h_in1k](https://huggingface.co/timm/resnet152.a1h_in1k)|288     |83.46|96.54|60.2       |19.1 |37.3 |904    |\n|[resnext101_32x16d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x16d.fb_swsl_ig1b_ft_in1k)|224     |83.35|96.85|194.0      |36.3 |51.2 |582    |\n|[resnet200d.ra2_in1k](https://huggingface.co/timm/resnet200d.ra2_in1k)|256     |83.23|96.53|64.7       |20.0 |43.1 |809    |\n|[resnext101_32x4d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x4d.fb_swsl_ig1b_ft_in1k)|224     |83.22|96.75|44.2       |8.0  |21.2 |1814   |\n|[resnext101_64x4d.c1_in1k](https://huggingface.co/timm/resnext101_64x4d.c1_in1k)|288     |83.16|96.38|83.5       |25.7 |51.6 |590    |\n|[resnet152d.ra2_in1k](https://huggingface.co/timm/resnet152d.ra2_in1k)|256     |83.14|96.38|60.2       |15.4 |30.5 |1096   |\n|[resnet101d.ra2_in1k](https://huggingface.co/timm/resnet101d.ra2_in1k)|320     |83.02|96.45|44.6       |16.5 |34.8 |992    |\n|[ecaresnet101d.miil_in1k](https://huggingface.co/timm/ecaresnet101d.miil_in1k)|288     |82.98|96.54|44.6       |13.4 |28.2 |1077   |\n|[resnext101_64x4d.tv_in1k](https://huggingface.co/timm/resnext101_64x4d.tv_in1k)|224     |82.98|96.25|83.5       |15.5 |31.2 |989    |\n|[resnetrs152.tf_in1k](https://huggingface.co/timm/resnetrs152.tf_in1k)|256     |82.86|96.28|86.6       |15.6 |30.8 |951    |\n|[resnext101_32x8d.tv2_in1k](https://huggingface.co/timm/resnext101_32x8d.tv2_in1k)|224     |82.83|96.22|88.8       |16.5 |31.2 |1099   |\n|[resnet152.a1h_in1k](https://huggingface.co/timm/resnet152.a1h_in1k)|224     |82.8 |96.13|60.2       |11.6 |22.6 |1486   |\n|[resnet101.a1h_in1k](https://huggingface.co/timm/resnet101.a1h_in1k)|288     |82.8 |96.32|44.6       |13.0 |26.8 |1291   |\n|[resnet152.a1_in1k](https://huggingface.co/timm/resnet152.a1_in1k)|288     |82.74|95.71|60.2       |19.1 |37.3 |905    |\n|[resnext101_32x8d.fb_wsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x8d.fb_wsl_ig1b_ft_in1k)|224     |82.69|96.63|88.8       |16.5 |31.2 |1100   |\n|[resnet152.a2_in1k](https://huggingface.co/timm/resnet152.a2_in1k)|288     |82.62|95.75|60.2       |19.1 |37.3 |904    |\n|[resnetaa50d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa50d.sw_in12k_ft_in1k)|288     |82.61|96.49|25.6       |8.9  |20.6 |1729   |\n|[resnet61q.ra2_in1k](https://huggingface.co/timm/resnet61q.ra2_in1k)|288     |82.53|96.13|36.8       |9.9  |21.5 |1773   |\n|[wide_resnet101_2.tv2_in1k](https://huggingface.co/timm/wide_resnet101_2.tv2_in1k)|224     |82.5 |96.02|126.9      |22.8 |21.2 |1078   |\n|[resnext101_64x4d.c1_in1k](https://huggingface.co/timm/resnext101_64x4d.c1_in1k)|224     |82.46|95.92|83.5       |15.5 |31.2 |987    |\n|[resnet51q.ra2_in1k](https://huggingface.co/timm/resnet51q.ra2_in1k)|288     |82.36|96.18|35.7       |8.1  |20.9 |1964   |\n|[ecaresnet50t.ra2_in1k](https://huggingface.co/timm/ecaresnet50t.ra2_in1k)|320     |82.35|96.14|25.6       |8.8  |24.1 |1386   |\n|[resnet101.a1_in1k](https://huggingface.co/timm/resnet101.a1_in1k)|288     |82.31|95.63|44.6       |13.0 |26.8 |1291   |\n|[resnetrs101.tf_in1k](https://huggingface.co/timm/resnetrs101.tf_in1k)|288     |82.29|96.01|63.6       |13.6 |28.5 |1078   |\n|[resnet152.tv2_in1k](https://huggingface.co/timm/resnet152.tv2_in1k)|224     |82.29|96.0 |60.2       |11.6 |22.6 |1484   |\n|[wide_resnet50_2.racm_in1k](https://huggingface.co/timm/wide_resnet50_2.racm_in1k)|288     |82.27|96.06|68.9       |18.9 |23.8 |1176   |\n|[resnet101d.ra2_in1k](https://huggingface.co/timm/resnet101d.ra2_in1k)|256     |82.26|96.07|44.6       |10.6 |22.2 |1542   |\n|[resnet101.a2_in1k](https://huggingface.co/timm/resnet101.a2_in1k)|288     |82.24|95.73|44.6       |13.0 |26.8 |1290   |\n|[seresnext50_32x4d.racm_in1k](https://huggingface.co/timm/seresnext50_32x4d.racm_in1k)|288     |82.2 |96.14|27.6       |7.0  |23.8 |1547   |\n|[ecaresnet101d.miil_in1k](https://huggingface.co/timm/ecaresnet101d.miil_in1k)|224     |82.18|96.05|44.6       |8.1  |17.1 |1771   |\n|[resnext50_32x4d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext50_32x4d.fb_swsl_ig1b_ft_in1k)|224     |82.17|96.22|25.0       |4.3  |14.4 |2943   |\n|[ecaresnet50t.a1_in1k](https://huggingface.co/timm/ecaresnet50t.a1_in1k)|288     |82.12|95.65|25.6       |7.1  |19.6 |1704   |\n|[resnext50_32x4d.a1h_in1k](https://huggingface.co/timm/resnext50_32x4d.a1h_in1k)|288     |82.03|95.94|25.0       |7.0  |23.8 |1745   |\n|[ecaresnet101d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet101d_pruned.miil_in1k)|288     |82.0 |96.15|24.9       |5.8  |12.7 |1787   |\n|[resnet61q.ra2_in1k](https://huggingface.co/timm/resnet61q.ra2_in1k)|256     |81.99|95.85|36.8       |7.8  |17.0 |2230   |\n|[resnext101_32x8d.tv2_in1k](https://huggingface.co/timm/resnext101_32x8d.tv2_in1k)|176     |81.98|95.72|88.8       |10.3 |19.4 |1768   |\n|[resnet152.a1_in1k](https://huggingface.co/timm/resnet152.a1_in1k)|224     |81.97|95.24|60.2       |11.6 |22.6 |1486   |\n|[resnet101.a1h_in1k](https://huggingface.co/timm/resnet101.a1h_in1k)|224     |81.93|95.75|44.6       |7.8  |16.2 |2122   |\n|[resnet101.tv2_in1k](https://huggingface.co/timm/resnet101.tv2_in1k)|224     |81.9 |95.77|44.6       |7.8  |16.2 |2118   |\n|[resnext101_32x16d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext101_32x16d.fb_ssl_yfcc100m_ft_in1k)|224     |81.84|96.1 |194.0      |36.3 |51.2 |583    |\n|[resnet51q.ra2_in1k](https://huggingface.co/timm/resnet51q.ra2_in1k)|256     |81.78|95.94|35.7       |6.4  |16.6 |2471   |\n|[resnet152.a2_in1k](https://huggingface.co/timm/resnet152.a2_in1k)|224     |81.77|95.22|60.2       |11.6 |22.6 |1485   |\n|[resnetaa50d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa50d.sw_in12k_ft_in1k)|224     |81.74|96.06|25.6       |5.4  |12.4 |2813   |\n|[ecaresnet50t.a2_in1k](https://huggingface.co/timm/ecaresnet50t.a2_in1k)|288     |81.65|95.54|25.6       |7.1  |19.6 |1703   |\n|[ecaresnet50d.miil_in1k](https://huggingface.co/timm/ecaresnet50d.miil_in1k)|288     |81.64|95.88|25.6       |7.2  |19.7 |1694   |\n|[resnext101_32x8d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext101_32x8d.fb_ssl_yfcc100m_ft_in1k)|224     |81.62|96.04|88.8       |16.5 |31.2 |1101   |\n|[wide_resnet50_2.tv2_in1k](https://huggingface.co/timm/wide_resnet50_2.tv2_in1k)|224     |81.61|95.76|68.9       |11.4 |14.4 |1930   |\n|[resnetaa50.a1h_in1k](https://huggingface.co/timm/resnetaa50.a1h_in1k)|288     |81.61|95.83|25.6       |8.5  |19.2 |1868   |\n|[resnet101.a1_in1k](https://huggingface.co/timm/resnet101.a1_in1k)|224     |81.5 |95.16|44.6       |7.8  |16.2 |2125   |\n|[resnext50_32x4d.a1_in1k](https://huggingface.co/timm/resnext50_32x4d.a1_in1k)|288     |81.48|95.16|25.0       |7.0  |23.8 |1745   |\n|[gcresnet50t.ra2_in1k](https://huggingface.co/timm/gcresnet50t.ra2_in1k)|288     |81.47|95.71|25.9       |6.9  |18.6 |2071   |\n|[wide_resnet50_2.racm_in1k](https://huggingface.co/timm/wide_resnet50_2.racm_in1k)|224     |81.45|95.53|68.9       |11.4 |14.4 |1929   |\n|[resnet50d.a1_in1k](https://huggingface.co/timm/resnet50d.a1_in1k)|288     |81.44|95.22|25.6       |7.2  |19.7 |1908   |\n|[ecaresnet50t.ra2_in1k](https://huggingface.co/timm/ecaresnet50t.ra2_in1k)|256     |81.44|95.67|25.6       |5.6  |15.4 |2168   |\n|[ecaresnetlight.miil_in1k](https://huggingface.co/timm/ecaresnetlight.miil_in1k)|288     |81.4 |95.82|30.2       |6.8  |13.9 |2132   |\n|[resnet50d.ra2_in1k](https://huggingface.co/timm/resnet50d.ra2_in1k)|288     |81.37|95.74|25.6       |7.2  |19.7 |1910   |\n|[resnet101.a2_in1k](https://huggingface.co/timm/resnet101.a2_in1k)|224     |81.32|95.19|44.6       |7.8  |16.2 |2125   |\n|[seresnet50.ra2_in1k](https://huggingface.co/timm/seresnet50.ra2_in1k)|288     |81.3 |95.65|28.1       |6.8  |18.4 |1803   |\n|[resnext50_32x4d.a2_in1k](https://huggingface.co/timm/resnext50_32x4d.a2_in1k)|288     |81.3 |95.11|25.0       |7.0  |23.8 |1746   |\n|[seresnext50_32x4d.racm_in1k](https://huggingface.co/timm/seresnext50_32x4d.racm_in1k)|224     |81.27|95.62|27.6       |4.3  |14.4 |2591   |\n|[ecaresnet50t.a1_in1k](https://huggingface.co/timm/ecaresnet50t.a1_in1k)|224     |81.26|95.16|25.6       |4.3  |11.8 |2823   |\n|[gcresnext50ts.ch_in1k](https://huggingface.co/timm/gcresnext50ts.ch_in1k)|288     |81.23|95.54|15.7       |4.8  |19.6 |2117   |\n|[senet154.gluon_in1k](https://huggingface.co/timm/senet154.gluon_in1k)|224     |81.23|95.35|115.1      |20.8 |38.7 |545    |\n|[resnet50.a1_in1k](https://huggingface.co/timm/resnet50.a1_in1k)|288     |81.22|95.11|25.6       |6.8  |18.4 |2089   |\n|[resnet50_gn.a1h_in1k](https://huggingface.co/timm/resnet50_gn.a1h_in1k)|288     |81.22|95.63|25.6       |6.8  |18.4 |676    |\n|[resnet50d.a2_in1k](https://huggingface.co/timm/resnet50d.a2_in1k)|288     |81.18|95.09|25.6       |7.2  |19.7 |1908   |\n|[resnet50.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnet50.fb_swsl_ig1b_ft_in1k)|224     |81.18|95.98|25.6       |4.1  |11.1 |3455   |\n|[resnext50_32x4d.tv2_in1k](https://huggingface.co/timm/resnext50_32x4d.tv2_in1k)|224     |81.17|95.34|25.0       |4.3  |14.4 |2933   |\n|[resnext50_32x4d.a1h_in1k](https://huggingface.co/timm/resnext50_32x4d.a1h_in1k)|224     |81.1 |95.33|25.0       |4.3  |14.4 |2934   |\n|[seresnet50.a2_in1k](https://huggingface.co/timm/seresnet50.a2_in1k)|288     |81.1 |95.23|28.1       |6.8  |18.4 |1801   |\n|[seresnet50.a1_in1k](https://huggingface.co/timm/seresnet50.a1_in1k)|288     |81.1 |95.12|28.1       |6.8  |18.4 |1799   |\n|[resnet152s.gluon_in1k](https://huggingface.co/timm/resnet152s.gluon_in1k)|224     |81.02|95.41|60.3       |12.9 |25.0 |1347   |\n|[resnet50.d_in1k](https://huggingface.co/timm/resnet50.d_in1k)|288     |80.97|95.44|25.6       |6.8  |18.4 |2085   |\n|[gcresnet50t.ra2_in1k](https://huggingface.co/timm/gcresnet50t.ra2_in1k)|256     |80.94|95.45|25.9       |5.4  |14.7 |2571   |\n|[resnext101_32x4d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext101_32x4d.fb_ssl_yfcc100m_ft_in1k)|224     |80.93|95.73|44.2       |8.0  |21.2 |1814   |\n|[resnet50.c1_in1k](https://huggingface.co/timm/resnet50.c1_in1k)|288     |80.91|95.55|25.6       |6.8  |18.4 |2084   |\n|[seresnext101_32x4d.gluon_in1k](https://huggingface.co/timm/seresnext101_32x4d.gluon_in1k)|224     |80.9 |95.31|49.0       |8.0  |21.3 |1585   |\n|[seresnext101_64x4d.gluon_in1k](https://huggingface.co/timm/seresnext101_64x4d.gluon_in1k)|224     |80.9 |95.3 |88.2       |15.5 |31.2 |918    |\n|[resnet50.c2_in1k](https://huggingface.co/timm/resnet50.c2_in1k)|288     |80.86|95.52|25.6       |6.8  |18.4 |2085   |\n|[resnet50.tv2_in1k](https://huggingface.co/timm/resnet50.tv2_in1k)|224     |80.85|95.43|25.6       |4.1  |11.1 |3450   |\n|[ecaresnet50t.a2_in1k](https://huggingface.co/timm/ecaresnet50t.a2_in1k)|224     |80.84|95.02|25.6       |4.3  |11.8 |2821   |\n|[ecaresnet101d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet101d_pruned.miil_in1k)|224     |80.79|95.62|24.9       |3.5  |7.7  |2961   |\n|[seresnet33ts.ra2_in1k](https://huggingface.co/timm/seresnet33ts.ra2_in1k)|288     |80.79|95.36|19.8       |6.0  |14.8 |2506   |\n|[ecaresnet50d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet50d_pruned.miil_in1k)|288     |80.79|95.58|19.9       |4.2  |10.6 |2349   |\n|[resnet50.a2_in1k](https://huggingface.co/timm/resnet50.a2_in1k)|288     |80.78|94.99|25.6       |6.8  |18.4 |2088   |\n|[resnet50.b1k_in1k](https://huggingface.co/timm/resnet50.b1k_in1k)|288     |80.71|95.43|25.6       |6.8  |18.4 |2087   |\n|[resnext50_32x4d.ra_in1k](https://huggingface.co/timm/resnext50_32x4d.ra_in1k)|288     |80.7 |95.39|25.0       |7.0  |23.8 |1749   |\n|[resnetrs101.tf_in1k](https://huggingface.co/timm/resnetrs101.tf_in1k)|192     |80.69|95.24|63.6       |6.0  |12.7 |2270   |\n|[resnet50d.a1_in1k](https://huggingface.co/timm/resnet50d.a1_in1k)|224     |80.68|94.71|25.6       |4.4  |11.9 |3162   |\n|[eca_resnet33ts.ra2_in1k](https://huggingface.co/timm/eca_resnet33ts.ra2_in1k)|288     |80.68|95.36|19.7       |6.0  |14.8 |2637   |\n|[resnet50.a1h_in1k](https://huggingface.co/timm/resnet50.a1h_in1k)|224     |80.67|95.3 |25.6       |4.1  |11.1 |3452   |\n|[resnext50d_32x4d.bt_in1k](https://huggingface.co/timm/resnext50d_32x4d.bt_in1k)|288     |80.67|95.42|25.0       |7.4  |25.1 |1626   |\n|[resnetaa50.a1h_in1k](https://huggingface.co/timm/resnetaa50.a1h_in1k)|224     |80.63|95.21|25.6       |5.2  |11.6 |3034   |\n|[ecaresnet50d.miil_in1k](https://huggingface.co/timm/ecaresnet50d.miil_in1k)|224     |80.61|95.32|25.6       |4.4  |11.9 |2813   |\n|[resnext101_64x4d.gluon_in1k](https://huggingface.co/timm/resnext101_64x4d.gluon_in1k)|224     |80.61|94.99|83.5       |15.5 |31.2 |989    |\n|[gcresnet33ts.ra2_in1k](https://huggingface.co/timm/gcresnet33ts.ra2_in1k)|288     |80.6 |95.31|19.9       |6.0  |14.8 |2578   |\n|[gcresnext50ts.ch_in1k](https://huggingface.co/timm/gcresnext50ts.ch_in1k)|256     |80.57|95.17|15.7       |3.8  |15.5 |2710   |\n|[resnet152.a3_in1k](https://huggingface.co/timm/resnet152.a3_in1k)|224     |80.56|95.0 |60.2       |11.6 |22.6 |1483   |\n|[resnet50d.ra2_in1k](https://huggingface.co/timm/resnet50d.ra2_in1k)|224     |80.53|95.16|25.6       |4.4  |11.9 |3164   |\n|[resnext50_32x4d.a1_in1k](https://huggingface.co/timm/resnext50_32x4d.a1_in1k)|224     |80.53|94.46|25.0       |4.3  |14.4 |2930   |\n|[wide_resnet101_2.tv2_in1k](https://huggingface.co/timm/wide_resnet101_2.tv2_in1k)|176     |80.48|94.98|126.9      |14.3 |13.2 |1719   |\n|[resnet152d.gluon_in1k](https://huggingface.co/timm/resnet152d.gluon_in1k)|224     |80.47|95.2 |60.2       |11.8 |23.4 |1428   |\n|[resnet50.b2k_in1k](https://huggingface.co/timm/resnet50.b2k_in1k)|288     |80.45|95.32|25.6       |6.8  |18.4 |2086   |\n|[ecaresnetlight.miil_in1k](https://huggingface.co/timm/ecaresnetlight.miil_in1k)|224     |80.45|95.24|30.2       |4.1  |8.4  |3530   |\n|[resnext50_32x4d.a2_in1k](https://huggingface.co/timm/resnext50_32x4d.a2_in1k)|224     |80.45|94.63|25.0       |4.3  |14.4 |2936   |\n|[wide_resnet50_2.tv2_in1k](https://huggingface.co/timm/wide_resnet50_2.tv2_in1k)|176     |80.43|95.09|68.9       |7.3  |9.0  |3015   |\n|[resnet101d.gluon_in1k](https://huggingface.co/timm/resnet101d.gluon_in1k)|224     |80.42|95.01|44.6       |8.1  |17.0 |2007   |\n|[resnet50.a1_in1k](https://huggingface.co/timm/resnet50.a1_in1k)|224     |80.38|94.6 |25.6       |4.1  |11.1 |3461   |\n|[seresnet33ts.ra2_in1k](https://huggingface.co/timm/seresnet33ts.ra2_in1k)|256     |80.36|95.1 |19.8       |4.8  |11.7 |3267   |\n|[resnext101_32x4d.gluon_in1k](https://huggingface.co/timm/resnext101_32x4d.gluon_in1k)|224     |80.34|94.93|44.2       |8.0  |21.2 |1814   |\n|[resnext50_32x4d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext50_32x4d.fb_ssl_yfcc100m_ft_in1k)|224     |80.32|95.4 |25.0       |4.3  |14.4 |2941   |\n|[resnet101s.gluon_in1k](https://huggingface.co/timm/resnet101s.gluon_in1k)|224     |80.28|95.16|44.7       |9.2  |18.6 |1851   |\n|[seresnet50.ra2_in1k](https://huggingface.co/timm/seresnet50.ra2_in1k)|224     |80.26|95.08|28.1       |4.1  |11.1 |2972   |\n|[resnetblur50.bt_in1k](https://huggingface.co/timm/resnetblur50.bt_in1k)|288     |80.24|95.24|25.6       |8.5  |19.9 |1523   |\n|[resnet50d.a2_in1k](https://huggingface.co/timm/resnet50d.a2_in1k)|224     |80.22|94.63|25.6       |4.4  |11.9 |3162   |\n|[resnet152.tv2_in1k](https://huggingface.co/timm/resnet152.tv2_in1k)|176     |80.2 |94.64|60.2       |7.2  |14.0 |2346   |\n|[seresnet50.a2_in1k](https://huggingface.co/timm/seresnet50.a2_in1k)|224     |80.08|94.74|28.1       |4.1  |11.1 |2969   |\n|[eca_resnet33ts.ra2_in1k](https://huggingface.co/timm/eca_resnet33ts.ra2_in1k)|256     |80.08|94.97|19.7       |4.8  |11.7 |3284   |\n|[gcresnet33ts.ra2_in1k](https://huggingface.co/timm/gcresnet33ts.ra2_in1k)|256     |80.06|94.99|19.9       |4.8  |11.7 |3216   |\n|[resnet50_gn.a1h_in1k](https://huggingface.co/timm/resnet50_gn.a1h_in1k)|224     |80.06|94.95|25.6       |4.1  |11.1 |1109   |\n|[seresnet50.a1_in1k](https://huggingface.co/timm/seresnet50.a1_in1k)|224     |80.02|94.71|28.1       |4.1  |11.1 |2962   |\n|[resnet50.ram_in1k](https://huggingface.co/timm/resnet50.ram_in1k)|288     |79.97|95.05|25.6       |6.8  |18.4 |2086   |\n|[resnet152c.gluon_in1k](https://huggingface.co/timm/resnet152c.gluon_in1k)|224     |79.92|94.84|60.2       |11.8 |23.4 |1455   |\n|[seresnext50_32x4d.gluon_in1k](https://huggingface.co/timm/seresnext50_32x4d.gluon_in1k)|224     |79.91|94.82|27.6       |4.3  |14.4 |2591   |\n|[resnet50.d_in1k](https://huggingface.co/timm/resnet50.d_in1k)|224     |79.91|94.67|25.6       |4.1  |11.1 |3456   |\n|[resnet101.tv2_in1k](https://huggingface.co/timm/resnet101.tv2_in1k)|176     |79.9 |94.6 |44.6       |4.9  |10.1 |3341   |\n|[resnetrs50.tf_in1k](https://huggingface.co/timm/resnetrs50.tf_in1k)|224     |79.89|94.97|35.7       |4.5  |12.1 |2774   |\n|[resnet50.c2_in1k](https://huggingface.co/timm/resnet50.c2_in1k)|224     |79.88|94.87|25.6       |4.1  |11.1 |3455   |\n|[ecaresnet26t.ra2_in1k](https://huggingface.co/timm/ecaresnet26t.ra2_in1k)|320     |79.86|95.07|16.0       |5.2  |16.4 |2168   |\n|[resnet50.a2_in1k](https://huggingface.co/timm/resnet50.a2_in1k)|224     |79.85|94.56|25.6       |4.1  |11.1 |3460   |\n|[resnet50.ra_in1k](https://huggingface.co/timm/resnet50.ra_in1k)|288     |79.83|94.97|25.6       |6.8  |18.4 |2087   |\n|[resnet101.a3_in1k](https://huggingface.co/timm/resnet101.a3_in1k)|224     |79.82|94.62|44.6       |7.8  |16.2 |2114   |\n|[resnext50_32x4d.ra_in1k](https://huggingface.co/timm/resnext50_32x4d.ra_in1k)|224     |79.76|94.6 |25.0       |4.3  |14.4 |2943   |\n|[resnet50.c1_in1k](https://huggingface.co/timm/resnet50.c1_in1k)|224     |79.74|94.95|25.6       |4.1  |11.1 |3455   |\n|[ecaresnet50d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet50d_pruned.miil_in1k)|224     |79.74|94.87|19.9       |2.5  |6.4  |3929   |\n|[resnet33ts.ra2_in1k](https://huggingface.co/timm/resnet33ts.ra2_in1k)|288     |79.71|94.83|19.7       |6.0  |14.8 |2710   |\n|[resnet152.gluon_in1k](https://huggingface.co/timm/resnet152.gluon_in1k)|224     |79.68|94.74|60.2       |11.6 |22.6 |1486   |\n|[resnext50d_32x4d.bt_in1k](https://huggingface.co/timm/resnext50d_32x4d.bt_in1k)|224     |79.67|94.87|25.0       |4.5  |15.2 |2729   |\n|[resnet50.bt_in1k](https://huggingface.co/timm/resnet50.bt_in1k)|288     |79.63|94.91|25.6       |6.8  |18.4 |2086   |\n|[ecaresnet50t.a3_in1k](https://huggingface.co/timm/ecaresnet50t.a3_in1k)|224     |79.56|94.72|25.6       |4.3  |11.8 |2805   |\n|[resnet101c.gluon_in1k](https://huggingface.co/timm/resnet101c.gluon_in1k)|224     |79.53|94.58|44.6       |8.1  |17.0 |2062   |\n|[resnet50.b1k_in1k](https://huggingface.co/timm/resnet50.b1k_in1k)|224     |79.52|94.61|25.6       |4.1  |11.1 |3459   |\n|[resnet50.tv2_in1k](https://huggingface.co/timm/resnet50.tv2_in1k)|176     |79.42|94.64|25.6       |2.6  |6.9  |5397   |\n|[resnet32ts.ra2_in1k](https://huggingface.co/timm/resnet32ts.ra2_in1k)|288     |79.4 |94.66|18.0       |5.9  |14.6 |2752   |\n|[resnet50.b2k_in1k](https://huggingface.co/timm/resnet50.b2k_in1k)|224     |79.38|94.57|25.6       |4.1  |11.1 |3459   |\n|[resnext50_32x4d.tv2_in1k](https://huggingface.co/timm/resnext50_32x4d.tv2_in1k)|176     |79.37|94.3 |25.0       |2.7  |9.0  |4577   |\n|[resnext50_32x4d.gluon_in1k](https://huggingface.co/timm/resnext50_32x4d.gluon_in1k)|224     |79.36|94.43|25.0       |4.3  |14.4 |2942   |\n|[resnext101_32x8d.tv_in1k](https://huggingface.co/timm/resnext101_32x8d.tv_in1k)|224     |79.31|94.52|88.8       |16.5 |31.2 |1100   |\n|[resnet101.gluon_in1k](https://huggingface.co/timm/resnet101.gluon_in1k)|224     |79.31|94.53|44.6       |7.8  |16.2 |2125   |\n|[resnetblur50.bt_in1k](https://huggingface.co/timm/resnetblur50.bt_in1k)|224     |79.31|94.63|25.6       |5.2  |12.0 |2524   |\n|[resnet50.a1h_in1k](https://huggingface.co/timm/resnet50.a1h_in1k)|176     |79.27|94.49|25.6       |2.6  |6.9  |5404   |\n|[resnext50_32x4d.a3_in1k](https://huggingface.co/timm/resnext50_32x4d.a3_in1k)|224     |79.25|94.31|25.0       |4.3  |14.4 |2931   |\n|[resnet50.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnet50.fb_ssl_yfcc100m_ft_in1k)|224     |79.22|94.84|25.6       |4.1  |11.1 |3451   |\n|[resnet33ts.ra2_in1k](https://huggingface.co/timm/resnet33ts.ra2_in1k)|256     |79.21|94.56|19.7       |4.8  |11.7 |3392   |\n|[resnet50d.gluon_in1k](https://huggingface.co/timm/resnet50d.gluon_in1k)|224     |79.07|94.48|25.6       |4.4  |11.9 |3162   |\n|[resnet50.ram_in1k](https://huggingface.co/timm/resnet50.ram_in1k)|224     |79.03|94.38|25.6       |4.1  |11.1 |3453   |\n|[resnet50.am_in1k](https://huggingface.co/timm/resnet50.am_in1k)|224     |79.01|94.39|25.6       |4.1  |11.1 |3461   |\n|[resnet32ts.ra2_in1k](https://huggingface.co/timm/resnet32ts.ra2_in1k)|256     |79.01|94.37|18.0       |4.6  |11.6 |3440   |\n|[ecaresnet26t.ra2_in1k](https://huggingface.co/timm/ecaresnet26t.ra2_in1k)|256     |78.9 |94.54|16.0       |3.4  |10.5 |3421   |\n|[resnet152.a3_in1k](https://huggingface.co/timm/resnet152.a3_in1k)|160     |78.89|94.11|60.2       |5.9  |11.5 |2745   |\n|[wide_resnet101_2.tv_in1k](https://huggingface.co/timm/wide_resnet101_2.tv_in1k)|224     |78.84|94.28|126.9      |22.8 |21.2 |1079   |\n|[seresnext26d_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26d_32x4d.bt_in1k)|288     |78.83|94.24|16.8       |4.5  |16.8 |2251   |\n|[resnet50.ra_in1k](https://huggingface.co/timm/resnet50.ra_in1k)|224     |78.81|94.32|25.6       |4.1  |11.1 |3454   |\n|[seresnext26t_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26t_32x4d.bt_in1k)|288     |78.74|94.33|16.8       |4.5  |16.7 |2264   |\n|[resnet50s.gluon_in1k](https://huggingface.co/timm/resnet50s.gluon_in1k)|224     |78.72|94.23|25.7       |5.5  |13.5 |2796   |\n|[resnet50d.a3_in1k](https://huggingface.co/timm/resnet50d.a3_in1k)|224     |78.71|94.24|25.6       |4.4  |11.9 |3154   |\n|[wide_resnet50_2.tv_in1k](https://huggingface.co/timm/wide_resnet50_2.tv_in1k)|224     |78.47|94.09|68.9       |11.4 |14.4 |1934   |\n|[resnet50.bt_in1k](https://huggingface.co/timm/resnet50.bt_in1k)|224     |78.46|94.27|25.6       |4.1  |11.1 |3454   |\n|[resnet34d.ra2_in1k](https://huggingface.co/timm/resnet34d.ra2_in1k)|288     |78.43|94.35|21.8       |6.5  |7.5  |3291   |\n|[gcresnext26ts.ch_in1k](https://huggingface.co/timm/gcresnext26ts.ch_in1k)|288     |78.42|94.04|10.5       |3.1  |13.3 |3226   |\n|[resnet26t.ra2_in1k](https://huggingface.co/timm/resnet26t.ra2_in1k)|320     |78.33|94.13|16.0       |5.2  |16.4 |2391   |\n|[resnet152.tv_in1k](https://huggingface.co/timm/resnet152.tv_in1k)|224     |78.32|94.04|60.2       |11.6 |22.6 |1487   |\n|[seresnext26ts.ch_in1k](https://huggingface.co/timm/seresnext26ts.ch_in1k)|288     |78.28|94.1 |10.4       |3.1  |13.3 |3062   |\n|[bat_resnext26ts.ch_in1k](https://huggingface.co/timm/bat_resnext26ts.ch_in1k)|256     |78.25|94.1 |10.7       |2.5  |12.5 |3393   |\n|[resnet50.a3_in1k](https://huggingface.co/timm/resnet50.a3_in1k)|224     |78.06|93.78|25.6       |4.1  |11.1 |3450   |\n|[resnet50c.gluon_in1k](https://huggingface.co/timm/resnet50c.gluon_in1k)|224     |78.0 |93.99|25.6       |4.4  |11.9 |3286   |\n|[eca_resnext26ts.ch_in1k](https://huggingface.co/timm/eca_resnext26ts.ch_in1k)|288     |78.0 |93.91|10.3       |3.1  |13.3 |3297   |\n|[seresnext26t_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26t_32x4d.bt_in1k)|224     |77.98|93.75|16.8       |2.7  |10.1 |3841   |\n|[resnet34.a1_in1k](https://huggingface.co/timm/resnet34.a1_in1k)|288     |77.92|93.77|21.8       |6.1  |6.2  |3609   |\n|[resnet101.a3_in1k](https://huggingface.co/timm/resnet101.a3_in1k)|160     |77.88|93.71|44.6       |4.0  |8.3  |3926   |\n|[resnet26t.ra2_in1k](https://huggingface.co/timm/resnet26t.ra2_in1k)|256     |77.87|93.84|16.0       |3.4  |10.5 |3772   |\n|[seresnext26ts.ch_in1k](https://huggingface.co/timm/seresnext26ts.ch_in1k)|256     |77.86|93.79|10.4       |2.4  |10.5 |4263   |\n|[resnetrs50.tf_in1k](https://huggingface.co/timm/resnetrs50.tf_in1k)|160     |77.82|93.81|35.7       |2.3  |6.2  |5238   |\n|[gcresnext26ts.ch_in1k](https://huggingface.co/timm/gcresnext26ts.ch_in1k)|256     |77.81|93.82|10.5       |2.4  |10.5 |4183   |\n|[ecaresnet50t.a3_in1k](https://huggingface.co/timm/ecaresnet50t.a3_in1k)|160     |77.79|93.6 |25.6       |2.2  |6.0  |5329   |\n|[resnext50_32x4d.a3_in1k](https://huggingface.co/timm/resnext50_32x4d.a3_in1k)|160     |77.73|93.32|25.0       |2.2  |7.4  |5576   |\n|[resnext50_32x4d.tv_in1k](https://huggingface.co/timm/resnext50_32x4d.tv_in1k)|224     |77.61|93.7 |25.0       |4.3  |14.4 |2944   |\n|[seresnext26d_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26d_32x4d.bt_in1k)|224     |77.59|93.61|16.8       |2.7  |10.2 |3807   |\n|[resnet50.gluon_in1k](https://huggingface.co/timm/resnet50.gluon_in1k)|224     |77.58|93.72|25.6       |4.1  |11.1 |3455   |\n|[eca_resnext26ts.ch_in1k](https://huggingface.co/timm/eca_resnext26ts.ch_in1k)|256     |77.44|93.56|10.3       |2.4  |10.5 |4284   |\n|[resnet26d.bt_in1k](https://huggingface.co/timm/resnet26d.bt_in1k)|288     |77.41|93.63|16.0       |4.3  |13.5 |2907   |\n|[resnet101.tv_in1k](https://huggingface.co/timm/resnet101.tv_in1k)|224     |77.38|93.54|44.6       |7.8  |16.2 |2125   |\n|[resnet50d.a3_in1k](https://huggingface.co/timm/resnet50d.a3_in1k)|160     |77.22|93.27|25.6       |2.2  |6.1  |5982   |\n|[resnext26ts.ra2_in1k](https://huggingface.co/timm/resnext26ts.ra2_in1k)|288     |77.17|93.47|10.3       |3.1  |13.3 |3392   |\n|[resnet34.a2_in1k](https://huggingface.co/timm/resnet34.a2_in1k)|288     |77.15|93.27|21.8       |6.1  |6.2  |3615   |\n|[resnet34d.ra2_in1k](https://huggingface.co/timm/resnet34d.ra2_in1k)|224     |77.1 |93.37|21.8       |3.9  |4.5  |5436   |\n|[seresnet50.a3_in1k](https://huggingface.co/timm/seresnet50.a3_in1k)|224     |77.02|93.07|28.1       |4.1  |11.1 |2952   |\n|[resnext26ts.ra2_in1k](https://huggingface.co/timm/resnext26ts.ra2_in1k)|256     |76.78|93.13|10.3       |2.4  |10.5 |4410   |\n|[resnet26d.bt_in1k](https://huggingface.co/timm/resnet26d.bt_in1k)|224     |76.7 |93.17|16.0       |2.6  |8.2  |4859   |\n|[resnet34.bt_in1k](https://huggingface.co/timm/resnet34.bt_in1k)|288     |76.5 |93.35|21.8       |6.1  |6.2  |3617   |\n|[resnet34.a1_in1k](https://huggingface.co/timm/resnet34.a1_in1k)|224     |76.42|92.87|21.8       |3.7  |3.7  |5984   |\n|[resnet26.bt_in1k](https://huggingface.co/timm/resnet26.bt_in1k)|288     |76.35|93.18|16.0       |3.9  |12.2 |3331   |\n|[resnet50.tv_in1k](https://huggingface.co/timm/resnet50.tv_in1k)|224     |76.13|92.86|25.6       |4.1  |11.1 |3457   |\n|[resnet50.a3_in1k](https://huggingface.co/timm/resnet50.a3_in1k)|160     |75.96|92.5 |25.6       |2.1  |5.7  |6490   |\n|[resnet34.a2_in1k](https://huggingface.co/timm/resnet34.a2_in1k)|224     |75.52|92.44|21.8       |3.7  |3.7  |5991   |\n|[resnet26.bt_in1k](https://huggingface.co/timm/resnet26.bt_in1k)|224     |75.3 |92.58|16.0       |2.4  |7.4  |5583   |\n|[resnet34.bt_in1k](https://huggingface.co/timm/resnet34.bt_in1k)|224     |75.16|92.18|21.8       |3.7  |3.7  |5994   |\n|[seresnet50.a3_in1k](https://huggingface.co/timm/seresnet50.a3_in1k)|160     |75.1 |92.08|28.1       |2.1  |5.7  |5513   |\n|[resnet34.gluon_in1k](https://huggingface.co/timm/resnet34.gluon_in1k)|224     |74.57|91.98|21.8       |3.7  |3.7  |5984   |\n|[resnet18d.ra2_in1k](https://huggingface.co/timm/resnet18d.ra2_in1k)|288     |73.81|91.83|11.7       |3.4  |5.4  |5196   |\n|[resnet34.tv_in1k](https://huggingface.co/timm/resnet34.tv_in1k)|224     |73.32|91.42|21.8       |3.7  |3.7  |5979   |\n|[resnet18.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnet18.fb_swsl_ig1b_ft_in1k)|224     |73.28|91.73|11.7       |1.8  |2.5  |10213  |\n|[resnet18.a1_in1k](https://huggingface.co/timm/resnet18.a1_in1k)|288     |73.16|91.03|11.7       |3.0  |4.1  |6050   |\n|[resnet34.a3_in1k](https://huggingface.co/timm/resnet34.a3_in1k)|224     |72.98|91.11|21.8       |3.7  |3.7  |5967   |\n|[resnet18.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnet18.fb_ssl_yfcc100m_ft_in1k)|224     |72.6 |91.42|11.7       |1.8  |2.5  |10213  |\n|[resnet18.a2_in1k](https://huggingface.co/timm/resnet18.a2_in1k)|288     |72.37|90.59|11.7       |3.0  |4.1  |6051   |\n|[resnet14t.c3_in1k](https://huggingface.co/timm/resnet14t.c3_in1k)|224     |72.26|90.31|10.1       |1.7  |5.8  |7026   |\n|[resnet18d.ra2_in1k](https://huggingface.co/timm/resnet18d.ra2_in1k)|224     |72.26|90.68|11.7       |2.1  |3.3  |8707   |\n|[resnet18.a1_in1k](https://huggingface.co/timm/resnet18.a1_in1k)|224     |71.49|90.07|11.7       |1.8  |2.5  |10187  |\n|[resnet14t.c3_in1k](https://huggingface.co/timm/resnet14t.c3_in1k)|176     |71.31|89.69|10.1       |1.1  |3.6  |10970  |\n|[resnet18.gluon_in1k](https://huggingface.co/timm/resnet18.gluon_in1k)|224     |70.84|89.76|11.7       |1.8  |2.5  |10210  |\n|[resnet18.a2_in1k](https://huggingface.co/timm/resnet18.a2_in1k)|224     |70.64|89.47|11.7       |1.8  |2.5  |10194  |\n|[resnet34.a3_in1k](https://huggingface.co/timm/resnet34.a3_in1k)|160     |70.56|89.52|21.8       |1.9  |1.9  |10737  |\n|[resnet18.tv_in1k](https://huggingface.co/timm/resnet18.tv_in1k)|224     |69.76|89.07|11.7       |1.8  |2.5  |10205  |\n|[resnet10t.c3_in1k](https://huggingface.co/timm/resnet10t.c3_in1k)|224     |68.34|88.03|5.4        |1.1  |2.4  |13079  |\n|[resnet18.a3_in1k](https://huggingface.co/timm/resnet18.a3_in1k)|224     |68.25|88.17|11.7       |1.8  |2.5  |10167  |\n|[resnet10t.c3_in1k](https://huggingface.co/timm/resnet10t.c3_in1k)|176     |66.71|86.96|5.4        |0.7  |1.5  |20327  |\n|[resnet18.a3_in1k](https://huggingface.co/timm/resnet18.a3_in1k)|160     |65.66|86.26|11.7       |0.9  |1.3  |18229  |\n\n## Citation\n```bibtex\n@article{He2015,\n  author = {Kaiming He and Xiangyu Zhang and Shaoqing Ren and Jian Sun},\n  title = {Deep Residual Learning for Image Recognition},\n  journal = {arXiv preprint arXiv:1512.03385},\n  year = {2015}\n}\n```\n```bibtex\n@misc{rw2019timm,\n  author = {Ross Wightman},\n  title = {PyTorch Image Models},\n  year = {2019},\n  publisher = {GitHub},\n  journal = {GitHub repository},\n  doi = {10.5281/zenodo.4414861},\n  howpublished = {\\url{https://github.com/huggingface/pytorch-image-models}}\n}\n```\n",
+              "extracted_code": "from urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model('resnet18.tv_in1k', pretrained=True)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\ntop5_probabilities, top5_class_indices = torch.topk(output.softmax(dim=1) * 100, k=5)\n\n\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.tv_in1k',\n    pretrained=True,\n    features_only=True,\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\nfor o in output:\n    # print shape of each feature map in output\n    # e.g.:\n    #  torch.Size([1, 64, 112, 112])\n    #  torch.Size([1, 64, 56, 56])\n    #  torch.Size([1, 128, 28, 28])\n    #  torch.Size([1, 256, 14, 14])\n    #  torch.Size([1, 512, 7, 7])\n\n    print(o.shape)\n\n\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.tv_in1k',\n    pretrained=True,\n    num_classes=0,  # remove classifier nn.Linear\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # output is (batch_size, num_features) shaped tensor\n\n# or equivalently (without needing to set num_classes=0)\n\noutput = model.forward_features(transforms(img).unsqueeze(0))\n# output is unpooled, a (1, 512, 7, 7) shaped tensor\n\noutput = model.forward_head(output, pre_logits=True)\n# output is a (1, num_features) shaped tensor"
+            }
+          ],
+          "datasets": [
+            {
+              "id": "HumanCompatibleAI/ppo-seals-CartPole-v0",
+              "author": "HumanCompatibleAI",
+              "sha": "5e867cd644a22076564fe046123ab2d182b6cf8f",
+              "created_at": "2023-05-29T09:52:45+00:00",
+              "last_modified": "2023-05-29T09:52:49+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 43,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/train-00000-of-00001-14411a48ce70e2ad.parquet"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "size_categories:n<1K",
+                "format:parquet",
+                "modality:text",
+                "library:datasets",
+                "library:pandas",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\ndataset_info:\n  features:\n  - name: obs\n    sequence:\n      sequence: float32\n  - name: acts\n    sequence: int64\n  - name: infos\n    sequence: string\n  - name: terminal\n    dtype: bool\n  - name: rews\n    sequence: float64\n  splits:\n  - name: train\n    num_bytes: 516313\n    num_examples: 24\n  download_size: 297546\n  dataset_size: 516313\n---\n# Dataset Card for \"ppo-seals-CartPole-v0\"\n\n[More Information needed](https://github.com/huggingface/datasets/blob/main/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)",
+              "extracted_code": ""
+            },
+            {
+              "id": "NathanGavenski/InvertedPendulum-v2",
+              "author": "NathanGavenski",
+              "sha": "1245d28c3a02a74e6293f3e77cb05fb41091bd6c",
+              "created_at": "2024-10-15T15:08:26+00:00",
+              "last_modified": "2024-10-15T15:09:28+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 16,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "teacher.jsonl"
+                }
+              ],
+              "card_data": {
+                "license": "mit",
+                "language": [],
+                "tags": [
+                  "Imitation Learning",
+                  "Expert Trajectory",
+                  "InvertedPendulum-v2"
+                ],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [
+                  "1M<n<10M"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "license:mit",
+                "size_categories:10K<n<100K",
+                "format:json",
+                "modality:tabular",
+                "library:datasets",
+                "library:pandas",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us",
+                "Imitation Learning",
+                "Expert Trajectory",
+                "InvertedPendulum-v2"
+              ],
+              "readme": "---\nlicense: mit\ntags:\n- Imitation Learning\n- Expert Trajectory\n- InvertedPendulum-v2\npretty_name: InvertedPendulum-v2 Expert Dataset\nsize_categories:\n- 1M<n<10M\n---\n\n# InvertedPendulum-v2 - Continuous Imitation Learning from Observation\n\nThis dataset was created for the paper Explorative imitation learning: A path signature approach for continuous environments.\nIt is based on InvertedPendulum-v2, which is an older version for the MuJoCo environment.\nIf you would like to use newer version, be sure to check: [IL-Datasets](https://github.com/NathanGavenski/IL-Datasets) repository for the updated list.\n\n## Description\n\nThe dataset consists of 10 episodes with an average episodic reward of `1000.0`.\nEach entry consists of:\n```\nobs (list): observation with length 2.\naction (int): action (0 or 1).\nreward (float): reward point for that timestep.\nepisode_starts (bool): if that state was the initial timestep for an episode.\n```\n\n## Usage\n\nFeel free to download and use the `teacher.jsonl` dataset as you please.\nIf you are interested in using our PyTorch Dataset implementation, feel free to check the [IL Datasets](https://github.com/NathanGavenski/IL-Datasets/blob/main/src/imitation_datasets/dataset/dataset.py) project.\nThere, we implement a base Dataset that downloads this dataset and all other datasets directly from HuggingFace.\nThe Baseline Dataset also allows for more control over train and test splits and how many episodes you want to use (in cases where the 1k episodes are not necessary).\n\n## Citation\n\n```{bibtex}\n@incollection{gavenski2024explorative,\n\ttitle={Explorative Imitation Learning: A Path Signature Approach for Continuous Environments},\n\tauthor={Gavenski, Nathan and Monteiro, Juarez and Meneguzzi, Felipe and Luck, Michael and Rodrigues, Odinaldo},\n\tbooktitle={ECAI 2024},\n\tpages={}\n\tyear={2024},\n\tpublisher={IOS Press}\n}\n```",
+              "extracted_code": ""
+            },
+            {
+              "id": "ufldl-stanford/svhn",
+              "author": "ufldl-stanford",
+              "sha": "f9e1717d73324ebbc1ece84267ccd80d0aca0690",
+              "created_at": "2022-03-02T23:29:22+00:00",
+              "last_modified": "2024-08-08T05:58:52+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 5152,
+              "likes": 14,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "cropped_digits/extra-00000-of-00002.parquet"
+                },
+                {
+                  "rfilename": "cropped_digits/extra-00001-of-00002.parquet"
+                },
+                {
+                  "rfilename": "cropped_digits/test-00000-of-00001.parquet"
+                },
+                {
+                  "rfilename": "cropped_digits/train-00000-of-00001.parquet"
+                },
+                {
+                  "rfilename": "full_numbers/extra-00000-of-00004.parquet"
+                },
+                {
+                  "rfilename": "full_numbers/extra-00001-of-00004.parquet"
+                },
+                {
+                  "rfilename": "full_numbers/extra-00002-of-00004.parquet"
+                },
+                {
+                  "rfilename": "full_numbers/extra-00003-of-00004.parquet"
+                }
+              ],
+              "card_data": {
+                "license": [
+                  "other"
+                ],
+                "language": [
+                  "en"
+                ],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [
+                  "image-classification",
+                  "object-detection"
+                ],
+                "size_categories": [
+                  "100K<n<1M"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:image-classification",
+                "task_categories:object-detection",
+                "annotations_creators:machine-generated",
+                "annotations_creators:expert-generated",
+                "language_creators:machine-generated",
+                "multilinguality:monolingual",
+                "source_datasets:original",
+                "language:en",
+                "license:other",
+                "size_categories:100K<n<1M",
+                "format:parquet",
+                "modality:image",
+                "library:datasets",
+                "library:dask",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\nannotations_creators:\n- machine-generated\n- expert-generated\nlanguage_creators:\n- machine-generated\nlanguage:\n- en\nlicense:\n- other\nmultilinguality:\n- monolingual\nsize_categories:\n- 100K<n<1M\nsource_datasets:\n- original\ntask_categories:\n- image-classification\n- object-detection\ntask_ids: []\npaperswithcode_id: svhn\npretty_name: Street View House Numbers\ndataset_info:\n- config_name: cropped_digits\n  features:\n  - name: image\n    dtype: image\n  - name: label\n    dtype:\n      class_label:\n        names:\n          '0': '0'\n          '1': '1'\n          '2': '2'\n          '3': '3'\n          '4': '4'\n          '5': '5'\n          '6': '6'\n          '7': '7'\n          '8': '8'\n          '9': '9'\n  splits:\n  - name: train\n    num_bytes: 128062110.875\n    num_examples: 73257\n  - name: test\n    num_bytes: 44356634.0\n    num_examples: 26032\n  - name: extra\n    num_bytes: 965662156.625\n    num_examples: 531131\n  download_size: 1205637083\n  dataset_size: 1138080901.5\n- config_name: full_numbers\n  features:\n  - name: image\n    dtype: image\n  - name: digits\n    sequence:\n    - name: bbox\n      sequence: int32\n      length: 4\n    - name: label\n      dtype:\n        class_label:\n          names:\n            '0': '0'\n            '1': '1'\n            '2': '2'\n            '3': '3'\n            '4': '4'\n            '5': '5'\n            '6': '6'\n            '7': '7'\n            '8': '8'\n            '9': '9'\n  splits:\n  - name: train\n    num_bytes: 389782132.75\n    num_examples: 33402\n  - name: test\n    num_bytes: 271279491.86\n    num_examples: 13068\n  - name: extra\n    num_bytes: 1864796784.036\n    num_examples: 202353\n  download_size: 2530154571\n  dataset_size: 2525858408.646\nconfigs:\n- config_name: cropped_digits\n  data_files:\n  - split: train\n    path: cropped_digits/train-*\n  - split: test\n    path: cropped_digits/test-*\n  - split: extra\n    path: cropped_digits/extra-*\n- config_name: full_numbers\n  data_files:\n  - split: train\n    path: full_numbers/train-*\n  - split: test\n    path: full_numbers/test-*\n  - split: extra\n    path: full_numbers/extra-*\n---\n\n# Dataset Card for Street View House Numbers\n\n## Table of Contents\n- [Table of Contents](#table-of-contents)\n- [Dataset Description](#dataset-description)\n  - [Dataset Summary](#dataset-summary)\n  - [Supported Tasks and Leaderboards](#supported-tasks-and-leaderboards)\n  - [Languages](#languages)\n- [Dataset Structure](#dataset-structure)\n  - [Data Instances](#data-instances)\n  - [Data Fields](#data-fields)\n  - [Data Splits](#data-splits)\n- [Dataset Creation](#dataset-creation)\n  - [Curation Rationale](#curation-rationale)\n  - [Source Data](#source-data)\n  - [Annotations](#annotations)\n  - [Personal and Sensitive Information](#personal-and-sensitive-information)\n- [Considerations for Using the Data](#considerations-for-using-the-data)\n  - [Social Impact of Dataset](#social-impact-of-dataset)\n  - [Discussion of Biases](#discussion-of-biases)\n  - [Other Known Limitations](#other-known-limitations)\n- [Additional Information](#additional-information)\n  - [Dataset Curators](#dataset-curators)\n  - [Licensing Information](#licensing-information)\n  - [Citation Information](#citation-information)\n  - [Contributions](#contributions)\n\n## Dataset Description\n\n- **Homepage:** http://ufldl.stanford.edu/housenumbers\n- **Repository:**\n- **Paper:** [Reading Digits in Natural Images with Unsupervised Feature Learning](http://ufldl.stanford.edu/housenumbers/nips2011_housenumbers.pdf)\n- **Leaderboard:** https://paperswithcode.com/sota/image-classification-on-svhn\n- **Point of Contact:** streetviewhousenumbers@gmail.com\n\n### Dataset Summary\n\nSVHN is a real-world image dataset for developing machine learning and object recognition algorithms with minimal requirement on data preprocessing and formatting. It can be seen as similar in flavor to MNIST (e.g., the images are of small cropped digits), but incorporates an order of magnitude more labeled data (over 600,000 digit images) and comes from a significantly harder, unsolved, real world problem (recognizing digits and numbers in natural scene images). SVHN is obtained from house numbers in Google Street View images. The dataset comes in two formats:\n1. Original images with character level bounding boxes.\n2. MNIST-like 32-by-32 images centered around a single character (many of the images do contain some distractors at the sides).\n\n### Supported Tasks and Leaderboards\n\n- `object-detection`: The dataset can be used to train a model for digit detection.\n- `image-classification`: The dataset can be used to train a model for Image Classification where the task is to predict a correct digit on the image. The leaderboard for this task is available at:\nhttps://paperswithcode.com/sota/image-classification-on-svhn\n\n### Languages\n\nEnglish\n\n## Dataset Structure\n\n### Data Instances\n\n#### full_numbers\n\nThe original, variable-resolution, color house-number images with character level bounding boxes.\n\n```\n{\n  'image': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=98x48 at 0x259E3F01780>,\n  'digits': {\n    'bbox': [\n      [36, 7, 13, 32],\n      [50, 7, 12, 32]\n    ], \n    'label': [6, 9]\n  }\n}\n```\n\n#### cropped_digits\n\nCharacter level ground truth in an MNIST-like format. All digits have been resized to a fixed resolution of 32-by-32 pixels. The original character bounding boxes are extended in the appropriate dimension to become square windows, so that resizing them to 32-by-32 pixels does not introduce aspect ratio distortions. Nevertheless this preprocessing introduces some distracting digits to the sides of the digit of interest.\n\n```\n{\n  'image': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=32x32 at 0x25A89494780>,\n  'label': 1\n}\n```\n\n### Data Fields\n\n#### full_numbers\n\n- `image`: A `PIL.Image.Image` object containing the image. Note that when accessing the image column: `dataset[0][\"image\"]` the image file is automatically decoded. Decoding of a large number of image files might take a significant amount of time. Thus it is important to first query the sample index before the `\"image\"` column, *i.e.* `dataset[0][\"image\"]` should **always** be preferred over `dataset[\"image\"][0]`\n- `digits`: a dictionary containing digits' bounding boxes and labels\n  - `bbox`: a list of bounding boxes (in the [coco](https://albumentations.ai/docs/getting_started/bounding_boxes_augmentation/#coco) format) corresponding to the digits present on the image\n  - `label`: a list of integers between 0 and 9 representing the digit.\n\n#### cropped_digits\n\n- `image`: A `PIL.Image.Image` object containing the image. Note that when accessing the image column: `dataset[0][\"image\"]` the image file is automatically decoded. Decoding of a large number of image files might take a significant amount of time. Thus it is important to first query the sample index before the `\"image\"` column, *i.e.* `dataset[0][\"image\"]` should **always** be preferred over `dataset[\"image\"][0]`\n- `digit`: an integer between 0 and 9 representing the digit.\n\n### Data Splits\n\n#### full_numbers\n\nThe data is split into training, test and extra set. The training set contains 33402 images, test set 13068 and the extra set 202353 images.\n\n#### cropped_digits\n\nThe data is split into training, test and extra set. The training set contains 73257 images, test set 26032 and the extra set 531131 images.\n\nThe extra set can be used as extra training data. The extra set was obtained in a similar manner to the training and test set, but with the increased detection threshold in order to generate this large amount of labeled data. The SVHN extra subset is thus somewhat biased toward less difficult detections, and is thus easier than SVHN train/SVHN test.\n\n## Dataset Creation\n\n### Curation Rationale\n\nFrom the paper:\n> As mentioned above, the venerable MNIST dataset has been a valuable goal post for researchers seeking to build better learning systems whose benchmark performance could be expected to translate into improved performance on realistic applications. However, computers have now reached essentially human levels of performance on this problem—a testament to progress in machine learning and computer vision. The Street View House Numbers (SVHN) digit database that we provide can be seen as similar in flavor to MNIST (e.g., the images are of small cropped characters), but the SVHN dataset incorporates an order of magnitude more labeled data and comes from a significantly harder, unsolved, real world problem. Here the gap between human performance and state of the art feature representations is significant. Going forward, we expect that this dataset may fulfill a similar role for modern feature learning algorithms: it provides a new and difficult benchmark where increased performance can be expected to translate into tangible gains on a realistic application.\n\n### Source Data\n\n#### Initial Data Collection and Normalization\n\nFrom the paper:\n> The SVHN dataset was obtained from a large number of Street View images using a combination\nof automated algorithms and the Amazon Mechanical Turk (AMT) framework, which was\nused to localize and transcribe the single digits. We downloaded a very large set of images from\nurban areas in various countries.\n\n#### Who are the source language producers?\n\n[More Information Needed]\n\n### Annotations\n\n#### Annotation process\n\nFrom the paper:\n> From these randomly selected images, the house-number patches were extracted using a dedicated sliding window house-numbers detector using a low threshold on the detector’s confidence score in order to get a varied, unbiased dataset of house-number signs. These low precision detections were screened and transcribed by AMT workers.\n\n#### Who are the annotators?\n\nThe AMT workers.\n\n### Personal and Sensitive Information\n\n[More Information Needed]\n\n## Considerations for Using the Data\n\n### Social Impact of Dataset\n\n[More Information Needed]\n\n### Discussion of Biases\n\n[More Information Needed]\n\n### Other Known Limitations\n\n[More Information Needed]\n\n## Additional Information\n\n### Dataset Curators\n\nYuval Netzer, Tao Wang, Adam Coates, Alessandro Bissacco, Bo Wu and Andrew Y. Ng \n\n### Licensing Information\n\nNon-commerical use only.\n\n### Citation Information\n\n```\n@article{netzer2011reading,\n  title={Reading digits in natural images with unsupervised feature learning},\n  author={Netzer, Yuval and Wang, Tao and Coates, Adam and Bissacco, Alessandro and Wu, Bo and Ng, Andrew Y},\n  year={2011}\n}\n```\n\n### Contributions\n\nThanks to [@mariosasko](https://github.com/mariosasko) for adding this dataset.",
+              "extracted_code": ""
+            },
+            {
+              "id": "uoft-cs/cifar10",
+              "author": "uoft-cs",
+              "sha": "0b2714987fa478483af9968de7c934580d0bb9a2",
+              "created_at": "2022-03-02T23:29:22+00:00",
+              "last_modified": "2024-01-04T06:53:11+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 71114,
+              "likes": 85,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "plain_text/test-00000-of-00001.parquet"
+                },
+                {
+                  "rfilename": "plain_text/train-00000-of-00001.parquet"
+                }
+              ],
+              "card_data": {
+                "license": [
+                  "unknown"
+                ],
+                "language": [
+                  "en"
+                ],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [
+                  "image-classification"
+                ],
+                "size_categories": [
+                  "10K<n<100K"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:image-classification",
+                "annotations_creators:crowdsourced",
+                "language_creators:found",
+                "multilinguality:monolingual",
+                "source_datasets:extended|other-80-Million-Tiny-Images",
+                "language:en",
+                "license:unknown",
+                "size_categories:10K<n<100K",
+                "format:parquet",
+                "modality:image",
+                "library:datasets",
+                "library:pandas",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\nannotations_creators:\n- crowdsourced\nlanguage_creators:\n- found\nlanguage:\n- en\nlicense:\n- unknown\nmultilinguality:\n- monolingual\nsize_categories:\n- 10K<n<100K\nsource_datasets:\n- extended|other-80-Million-Tiny-Images\ntask_categories:\n- image-classification\ntask_ids: []\npaperswithcode_id: cifar-10\npretty_name: Cifar10\ndataset_info:\n  config_name: plain_text\n  features:\n  - name: img\n    dtype: image\n  - name: label\n    dtype:\n      class_label:\n        names:\n          '0': airplane\n          '1': automobile\n          '2': bird\n          '3': cat\n          '4': deer\n          '5': dog\n          '6': frog\n          '7': horse\n          '8': ship\n          '9': truck\n  splits:\n  - name: train\n    num_bytes: 113648310.0\n    num_examples: 50000\n  - name: test\n    num_bytes: 22731580.0\n    num_examples: 10000\n  download_size: 143646105\n  dataset_size: 136379890.0\nconfigs:\n- config_name: plain_text\n  data_files:\n  - split: train\n    path: plain_text/train-*\n  - split: test\n    path: plain_text/test-*\n  default: true\n---\n\n# Dataset Card for CIFAR-10\n\n## Table of Contents\n- [Dataset Description](#dataset-description)\n  - [Dataset Summary](#dataset-summary)\n  - [Supported Tasks and Leaderboards](#supported-tasks-and-leaderboards)\n  - [Languages](#languages)\n- [Dataset Structure](#dataset-structure)\n  - [Data Instances](#data-instances)\n  - [Data Fields](#data-fields)\n  - [Data Splits](#data-splits)\n- [Dataset Creation](#dataset-creation)\n  - [Curation Rationale](#curation-rationale)\n  - [Source Data](#source-data)\n  - [Annotations](#annotations)\n  - [Personal and Sensitive Information](#personal-and-sensitive-information)\n- [Considerations for Using the Data](#considerations-for-using-the-data)\n  - [Social Impact of Dataset](#social-impact-of-dataset)\n  - [Discussion of Biases](#discussion-of-biases)\n  - [Other Known Limitations](#other-known-limitations)\n- [Additional Information](#additional-information)\n  - [Dataset Curators](#dataset-curators)\n  - [Licensing Information](#licensing-information)\n  - [Citation Information](#citation-information)\n  - [Contributions](#contributions)\n\n## Dataset Description\n\n- **Homepage:** https://www.cs.toronto.edu/~kriz/cifar.html\n- **Repository:** \n- **Paper:** Learning Multiple Layers of Features from Tiny Images by Alex Krizhevsky\n- **Leaderboard:**\n- **Point of Contact:**\n\n### Dataset Summary\n\nThe CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes, with 6000 images per class. There are 50000 training images and 10000 test images.\nThe dataset is divided into five training batches and one test batch, each with 10000 images. The test batch contains exactly 1000 randomly-selected images from each class. The training batches contain the remaining images in random order, but some training batches may contain more images from one class than another. Between them, the training batches contain exactly 5000 images from each class.\n\n### Supported Tasks and Leaderboards\n\n- `image-classification`: The goal of this task is to classify a given image into one of 10 classes. The leaderboard is available [here](https://paperswithcode.com/sota/image-classification-on-cifar-10).\n\n### Languages\n\nEnglish\n\n## Dataset Structure\n\n### Data Instances\n\nA sample from the training set is provided below:\n\n```\n{\n  'img': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=32x32 at 0x201FA6EE748>,\n  'label': 0\n}\n```\n\n### Data Fields\n\n- img: A `PIL.Image.Image` object containing the 32x32 image. Note that when accessing the image column: `dataset[0][\"image\"]` the image file is automatically decoded. Decoding of a large number of image files might take a significant amount of time. Thus it is important to first query the sample index before the `\"image\"` column, *i.e.* `dataset[0][\"image\"]` should **always** be preferred over `dataset[\"image\"][0]`\n- label: 0-9 with the following correspondence\n         0 airplane\n         1 automobile\n         2 bird\n         3 cat\n         4 deer\n         5 dog\n         6 frog\n         7 horse\n         8 ship\n         9 truck\n\n### Data Splits\n\nTrain and Test\n\n## Dataset Creation\n\n### Curation Rationale\n\n[More Information Needed]\n\n### Source Data\n\n#### Initial Data Collection and Normalization\n\n[More Information Needed]\n\n#### Who are the source language producers?\n\n[More Information Needed]\n\n### Annotations\n\n#### Annotation process\n\n[More Information Needed]\n\n#### Who are the annotators?\n\n[More Information Needed]\n\n### Personal and Sensitive Information\n\n[More Information Needed]\n\n## Considerations for Using the Data\n\n### Social Impact of Dataset\n\n[More Information Needed]\n\n### Discussion of Biases\n\n[More Information Needed]\n\n### Other Known Limitations\n\n[More Information Needed]\n\n## Additional Information\n\n### Dataset Curators\n\n[More Information Needed]\n\n### Licensing Information\n\n[More Information Needed]\n\n### Citation Information\n\n```\n@TECHREPORT{Krizhevsky09learningmultiple,\n    author = {Alex Krizhevsky},\n    title = {Learning multiple layers of features from tiny images},\n    institution = {},\n    year = {2009}\n}\n```\n\n### Contributions\n\nThanks to [@czabo](https://github.com/czabo) for adding this dataset.",
+              "extracted_code": ""
+            }
+          ]
+        }
+      }
     }
   },
   "idea_info_history": [
