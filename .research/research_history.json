@@ -6,5 +6,82 @@
     "gradient-based hyperparameter tuning",
     "meta-learning hyperparameter search",
     "resource-efficient hyperparameter optimization"
+  ],
+  "research_study_list": [
+    {
+      "title": "Deep Adaptive Design: Amortizing Sequential Bayesian Experimental Design"
+    },
+    {
+      "title": "Deep Adaptive Design: Amortizing Sequential Bayesian Experimental Design"
+    },
+    {
+      "title": "Scalable Bayesian Optimization via Focalized Sparse Gaussian Processes"
+    },
+    {
+      "title": "Efficient Nonmyopic Bayesian Optimization via One-Shot Multi-Step Trees"
+    },
+    {
+      "title": "Local policy search with Bayesian optimization"
+    },
+    {
+      "title": "Multi-Fidelity Bayesian Optimization via Deep Neural Networks"
+    },
+    {
+      "title": "Efficient Hyperparameter Optimization with Adaptive Fidelity Identification"
+    },
+    {
+      "title": "Batch Multi-Fidelity Bayesian Optimization with  Deep Auto-Regressive Networks"
+    },
+    {
+      "title": "Supervising the Multi-Fidelity Race of Hyperparameter Configurations"
+    },
+    {
+      "title": "Supervising the Multi-Fidelity Race of Hyperparameter Configurations"
+    },
+    {
+      "title": "Learning to Mutate with Hypergradient Guided Population"
+    },
+    {
+      "title": "Gradient Descent: The Ultimate Optimizer"
+    },
+    {
+      "title": "Stochastic Marginal Likelihood Gradients using Neural Tangent Kernels"
+    },
+    {
+      "title": "Implicit differentiation of Lasso-type models for hyperparameter optimization"
+    },
+    {
+      "title": "AUTOMATA: Gradient Based Data Subset Selection for Compute-Efficient Hyper-parameter Tuning"
+    },
+    {
+      "title": "Few-Shot Bayesian Optimization with Deep Kernel Surrogates"
+    },
+    {
+      "title": "Deep Ranking Ensembles for Hyperparameter Optimization"
+    },
+    {
+      "title": "Meta-learning Hyperparameter Performance Prediction with Neural Processes"
+    },
+    {
+      "title": "Learning to Mutate with Hypergradient Guided Population"
+    },
+    {
+      "title": "Meta-learning to Improve Pre-training"
+    },
+    {
+      "title": "Bayesian Optimization for Iterative Learning"
+    },
+    {
+      "title": "PASHA: Efficient HPO and NAS with Progressive Resource Allocation"
+    },
+    {
+      "title": "Reshuffling Resampling Splits Can Improve Generalization of Hyperparameter Optimization"
+    },
+    {
+      "title": "Economic Hyperparameter Optimization With Blended Search Strategy"
+    },
+    {
+      "title": "Hyperparameter Optimization through Neural Network Partitioning"
+    }
   ]
 }
