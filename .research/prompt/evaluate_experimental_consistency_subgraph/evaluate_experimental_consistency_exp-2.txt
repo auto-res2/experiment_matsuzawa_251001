@@ -1,0 +1,86 @@
+
+Input:
+
+# Instructions
+You are a scientific research consistency evaluator. Your task is to evaluate a single experiment to determine:
+1. Whether it is consistent with the proposed method and experimental strategy
+2. Whether the results support the main claims (e.g., proposed method outperforms baseline)
+3. Whether it should be included in the research paper
+
+## Scope Constraints
+- Focus ONLY on evaluating consistency between the proposed method and experimental results
+- Do not suggest infrastructure changes (Docker, lock files, etc.)
+- Do not recommend development/testing procedures (unit tests, synthetic graphs, etc.)
+- Do not suggest implementation details or code improvements
+- Do not recommend data release or reproducibility practices
+- Do not require or suggest experiments on actual hardware (e.g., real edge devices, physical deployment)
+- Evaluate only: method-result alignment, experimental design adequacy, result interpretation validity, and statistical rigor within computational/simulation contexts
+
+Based on your analysis, provide:
+1. `consistency_feedback` (str): Detailed feedback explaining the consistency evaluation and suggestions for improvement
+2. `consistency_score` (int): A score from 1-10 indicating the quality and consistency of the experimental design and results
+
+## Evaluation Criteria
+
+### consistency_feedback (str)
+Provide specific feedback focused on **scientific consistency evaluation** and **clearly categorize the source of any issues**:
+
+**Problem Categorization - Identify which area(s) need improvement:**
+
+1. **Experimental Strategy Issues**:
+   - Evaluate if the experimental strategy is fundamentally sound for validating the proposed method
+   - Assess whether the experimental setup provides adequate scope and rigor
+   - Identify if the chosen metrics, baselines, or evaluation approach are appropriate
+
+2. **Implementation Issues**:
+   - Assess whether the generated code correctly implements the described experimental strategy
+   - Identify gaps between what the strategy specifies and what the code actually does
+   - Point out if the implementation fails to follow the experimental design
+
+3. **Result Interpretation Issues**:
+   - Assess alignment between claimed method and actual experimental results
+   - Identify gaps between theoretical claims and empirical evidence
+   - Point out contradictions between expected and observed outcomes
+   - **Critical**: Check if the proposed method demonstrates improvement over baseline
+
+**For each identified issue, clearly specify:**
+- Which category the problem falls into
+- What specific aspect needs improvement
+- How it affects the paper inclusion decision
+
+### consistency_score (int)
+Provide a numerical score (1-10) based on:
+- **8-10**: Excellent experimental design with clear, reliable results supporting the claims
+- **6-7**: Good experimental design with minor issues or room for improvement
+- **4-5**: Adequate experimental design but with concerns that need addressing
+- **1-3**: Poor experimental design with major flaws that undermine the conclusions
+
+## Context
+
+**Proposed Method:** Adaptive Curvature Momentum (ACM) Optimizer for improved convergence in deep learning
+
+**Overall Experimental Strategy:** Compare ACM against Adam/SGD/AdaBelief on ResNet-18 using CIFAR-10
+
+## Current Experiment to Evaluate
+
+**Experiment ID:** exp-2
+
+**Experiment Description:** Ablation study: Impact of curvature-aware adjustment
+
+**Run Variations:** ['acm_full', 'acm_no_curvature', 'acm_no_momentum']
+
+**Generated Code:** null
+
+**Experimental Results:**
+
+- Result: Ablation results: ACM full=94.2%, ACM without curvature=92.8%, ACM without momentum=91.5%. Curvature adjustment provides 1.4% improvement.
+- Error: Training instability observed in acm_no_momentum variant at epoch 35
+- Images: ['ablation_comparison.pdf']
+
+
+**Primary Goal**: Evaluate whether this specific experiment is consistent, supports the main claims, and should be included in the research paper.
+Output:
+{
+    "consistency_feedback": "Overall assessment: The ablation experiment is conceptually consistent with the proposed ACM optimizer and with the stated experimental strategy. It isolates two key design components (curvature term, momentum term) and measures their impact on CIFAR-10/ResNet-18 accuracy, which is exactly what an ablation study should do. The reported numbers show that removing curvature awareness drops accuracy from 94.2 % to 92.8 %, and removing momentum drops it to 91.5 %. These results qualitatively support the claim that curvature adjustment (and momentum) contribute to ACM’s performance.\n\nIdentified issues and their categories\n1. Experimental Strategy Issues\n   • Lack of statistical rigor: Only a single run per variant is reported. Without multiple seeds or confidence intervals it is impossible to know whether the 1.4 % gap is statistically significant or within run-to-run noise for CIFAR-10.  \n   • Missing training-time metrics: Convergence speed is one of ACM’s advertised benefits, but the ablation only reports final accuracy. Including learning-curve comparisons would strengthen the link to the “improved convergence” claim.\n\n2. Implementation Issues\n   • Code is listed as “null”, so correctness of the curvature removal or momentum removal cannot be verified. Although not fatal for paper inclusion, it prevents confirming that the ablated variants were implemented exactly as described.\n\n3. Result Interpretation Issues\n   • The 1.4 % improvement is interpreted as evidence that curvature helps. That is reasonable, but the paper should acknowledge the modest magnitude and caveat it with statistical validation once multiple runs are added.\n   • Training instability at epoch 35 for the no-momentum variant is mentioned but not quantified or visualised. Clarifying whether this instability is systematic would strengthen the argument.\n\nEffect on paper inclusion\nDespite the above shortcomings, the experiment is methodologically aligned with the paper’s goals and provides supportive (if preliminary) evidence for the importance of curvature and momentum. With additional runs and basic statistical reporting, it would be solid. In its current form it can still be included, but the paper should explicitly note that these are single-seed results and commit to further validation.\n",
+    "consistency_score": 7
+}
