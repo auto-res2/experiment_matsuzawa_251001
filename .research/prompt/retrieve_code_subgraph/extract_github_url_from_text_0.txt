@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+DNN-MFBO employs deep neural networks as a probabilistic surrogate model, where each fidelity is modeled by a stacked neural network. The input to the NN for fidelity 'm' includes the original input and the output from the previous fidelity 'm-1', enabling information propagation and capturing complex inter-fidelity relationships. Stochastic variational learning is used to jointly estimate the posterior distributions of the output layer weights (treated as random variables) and other NN weights/noise variances (hyper-parameters). A Max-Value Entropy Search (MES) based mutual information serves as the acquisition function, balancing optimization benefit and query cost. Posterior distributions and conditional entropy terms within the acquisition function are approximated as Gaussian using fidelity-wise moment matching and Gauss-Hermite quadrature, and Monte-Carlo sampling for function maximums. L-BFGS is used to maximize the acquisition function.
+
+# GitHub URLs List
+['https://github.com/kirthevasank/mf-gp-ucb', 'https://github.com/YehongZ/MixedTypeBO', 'https://github.com/zi-w/Max-value-Entropy-Search', 'https://github.com/automl/SMAC3']
+Output:
+{
+    "index": 2
+}
