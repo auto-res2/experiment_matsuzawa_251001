@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+DAD employs a neural network, called the design network (πφ), to represent a design policy. This network takes the history of previous design-observation pairs as input and outputs the next optimal design. The network is trained upfront by simulating hypothetical experimental trajectories to learn near-optimal design decisions. The core objective, IT(π), maximizes the total expected information gained from the entire sequence of T experiments, representing the mutual information between the unknown latent parameters (θ) and the full history (hT). To optimize this intractable objective, DAD introduces contrastive lower bounds, specifically Sequential Prior Contrastive Estimation (sPCE), which allow for end-to-end training using stochastic gradient ascent without direct posterior or marginal likelihood estimation. For gradient estimation, the reparametrization trick is used for continuous, reparametrizable likelihoods, and the score function gradient estimator (REINFORCE) for discrete observations or non-reparametrizable likelihoods. The architecture exploits permutation invariance by using an encoder network (Eφ1) to create a pooled, fixed-dimensional representation of the history, which is then fed into an emitter network (Fφ2) to output the design.
+
+# GitHub URLs List
+['https://github.com/ae-foster/dad', 'https://github.com/drbenvincent/darc-experiments-matlab']
+Output:
+{
+    "index": 0
+}
