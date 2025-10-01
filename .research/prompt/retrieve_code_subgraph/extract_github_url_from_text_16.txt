@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The core methodology re-frames HPO as a Learning-to-Rank (L2R) problem, focusing on preserving the ranks of hyperparameter configuration performances rather than directly regressing their values. DRE consists of an ensemble of diverse neural networks (MLPs) optimized with a weighted list-wise L2R loss, which prioritizes correctly predicting the ranks of top-performing configurations. Uncertainty estimation is achieved by training diverse networks within the ensemble using stochastic gradient descent with different per-scorer seeds. The method incorporates transfer learning by meta-learning the ranking surrogates from evaluations on previous datasets. Dataset meta-features, extracted by a Deep Set architecture, are used as an additional input to condition the surrogates and boost transfer quality, mitigating negative-transfer phenomena. For Bayesian Optimization, acquisition functions such as Expected Improvement (EI) are used, leveraging the ensemble's uncertainty estimates.
+
+# GitHub URLs List
+['https://github.com/releaunifreiburg/HPO-B', 'https://github.com/huawei-noah/HEBO']
+Output:
+{
+    "index": 0
+}
