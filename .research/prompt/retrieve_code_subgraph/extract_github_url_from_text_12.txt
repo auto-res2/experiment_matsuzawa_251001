@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The methodology is based on Bayesian model selection, optimizing hyperparameters by maximizing the marginal likelihood. The core challenge lies in the log-determinant term of the linearized Laplace approximation, which traditionally prevents unbiased stochastic gradient estimation. The authors leverage the dual Neural Tangent Kernel (NTK) form of the linearized Laplace approximation to derive two main types of lower bounds: 1) **Structured Parametric Lower Bounds:** Demonstrating that existing block-diagonal (e.g., KFAC) and diagonal approximations of the Hessian are valid lower bounds. 2) **Subset-of-Data Kernel Bounds:** By partitioning input-output indices, the NTK can be computed on data subsets, allowing for unbiased stochastic estimates and gradients for marginal likelihood optimization. This is extended to **Subset-of-Data Parametric Bounds**, showing equivalence for GGN approximations on data subsets, thus enabling stochastic KFAC. The tightness of these bounds can be improved by strategic partitioning, such as output-wise (class-wise) partitioning. An algorithm is provided for stochastic marginal likelihood estimation using these bounds.
+
+# GitHub URLs List
+['https://github.com/AlexImmer/ntk-marglik']
+Output:
+{
+    "index": 0
+}
