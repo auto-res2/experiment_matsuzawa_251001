@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+CES operates by performing a two-way data split into a training set (Dtrain) and a combined early stopping and calibration set (Des-cal). A neural network is trained on Dtrain for a maximum number of epochs, storing intermediate models at predefined intervals. For a given test point, a model `ˆMces` is selected by minimizing an augmented loss function (`L+1 es-cal`) on the Des-cal set, which includes the test point as a placeholder, ensuring its involvement in the early stopping rule. Conformal p-values or prediction sets are then computed using nonconformity scores derived from the selected `ˆMces` and the Des-cal set. Specific implementations include: for outlier detection, a one-class classifier and corresponding loss; for multi-class classification, a K-class classifier with cross-entropy loss, where models are selected for each possible label using adaptive nonconformity scores; for regression, a neural network with squared-error loss, where model selection across continuous outcomes is solved efficiently by finding the lower envelope of parabolas (`O(T log T)` computational cost); and an extension to quantile regression (CQR) employing pinball loss and a similar lower envelope algorithm for shifted pinball loss functions. To prevent empty prediction sets in regression, a fallback to a naive conformal prediction interval is implemented.
+
+# GitHub URLs List
+['https://github.com/xinbinhuang/feature-selection_blogfeedback']
+Output:
+{
+    "index": null
+}
