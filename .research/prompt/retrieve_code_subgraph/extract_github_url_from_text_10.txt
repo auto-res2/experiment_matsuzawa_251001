@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+DNN-MFBO models each fidelity using a dedicated neural network (NN). For fidelities 'm > 1', the input to the NN `xm` is concatenated from the original input `x` and the output from the previous fidelity `fm-1(x)`. For the first fidelity (`m=1`), the input is `x`. The NN output is `fm(x) = w_m^T * phi_theta_m(xm)`, where `w_m` (output layer weights) are treated as random variables with a standard normal prior, and `theta_m` (other NN weights) are hyper-parameters. A stochastic variational learning algorithm is employed to jointly estimate the multivariate Gaussian posterior `q(w_m) = N(w_m | mu_m, Sigma_m)` and the hyper-parameters by maximizing an Evidence Lower Bound (ELBO) using the reparameterization trick. The acquisition function is defined as `a(x, m) = (1/lambda_m) * I(f*, fm(x)|D)`, a mutual information-based criterion for maximum entropy search, where `lambda_m` is the query cost for fidelity `m`. Due to nonlinear coupling, `p(fm(x)|D)` is approximated as a Gaussian using fidelity-wise moment matching and Gauss-Hermite quadrature. The conditional entropy term `Ep(f*|D)[H(fm(x)|f*, D)]` is approximated via Monte-Carlo sampling of the function maximum `f*` and further approximating `H(fm(x)|f*, D)` with `H(fm(x)|fM(x) <= f*, D)`. This approximation for conditional entropy also uses moment matching and Gauss-Hermite quadrature (or truncated Gaussian for the highest fidelity). Acquisition function optimization uses L-BFGS with random initialization, with gradients computed via automatic differentiation (TensorFlow).
+
+# GitHub URLs List
+['https://github.com/kirthevasank/mf-gp-ucb', 'https://github.com/YehongZ/MixedTypeBO', 'https://github.com/zi-w/Max-value-Entropy-Search', 'https://github.com/automl/SMAC3']
+Output:
+{
+    "index": 2
+}
