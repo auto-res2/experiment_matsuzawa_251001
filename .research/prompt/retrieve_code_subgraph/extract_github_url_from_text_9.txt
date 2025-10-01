@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+ColaBO redefines the Gaussian Process (GP) prior by integrating an additional, user-defined prior belief over function properties, denoted as ρ(f). This user belief acts as a likelihood, weighting draws from the GP prior to form a belief-weighted prior p(f|ρ) ~ p(f)ρ(f). When observations (D) are obtained, the posterior is updated as p(f|D, ρ) ~ ρ(f)p(f|D). The framework leverages a pathwise update mechanism based on decoupled posterior sampling, where the user belief ρ(f) influences the initial draw from the prior, while observed data D affects a deterministic update. Since the belief-weighted prior and posterior are generally non-Gaussian, ColaBO relies on Monte Carlo (MC) acquisition functions (like Expected Improvement and Max-Value Entropy Search) which are modified to incorporate the ρ(f) weighting through rejection sampling on function draws from the prior, followed by pathwise updates based on observed data.
+
+# GitHub URLs List
+['https://github.com/hvarfner/colabo', 'https://github.com/automl/mf-prior-bench', 'https://github.com/automl/mf-prior-bench']
+Output:
+{
+    "index": 0
+}
