@@ -27,7 +27,7 @@ Output:
         "Efficient benchmarking of hyperparameter optimizers via surrogates",
         "Efficient benchmarking of algorithm configurators via model-based surrogates",
         "A tutorial on bayesian optimization",
-        "Gpytorch: Black-box matrix-matrix gaussian process inference with gpu acceleration",
+        "GPyTorch: Black-box matrix-matrix gaussian process inference with GPU acceleration",
         "Towards Gaussian process-based optimization with finite time horizon",
         "Kriging is well-suited to parallelize optimization",
         "GLASSES: Relieving the myopia of Bayesian optimisation",
@@ -52,7 +52,7 @@ Output:
         "The parallel knowledge gradient method for batch Bayesian optimization",
         "Practical two-step lookahead Bayesian optimization",
         "Why non-myopic Bayesian optimization is promising and how far should we look-ahead? A study via rollout",
-        "D-vae: A variational autoencoder for directed acyclic graphs",
+        "D-VAE: A variational autoencoder for directed acyclic graphs",
         "Bayesian optimization for materials design with mixed quantitative and qualitative variables"
     ]
 }
