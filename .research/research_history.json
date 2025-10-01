@@ -6,5 +6,82 @@
     "parallel hyperparameter search",
     "early-stopping hyperparameter tuning",
     "surrogate-assisted HPO"
+  ],
+  "research_study_list": [
+    {
+      "title": "Scalable First-Order Bayesian Optimization via Structured Automatic Differentiation"
+    },
+    {
+      "title": "Scalable First-Order Bayesian Optimization via Structured Automatic Differentiation"
+    },
+    {
+      "title": "Efficient Nonmyopic Bayesian Optimization via One-Shot Multi-Step Trees"
+    },
+    {
+      "title": "Efficient Hyperparameter Optimization with Adaptive Fidelity Identification"
+    },
+    {
+      "title": "A General Framework for User-Guided Bayesian Optimization"
+    },
+    {
+      "title": "Multi-Fidelity Bayesian Optimization via Deep Neural Networks"
+    },
+    {
+      "title": "Efficient Hyperparameter Optimization with Adaptive Fidelity Identification"
+    },
+    {
+      "title": "Batch Multi-Fidelity Bayesian Optimization with  Deep Auto-Regressive Networks"
+    },
+    {
+      "title": "Supervising the Multi-Fidelity Race of Hyperparameter Configurations"
+    },
+    {
+      "title": "Supervising the Multi-Fidelity Race of Hyperparameter Configurations"
+    },
+    {
+      "title": "Federated Hyperparameter Tuning: Challenges, Baselines, and Connections to Weight-Sharing"
+    },
+    {
+      "title": "PASHA: Efficient HPO and NAS with Progressive Resource Allocation"
+    },
+    {
+      "title": "Hyperparameter Optimization through Neural Network Partitioning"
+    },
+    {
+      "title": "Provably Efficient Online Hyperparameter Optimization with Population-Based Bandits"
+    },
+    {
+      "title": "Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization"
+    },
+    {
+      "title": "Bayesian Optimization for Iterative Learning"
+    },
+    {
+      "title": "Conformal Inference is (almost) Free for Neural Networks Trained with Early Stopping"
+    },
+    {
+      "title": "Hyperparameter Optimization through Neural Network Partitioning"
+    },
+    {
+      "title": "Learning to Mutate with Hypergradient Guided Population"
+    },
+    {
+      "title": "Meta-learning to Improve Pre-training"
+    },
+    {
+      "title": "Continuation Path Learning for Homotopy Optimization"
+    },
+    {
+      "title": "Continuation Path Learning for Homotopy Optimization"
+    },
+    {
+      "title": "Deep Ranking Ensembles for Hyperparameter Optimization"
+    },
+    {
+      "title": "Landscape Surrogate: Learning Decision Losses for Mathematical Optimization Under Partial Information"
+    },
+    {
+      "title": "SurCo: Learning Linear SURrogates for COmbinatorial Nonlinear Optimization Problems"
+    }
   ]
 }
