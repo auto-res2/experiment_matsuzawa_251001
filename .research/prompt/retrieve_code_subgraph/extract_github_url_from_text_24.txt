@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+SurCo learns linear surrogate cost coefficients (ˆc) which are then fed into existing efficient combinatorial solvers (gΩ) to find solutions (x) that minimize the original nonlinear objective function f(x). The core mechanism is end-to-end optimization of the surrogate costs by backpropagating through the differentiable combinatorial solver. For a single instance (SurCo-zero), c is updated via gradient descent on f(gΩ(c)). For problem distributions (SurCo-prior), a neural network model ˆc(y; θ) predicts surrogate costs based on instance description y, minimizing Σ f(gΩ(yi)(ˆc(yi; θ)); yi). SurCo-hybrid combines both by initializing SurCo-zero's coefficients with predictions from SurCo-prior and then fine-tuning. Differentiability of f(x; y) and ∂f/∂x is assumed, or a learned cost model is used. Existing tools like CVXPYLayers (for MILP with relaxed integrality during training) and blackbox differentiation (for discrete linear optimizers like Bellman-Ford) are leveraged to compute gradients through the solvers.
+
+# GitHub URLs List
+['https://github.com/google/jax']
+Output:
+{
+    "index": 0
+}
