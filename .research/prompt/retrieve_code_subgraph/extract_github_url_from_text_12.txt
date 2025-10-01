@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The core methodology revolves around reducing the dimensionality of HPO by combining the learning rate (η) and number of steps (T) into a single scalar variable 'r = η × T'. The optimal 'r' for a target privacy budget (ε) is approximated using a first-order Taylor approximation (linear interpolation). This involves performing random search to find two empirical points (ε1, r(ε1)) and (ε2, r(ε2)) at small privacy budgets, fitting a line, and then using this line to estimate r for the desired final ε (εf). The method uses a Privacy Loss Variable (PLV) accountant for tighter privacy guarantees, specifically f-DP, and standard DP-SGD mechanisms involving per-sample gradient clipping (fixed to unit norm C=1) and Gaussian noise addition. Other fixed design choices include using full-batch training, SGD with momentum (ρ=0.9), and zero-initialization for linear classifiers.
+
+# GitHub URLs List
+['https://github.com/huggingface/transfer-learning-conv-ai', 'https://github.com/lxuechen/private-transformers']
+Output:
+{
+    "index": 1
+}
