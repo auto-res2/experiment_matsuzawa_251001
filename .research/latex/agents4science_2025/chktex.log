@@ -1,0 +1,69 @@
+Warning 13 in paper.tex line 36: Intersentence spacing (`\@') should perhaps be used.
+\title{Cost-Conditioned BOIL: Stochastic Cost Modelling for Faster Hyperparameter Optimisation}  
+                            ^
+Warning 36 in paper.tex line 45: You should put a space in front of parenthesis.
+We address cost-aware Bayesian optimisation for iterative learners, where an optimiser must jointly choose hyper-parameters x and a training budget t under a hard wall-clock constraint. BOIL, the current state-of-the-art, estimates the runtime c(x,t) with a linear regressor and inserts this single point estimate into a myopic utility. When cost is a non-linear or piece-wise function of the hyper-parameters, the regressor is miss-specified; in addition, the deterministic treatment of c ignores epistemic uncertainty and can yield over-optimistic, time-wasting selections [nguyen-2019-bayesian]. We propose COCO-BOIL, a two-line modification of BOIL that leaves every other component untouched. First, we replace the linear regressor with a tiny one-hidden-layer MLP (eight ReLU units, $\approx 200$ parameters) trained on the same $(x,t,c)$ logs. Second, at acquisition time we keep dropout active and average $K=10$ Monte-Carlo cost samples, turning BOIL's penalty into $\mathbb{E}$. The resulting acquisition $a(x,t)=\log \mathrm{EI}(x,t)-\mathbb{E}$ penalises both high and uncertain cost. Experiments on five benchmarks- CartPole-DDQN, InvertedPendulum-A2C, Reacher-A2C, SVHN-CNN and CIFAR-10-CNN- show that COCO-BOIL cuts median time-to-target by 27\ \% compared with BOIL, while matching its sample efficiency. Mean absolute percentage error of the cost surrogate drops from $\approx 35\ \%$ to $<10\ \%$, and the extra computation per BO iteration is below 3\ \%. Ablations confirm that the neural surrogate and the stochastic penalty provide additive gains. Because the change touches only two lines of code and incurs negligible overhead, COCO-BOIL is an immediately practical upgrade for any cost-aware BO pipeline.  
+                                                                                                                                                                                                                                                     ^
+Warning 12 in paper.tex line 51: Interword spacing (`\ ') should perhaps be used.
+Despite its empirical success, three practical weaknesses remain. (i) BOIL predicts $c(x,t)$ with a linear regressor. Real runtimes vary non-linearly with learning-rate schedules, optimiser state, mixed precision settings and even subtle hardware regime changes. A linear model is badly miss-specified and extrapolates poorly. (ii) The acquisition discounts EI by the mean predicted cost only. Ignoring epistemic uncertainty encourages the optimiser to choose configurations whose runtime is systematically under-estimated- a single such error can burn the entire wall-clock budget. (iii) The cost model is re-trained from scratch on raw $(x,t)$ pairs every BO iteration, without sharing statistical strength across similar hyper-parameter regions, which slows learning in sparse data regimes.  
+                                                                 ^
+Warning 12 in paper.tex line 51: Interword spacing (`\ ') should perhaps be used.
+Despite its empirical success, three practical weaknesses remain. (i) BOIL predicts $c(x,t)$ with a linear regressor. Real runtimes vary non-linearly with learning-rate schedules, optimiser state, mixed precision settings and even subtle hardware regime changes. A linear model is badly miss-specified and extrapolates poorly. (ii) The acquisition discounts EI by the mean predicted cost only. Ignoring epistemic uncertainty encourages the optimiser to choose configurations whose runtime is systematically under-estimated- a single such error can burn the entire wall-clock budget. (iii) The cost model is re-trained from scratch on raw $(x,t)$ pairs every BO iteration, without sharing statistical strength across similar hyper-parameter regions, which slows learning in sparse data regimes.  
+                                                                                                                                                                                                                                                                                                                                      ^
+Warning 12 in paper.tex line 51: Interword spacing (`\ ') should perhaps be used.
+Despite its empirical success, three practical weaknesses remain. (i) BOIL predicts $c(x,t)$ with a linear regressor. Real runtimes vary non-linearly with learning-rate schedules, optimiser state, mixed precision settings and even subtle hardware regime changes. A linear model is badly miss-specified and extrapolates poorly. (ii) The acquisition discounts EI by the mean predicted cost only. Ignoring epistemic uncertainty encourages the optimiser to choose configurations whose runtime is systematically under-estimated- a single such error can burn the entire wall-clock budget. (iii) The cost model is re-trained from scratch on raw $(x,t)$ pairs every BO iteration, without sharing statistical strength across similar hyper-parameter regions, which slows learning in sparse data regimes.  
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      ^
+Warning 13 in paper.tex line 88: Intersentence spacing (`\@') should perhaps be used.
+The linear regressor is replaced by a fully-connected network with one hidden layer of eight ReLU units and an output neuron producing log-runtime. Inputs are the concatenation of hyper-parameters and the training-step count. With $\approx 200$ parameters, the model trains for 20 epochs using Adam (learning rate $1\times 10^{-3}$) on all accumulated $(x,t, \log c)$ tuples. Training takes under 0.01 s on CPU.  
+                                                                                                                                                                                                                                                                                                                                                                                                                          ^
+Warning 8 in paper.tex line 98: Wrong length of dash may have been used.
+In PyTorch the change boils down to instantiating a TinyCostNet, training it for 20 minibatches, and replacing the single call to mean\_cost by an average over $K$ dropout samples. No other BOIL component- Gaussian process, learning-curve compression, virtual points, or candidate search- is touched. The total extra latency per BO iteration is 0.92-1.7 ms ($\approx 2.2$ \%), and memory overhead is 0.17 GB, negligible relative to model training footprints.  
+                                                                                                                                                                                                                                                                                                                                                             ^
+Warning 1 in paper.tex line 103: Command terminated with space.
+\State Given GP surrogate for performance $y$, dataset $\mathcal{D}=\{(x_i,t_i, y_i, c_i)\}_{i=1}^n$, TinyCostNet parameters $\theta$  
+      ^
+Warning 3 in paper.tex line 103: You should enclose the previous parenthesis with `{}'.
+\State Given GP surrogate for performance $y$, dataset $\mathcal{D}=\{(x_i,t_i, y_i, c_i)\}_{i=1}^n$, TinyCostNet parameters $\theta$  
+                                                                                         ^^
+Warning 1 in paper.tex line 104: Command terminated with space.
+\State Train TinyCostNet on $\{(x_i,t_i, \log c_i)\}$ for 20 epochs with Adam, learning rate $1\times 10^{-3}$, dropout rate 0.1  
+      ^
+Warning 1 in paper.tex line 106: Command terminated with space.
+  \State Compute $\mu(x,t),\sigma^2(x,t)$ from GP and $\mathrm{EI}(x,t)$  
+        ^
+Warning 1 in paper.tex line 107: Command terminated with space.
+  \State Enable dropout; compute $\ell_k=\text{TinyCostNet}_{\theta}^{(k)}(x,t)$ for $k=1,\ldots,K$  
+        ^
+Warning 1 in paper.tex line 108: Command terminated with space.
+  \State $\widehat{\mathbb{E}[\ell]} \leftarrow \frac{1}{K}\sum_{k=1}^K \ell_k$  
+        ^
+Warning 1 in paper.tex line 109: Command terminated with space.
+  \State Score $a(x,t) \leftarrow \log \mathrm{EI}(x,t) - \widehat{\mathbb{E}[\ell]}$  
+        ^
+Warning 1 in paper.tex line 110: Command terminated with space.
+\EndFor  
+       ^
+Warning 1 in paper.tex line 111: Command terminated with space.
+\State Return $(x^*,t^*)=\arg\max_{(x,t)} a(x,t)$  
+      ^
+Warning 13 in paper.tex line 120: Intersentence spacing (`\@') should perhaps be used.
+We compare COCO-BOIL to BOIL, Hyperband, CM-TF-BO and random search. Four ablations isolate the contribution of each modification: (i) BOIL + MLP (M1 only), (ii) BOIL + MC expectation with the linear regressor (M2 only), (iii) COCO-BOIL without dropout (uncertainty ignored) and (iv) full COCO-BOIL.  
+                                                                                                                                                                                                                                                                                                          ^
+Warning 13 in paper.tex line 123: Intersentence spacing (`\@') should perhaps be used.
+We log every 15 s: best validation score versus wall-clock, number of finished trials, cumulative wall-clock, surrogate errors (MAPE, normalised RMSE, expected calibration error), per-iteration latency and memory use. Primary metric is median time-to-threshold; secondary metrics are area-under-curve (AUC) of best-so-far versus time and sample efficiency (best score versus completed trials). All statistics aggregate 20 random seeds per method. Significance is assessed with paired Wilcoxon signed-rank tests on time-to-threshold and AUC.  
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           ^
+Warning 8 in paper.tex line 130: Wrong length of dash may have been used.
+Across all five tasks COCO-BOIL reduces the median time-to-threshold by 27\ \% relative to BOIL (range 23-31\ \%). CartPole reaches 195 reward in 242 s (COCO-BOIL) vs. 336 s (BOIL), 511 s (Hyperband) and 468 s (CM-TF-BO). CIFAR-10 attains $\le 10.25\ \%$ test error in 3 h 08 m vs. 4 h 05 m for BOIL. AUC improvements average 29\ \%; Wilcoxon p-values are $<0.01$ for every benchmark.  
+                                                                                                         ^
+Warning 13 in paper.tex line 130: Intersentence spacing (`\@') should perhaps be used.
+Across all five tasks COCO-BOIL reduces the median time-to-threshold by 27\ \% relative to BOIL (range 23-31\ \%). CartPole reaches 195 reward in 242 s (COCO-BOIL) vs. 336 s (BOIL), 511 s (Hyperband) and 468 s (CM-TF-BO). CIFAR-10 attains $\le 10.25\ \%$ test error in 3 h 08 m vs. 4 h 05 m for BOIL. AUC improvements average 29\ \%; Wilcoxon p-values are $<0.01$ for every benchmark.  
+                                                                                                                                                                                                                                                                                                           ^
+Warning 13 in paper.tex line 136: Intersentence spacing (`\@') should perhaps be used.
+The linear regressor's MAPE $34.7 \pm 3.1\ \%$ falls to $9.6 \pm 1.2\ \%$ with the MLP alone and to $8.3 \pm 1.0\ \%$ with full COCO-BOIL. Normalised RMSE drops from 0.241 to 0.061; expected calibration error from 0.128 to 0.043. The linear model systematically under-predicts high-cost regions, whereas COCO-BOIL's predictions align with the identity line.  
+                                                                                                                                         ^
+Warning 8 in paper.tex line 142: Wrong length of dash may have been used.
+Training plus sampling costs 0.92-1.7 ms per BO iteration ($<3\ \%$ of iteration time) and 0.17 GB GPU memory- negligible compared with model training.  
+                                 ^
+Warning 13 in paper.tex line 145: Intersentence spacing (`\@') should perhaps be used.
+Across 20 seeds the inter-quartile width of time-to-threshold widens by only 1.8\ \% compared with BOIL. Under a synthetic regime change (FP32 $\to$ BF16 switch) COCO-BOIL keeps MAPE $\approx 11\ \%$; BOIL spikes to 54\ \%. On the unseen LunarLanderContinuous-v2 benchmark, COCO-BOIL still delivers a 21\ \% speed-up, satisfying the pre-registered $\ge 75\ \%$ generalisation criterion.  
+                                                                                                       ^
