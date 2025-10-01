@@ -644,6 +644,11 @@
             "result": "=== [PHASE 2/2] Full experiment start Wed Oct  1 07:45:17 AM UTC 2025 ===\n==== Main Orchestrator ====\n{\"num_experiments\": 0, \"available_gpus\": [0]}\nNo results found to evaluate.\n=== [PHASE 2/2] Full experiment end Wed Oct  1 07:45:20 AM UTC 2025 ===\n",
             "error": "",
             "image_file_name_list": []
+          },
+          "evaluation": {
+            "consistency_score": 2,
+            "consistency_feedback": "The experiment did not generate any usable output – the log reports “num_experiments: 0” and “No results found to evaluate.”  Consequently none of the proposed comparisons (COCO-BOIL-full vs BOIL, MAPE improvement, wall-clock speed-up, etc.) can be inspected.\n\nProblem categorisation:\n\n1. Experimental Strategy Issues\n   • The YAML supplied in full_experiment.yaml enumerates the right tasks/variants, but only one seed is listed and the file is not actually passed to the orchestrator (the main script appears to default to smoke_test.yaml unless --full-experiment is supplied).  Hence the intended 5×5×20 grid is not executed.\n   • Even if it were executed, the benchmark factory currently falls back to a synthetic quadratic toy function for every dataset name; this cannot validate RL or vision HPO claims, nor does it yield meaningful wall-clock costs.\n\n2. Implementation Issues\n   • The preprocessing module lacks real Gym/MuJoCo/CIFAR/SVHN integrations, so cost and objective measurements are unrelated to the stated hypothesis.\n   • Because results.json files are never written, the evaluation stage exits early.\n\n3. Result Interpretation Issues\n   • No numerical results exist, therefore none of the paper’s quantitative claims (≥20 % wall-clock reduction, ≤10 % MAPE, etc.) are supported.\n\nEffect on inclusion decision: The experiment in its current form cannot be included in the paper; it neither runs the correct workloads nor produces evidence.  Minimum fixes required are (i) hook actual benchmarks into preprocess.py, (ii) ensure main.py is invoked with --full-experiment and writes results, and (iii) rerun with the planned number of seeds and statistical analysis.\n",
+            "is_selected_for_paper": false
           }
         }
       ],
