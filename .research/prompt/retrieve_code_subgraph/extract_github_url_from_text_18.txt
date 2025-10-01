@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The core methodology involves optimizing hyperparameters by maximizing the marginal likelihood, approximated using the linearized Laplace (LA) method. The key innovation is the derivation of lower bounds for the log marginal likelihood that enable stochastic gradient estimation. This includes: 1. Parametric structured lower bounds (Theorem 1) demonstrating that block-diagonal and diagonal Generalized Gauss-Newton (GGN) approximations are valid lower bounds. 2. Data subset kernel bounds (Theorem 2) based on partitioning the Neural Tangent Kernel (NTK) into batches of input-output pairs, allowing for unbiased stochastic estimates. 3. Parametric data subset bounds (Theorem 3 and Corollary 3.1) showing equivalence between NTK-based and parametric (e.g., KFAC) approaches on data subsets, facilitating stochastic optimization with structured GGN approximations. Partitioning strategies, such as output-wise partitioning or grouping inputs by labels, are explored to improve bound tightness and efficiency. An algorithm (Algorithm 1) is provided for stochastic marginal likelihood estimation using these bounds.
+
+# GitHub URLs List
+['https://github.com/AlexImmer/ntk-marglik']
+Output:
+{
+    "index": 0
+}
