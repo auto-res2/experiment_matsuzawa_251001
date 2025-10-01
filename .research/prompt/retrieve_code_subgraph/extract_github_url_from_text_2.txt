@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The core methodology involves two main components: 1) **Focalized GP**: A sparse GP model trained using a novel variational loss function (focalized ELBO, L2). This loss weights the data likelihood term using the maximum kernel covariance of training points to positions within a defined search region, emphasizing local functional landscapes. It also includes a regularization term to encourage accurate local prediction over blurred global estimation. 2) **FocalBO**: A hierarchical acquisition optimization algorithm that iteratively optimizes the acquisition function over progressively smaller search regions. At each iteration, it trains a specific focalized GP for the current search region, halves the search space length, and re-centers it at the current best position. A batch of inputs is proposed, and the final decision is sampled from all candidates via a Softmax distribution over acquisition values. FocalBO also adaptively adjusts the optimization depth (H) based on whether the best-performing proposed point came from a shallower or deeper search, balancing exploration and exploitation.
+
+# GitHub URLs List
+['https://github.com/yunyuewei/FocalBO', 'https://github.com/ermongroup/bayes-opt', 'https://github.com/feji3769/VecchiaBO', 'https://github.com/brandontrabucco/design-bench']
+Output:
+{
+    "index": 0
+}
