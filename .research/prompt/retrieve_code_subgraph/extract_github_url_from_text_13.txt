@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+DyHPO employs a Gaussian Process (GP) surrogate model with a novel deep kernel. This deep kernel, denoted as K(θ, w), uses a neural network φ as a feature extractor. The network φ takes the hyperparameter configuration, the past learning curve, and the current budget as input, processing them through linear and 1D convolutional layers followed by global max pooling, before feeding to a squared exponential kernel k. Parameters θ and w are optimized by maximizing marginal likelihood using gradient descent (Adam). The method also introduces a multi-fidelity Expected Improvement (EIMF) acquisition function that considers the best observed performance at the specific budget or across all budgets. The DyHPO algorithm dynamically selects the most promising configuration to train for a small additional budget (incrementally increasing by one step), observes its performance, and updates the surrogate model.
+
+# GitHub URLs List
+['https://github.com/releaunifreiburg/DyHPO', 'https://github.com/automl/LCBench', 'https://github.com/google-research/google-research', 'https://github.com/D-X-Y/NAS-Bench-201', 'https://github.com/automl/HpBandSter', 'https://github.com/automl/DEHB', 'https://github.com/dragonfly/dragonfly', 'https://github.com/shib0li/DNN-MFBO']
+Output:
+{
+    "index": 0
+}
