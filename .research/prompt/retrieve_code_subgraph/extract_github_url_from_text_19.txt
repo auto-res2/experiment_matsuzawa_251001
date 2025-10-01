@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+AUTOMATA is a three-component framework: a hyper-parameter search algorithm (e.g., Random Search, TPE), a gradient-based subset selection (GSS) algorithm for efficient configuration evaluation, and a hyper-parameter scheduling algorithm (e.g., Hyperband, ASHA) for early stopping. The core of AUTOMATA is the GSS, which selects a subset S and its weight vector w such that the weighted subset loss gradient best approximates the entire training loss gradient. This optimization problem, formulated as minimizing the L2 norm of the gradient difference plus a regularization term, is approximately submodular and solved using a greedy algorithm called Orthogonal Matching Pursuit (OMP). A 'per-batch' subset selection is employed for efficiency, where a subset of mini-batches is selected instead of individual data points. Model warm-starting is also used for ASHA scheduler experiments to provide informative loss gradients for selection.
+
+# GitHub URLs List
+['https://github.com/decile-team/cords']
+Output:
+{
+    "index": 0
+}
