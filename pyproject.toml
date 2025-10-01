@@ -1,1 +1,25 @@
-# Please list the required python packages.
+[project]
+name = "dyram-hpo-common-core"
+version = "0.1.0"
+description = "Common core experiment framework for DyGraM-HPO paper"
+requires-python = ">=3.9"
+authors = [
+  { name = "Research Automation Bot", email = "noreply@example.com" }
+]
+license = {text = "MIT"}
+
+[project.dependencies]
+torch = ">=2.0.0"
+torchvision = ">=0.15.0"
+pyyaml = ">=6.0"
+matplotlib = ">=3.7.0"
+seaborn = ">=0.12.0"
+pandas = ">=2.0.0"
+datasets = ">=2.13.0"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"

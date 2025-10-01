@@ -1,0 +1,93 @@
+# config/smoke_test.yaml
+# Fast CI configuration containing lightweight versions of *all* experimental
+# variations (FULL, RANDOM-10%, AUTOMATA-10%, DyGraM-HPO, DyGraM-HPO-noDecay)
+# executed on a synthetic dataset with the DummyNet model.  Every run finishes
+# within seconds.
+
+experiments:
+  - id: "FULL_smoke"
+    seed: 0
+    dataset:
+      name: "RANDOM_CLASSIFICATION"
+      params: { num_samples: 512 }
+    model:
+      name: "DUMMYNET"
+      params: {}
+    training:
+      epochs: 1
+      batch_size: 32
+    optimizer:
+      name: "SGD"
+      lr: 0.01
+
+  - id: "RANDOM-10%_smoke"
+    seed: 0
+    dataset:
+      name: "RANDOM_CLASSIFICATION"
+      params: { num_samples: 512 }
+    model:
+      name: "DUMMYNET"
+      params: {}
+    training:
+      epochs: 1
+      batch_size: 32
+    optimizer:
+      name: "SGD"
+      lr: 0.01
+    method_specific:
+      algo: "RANDOM_SUBSET"
+      params: { fraction: 0.1 }
+
+  - id: "AUTOMATA-10%_smoke"
+    seed: 0
+    dataset:
+      name: "RANDOM_CLASSIFICATION"
+      params: { num_samples: 512 }
+    model:
+      name: "DUMMYNET"
+      params: {}
+    training:
+      epochs: 1
+      batch_size: 32
+    optimizer:
+      name: "SGD"
+      lr: 0.01
+    method_specific:
+      algo: "AUTOMATA"
+      params: { fraction: 0.1 }
+
+  - id: "DyGraM-HPO_smoke"
+    seed: 0
+    dataset:
+      name: "RANDOM_CLASSIFICATION"
+      params: { num_samples: 512 }
+    model:
+      name: "DUMMYNET"
+      params: {}
+    training:
+      epochs: 1
+      batch_size: 32
+    optimizer:
+      name: "SGD"
+      lr: 0.01
+    method_specific:
+      algo: "DyGraM-HPO"
+      params: { tau_start: 0.2, tau_end: 0.05 }
+
+  - id: "DyGraM-HPO-noDecay_smoke"
+    seed: 0
+    dataset:
+      name: "RANDOM_CLASSIFICATION"
+      params: { num_samples: 512 }
+    model:
+      name: "DUMMYNET"
+      params: {}
+    training:
+      epochs: 1
+      batch_size: 32
+    optimizer:
+      name: "SGD"
+      lr: 0.01
+    method_specific:
+      algo: "DyGraM-HPO-noDecay"
+      params: { tau_fixed: 0.1 }
