@@ -6,5 +6,82 @@
     "Adaptive resource allocation HPO",
     "Early-stopping hyperparameter tuning",
     "Meta-learning hyperparameter search"
+  ],
+  "research_study_list": [
+    {
+      "title": "Multi-Fidelity Bayesian Optimization via Deep Neural Networks"
+    },
+    {
+      "title": "Multi-fidelity Bayesian Optimization with Max-value Entropy Search and its Parallelization"
+    },
+    {
+      "title": "Multi-fidelity Monte Carlo: a pseudo-marginal approach"
+    },
+    {
+      "title": "Batch Multi-Fidelity Bayesian Optimization with  Deep Auto-Regressive Networks"
+    },
+    {
+      "title": "Bayesian Active Causal Discovery with Multi-Fidelity Experiments"
+    },
+    {
+      "title": "Hyperparameter Optimization through Neural Network Partitioning"
+    },
+    {
+      "title": "Differentiable Expected Hypervolume Improvement for Parallel Multi-Objective Bayesian Optimization"
+    },
+    {
+      "title": "Federated Hyperparameter Tuning: Challenges, Baselines, and Connections to Weight-Sharing"
+    },
+    {
+      "title": "FedHPO-Bench: A Benchmark Suite for Federated Hyperparameter Optimization"
+    },
+    {
+      "title": "Scaling Laws for Hyperparameter Optimization"
+    },
+    {
+      "title": "PASHA: Efficient HPO and NAS with Progressive Resource Allocation"
+    },
+    {
+      "title": "Learning with Adaptive Resource Allocation"
+    },
+    {
+      "title": "A New Linear Scaling Rule for Private Adaptive Hyperparameter Optimization"
+    },
+    {
+      "title": "Supervising the Multi-Fidelity Race of Hyperparameter Configurations"
+    },
+    {
+      "title": "Supervising the Multi-Fidelity Race of Hyperparameter Configurations"
+    },
+    {
+      "title": "Bayesian Optimization for Iterative Learning"
+    },
+    {
+      "title": "Conformal Inference is (almost) Free for Neural Networks Trained with Early Stopping"
+    },
+    {
+      "title": "Hyperparameter Optimization through Neural Network Partitioning"
+    },
+    {
+      "title": "Robust early-learning: Hindering the memorization of noisy labels"
+    },
+    {
+      "title": "Learning to Mutate with Hypergradient Guided Population"
+    },
+    {
+      "title": "Few-Shot Bayesian Optimization with Deep Kernel Surrogates"
+    },
+    {
+      "title": "Deep Ranking Ensembles for Hyperparameter Optimization"
+    },
+    {
+      "title": "Meta-learning Hyperparameter Performance Prediction with Neural Processes"
+    },
+    {
+      "title": "Learning to Mutate with Hypergradient Guided Population"
+    },
+    {
+      "title": "Meta-learning to Improve Pre-training"
+    }
   ]
 }
