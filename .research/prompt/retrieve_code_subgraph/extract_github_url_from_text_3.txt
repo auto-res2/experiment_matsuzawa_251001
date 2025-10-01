@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The proposed adaptive private HPO method, termed the 'new linear scaling rule,' centers on identifying and optimizing a single scalar hyperparameter, `r = η × T`, which represents the product of the learning rate (η) and the number of training iterations (T). This simplification is motivated by theoretical analysis linking the excess empirical risk of private Gradient Descent (GD) to a 'noisy radius,' which is shown to be proportional to `η × T`. The method estimates the optimal `r` for a given privacy budget `ε` by sampling `r(ε)` at two distinct, small privacy budgets (e.g., `ε1 = 0.1, ε2 = 0.2`) using random search (cheap trials). A linear function (`r = mε + b`) is then fitted to these two points to approximate the relationship between `r` and `ε`, allowing for the estimation of `r` for any target `εf`. The estimated `r*` is subsequently decomposed back into `η` and `T`. Key design choices for private training include using full-batch gradient descent (DP-GD) to maximize the signal-to-noise ratio of updates, unit clipping (C=1) for per-sample gradients to avoid optimization bias, zero initialization for linear classifier weights, and integrating momentum (ρ=0.9) to accelerate convergence. The privacy accounting uses the Privacy Loss Variable (PLV) method (based on f-DP/Gaussian DP), which offers tighter guarantees than RDP, particularly for smaller `ε` values, and explicitly accounts for the privacy cost incurred during HPO.
+
+# GitHub URLs List
+['https://github.com/huggingface/transfer-learning-conv-ai', 'https://github.com/lxuechen/private-transformers']
+Output:
+{
+    "index": 1
+}
