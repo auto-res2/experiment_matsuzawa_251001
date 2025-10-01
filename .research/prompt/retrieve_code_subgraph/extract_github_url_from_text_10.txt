@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The problem of hyperparameter optimization in Federated Learning (FL) is formalized, distinguishing between global and personalized objectives. FL algorithms are decomposed into local training (Locc) and aggregation (Aggb) subroutines. Baselines adapt Random Search (RS) and Successive Halving (SHA) for FL, making elimination decisions based on noisy validation signals from a single communication round. FedEx addresses these challenges by applying a Neural Architecture Search (NAS)-like stochastic relaxation from weight-sharing to tune local FL hyperparameters. It replaces the personalized objective with a single-level function of shared weights (w) and local hyperparameters (c), then solves a relaxed objective min Ec~Dθ L(w,c). A categorical distribution Dθ over k random samples of local hyperparameters is used, and θ is updated via exponentiated gradient, alternating with standard SGD updates for w. FedEx is wrapped by RS or SHA to tune server hyperparameters and FedEx's own parameters. A local perturbation scheme is used to select initial configurations c1,...,ck for FedEx. Theoretical analysis employs the ARUBA framework, using bandit exponentiated gradient to tune the client step-size in an online convex optimization setting.
+
+# GitHub URLs List
+['https://github.com/mkhodak/fedex', 'https://github.com/TalwalkarLab/leaf']
+Output:
+{
+    "index": 0
+}
