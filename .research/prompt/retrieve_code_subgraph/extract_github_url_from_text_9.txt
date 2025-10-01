@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+DyHPO is a Bayesian Optimization algorithm that employs a Gaussian Process surrogate model with several key components: 1. A **Deep Multi-Fidelity Surrogate** utilizes a deep kernel, where a neural network (feature extractor φ) processes hyperparameter configurations, normalized budget information, and the historical learning curve (via 1D convolution and max-pooling). This allows the GP to capture learning dynamics across different fidelities. 2. A **Multi-Fidelity Expected Improvement (EIMF)** acquisition function extends the standard Expected Improvement by considering the best observed performance for a specific budget or globally if no budget-specific data exists. 3. The **DyHPO Algorithm** dynamically selects the most promising candidate configuration to train for one additional budget step using EIMF and updates the surrogate model with the new observations. This ensures configurations are explored by slowly increasing their budget.
+
+# GitHub URLs List
+['https://github.com/releaunifreiburg/DyHPO', 'https://github.com/automl/LCBench', 'https://github.com/google-research/google-research', 'https://github.com/D-X-Y/NAS-Bench-201', 'https://github.com/automl/HpBandSter', 'https://github.com/automl/DEHB', 'https://github.com/dragonfly/dragonfly', 'https://github.com/shib0li/DNN-MFBO']
+Output:
+{
+    "index": 0
+}
