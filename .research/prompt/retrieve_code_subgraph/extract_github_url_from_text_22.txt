@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The core methodology involves training an ensemble of diverse neural network 'scorers' (MLPs) to predict the ranking score of hyperparameter configurations. These scorers are optimized using a weighted list-wise L2R loss, where higher penalties are assigned to top-performing configurations. Uncertainty estimation is achieved by training multiple diverse scorers (10 MLPs) using the Deep Ensemble paradigm, with diversity encouraged by different per-scorer seeds. The method incorporates meta-learning where surrogates are transferred from evaluations on previous datasets, and dataset meta-features (extracted by a DeepSet architecture) are used as an additional input to condition the scorers, enhancing transfer quality. Bayesian Optimization (BO) is guided by acquisition functions like Expected Improvement (EI), which leverages the ensemble's mean and variance of estimated ranks.
+
+# GitHub URLs List
+['https://github.com/releaunifreiburg/HPO-B', 'https://github.com/huawei-noah/HEBO']
+Output:
+{
+    "index": 0
+}
