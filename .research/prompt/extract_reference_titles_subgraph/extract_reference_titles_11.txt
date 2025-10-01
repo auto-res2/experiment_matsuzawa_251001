@@ -40,7 +40,7 @@ Output:
         "Tabular benchmarks for joint architecture and hyperparameter optimization",
         "Model-based asynchronous hyperparameter and neural architecture search",
         "Accelerating experimental design by incorporating experimenter hunches",
-        "A system for massively parallel hyperparameter tuning",
+        "A system for massively parallel hyper tuning",
         "Hyperband: A novel bandit-based approach to hyperparameter optimization",
         "Hyper-tune: Towards efficient hyper-parameter tuning at scale",
         "Improving accuracy of interpretability measures in hyperparameter optimization via Bayesian algorithm execution",
@@ -59,6 +59,6 @@ Output:
         "Regulating model reliance on non-robust features by smoothing input marginal density",
         "Local path integration for attribution",
         "Re-calibrating feature attributions for model interpretation",
-        "Auto-Pytorch: Multi-fidelity metalearning for efficient and robust AutoDL"
+        "Auto-Pytorch: Multi-fidelity meta-learning for efficient and robust AutoDL"
     ]
 }
