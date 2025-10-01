@@ -612,7 +612,916 @@
         "CartPole-v1",
         "UCI Boston Housing",
         "UCI Yacht"
-      ]
+      ],
+      "external_resources": {
+        "hugging_face": {
+          "models": [
+            {
+              "id": "microsoft/resnet-18",
+              "author": "microsoft",
+              "sha": "65a5785d9156231087c481e0c7dd33a5ff6f7e3e",
+              "created_at": "2022-03-16T15:40:26+00:00",
+              "last_modified": "2024-04-08T11:06:50+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 123791,
+              "likes": 58,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "config.json"
+                },
+                {
+                  "rfilename": "model.safetensors"
+                },
+                {
+                  "rfilename": "preprocessor_config.json"
+                },
+                {
+                  "rfilename": "pytorch_model.bin"
+                },
+                {
+                  "rfilename": "tf_model.h5"
+                }
+              ],
+              "card_data": {
+                "license": "apache-2.0",
+                "language": [],
+                "tags": [
+                  "vision",
+                  "image-classification"
+                ],
+                "datasets": [
+                  "imagenet-1k"
+                ],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": [
+                  {
+                    "src": "https://huggingface.co/datasets/mishig/sample_images/resolve/main/tiger.jpg",
+                    "example_title": "Tiger"
+                  },
+                  {
+                    "src": "https://huggingface.co/datasets/mishig/sample_images/resolve/main/teapot.jpg",
+                    "example_title": "Teapot"
+                  },
+                  {
+                    "src": "https://huggingface.co/datasets/mishig/sample_images/resolve/main/palace.jpg",
+                    "example_title": "Palace"
+                  }
+                ]
+              },
+              "tags": [
+                "transformers",
+                "pytorch",
+                "tf",
+                "safetensors",
+                "resnet",
+                "image-classification",
+                "vision",
+                "dataset:imagenet-1k",
+                "arxiv:1512.03385",
+                "license:apache-2.0",
+                "autotrain_compatible",
+                "endpoints_compatible",
+                "region:us"
+              ],
+              "pipeline_tag": "image-classification",
+              "library_name": "transformers",
+              "readme": "---\nlicense: apache-2.0\ntags:\n- vision\n- image-classification\n\ndatasets:\n- imagenet-1k\n\nwidget:\n- src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/tiger.jpg\n  example_title: Tiger\n- src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/teapot.jpg\n  example_title: Teapot\n- src: https://huggingface.co/datasets/mishig/sample_images/resolve/main/palace.jpg\n  example_title: Palace\n\n---\n\n# ResNet\n\nResNet model trained on imagenet-1k. It was introduced in the paper [Deep Residual Learning for Image Recognition](https://arxiv.org/abs/1512.03385) and first released in [this repository](https://github.com/KaimingHe/deep-residual-networks). \n\nDisclaimer: The team releasing ResNet did not write a model card for this model so this model card has been written by the Hugging Face team.\n\n## Model description\n\nResNet introduced residual connections, they allow to train networks with an unseen number of layers (up to 1000). ResNet won the 2015 ILSVRC & COCO competition, one important milestone in deep computer vision.\n\n![model image](https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/resnet_architecture.png)\n\n## Intended uses & limitations\n\nYou can use the raw model for image classification. See the [model hub](https://huggingface.co/models?search=resnet) to look for\nfine-tuned versions on a task that interests you.\n\n### How to use\n\nHere is how to use this model:\n\n```python\n>>> from transformers import AutoImageProcessor, AutoModelForImageClassification\n>>> import torch\n>>> from datasets import load_dataset\n\n>>> dataset = load_dataset(\"huggingface/cats-image\")\n>>> image = dataset[\"test\"][\"image\"][0]\n\n>>> image_processor = AutoImageProcessor.from_pretrained(\"microsoft/resnet-18\")\n>>> model = AutoModelForImageClassification.from_pretrained(\"microsoft/resnet-18\")\n\n>>> inputs = image_processor(image, return_tensors=\"pt\")\n\n>>> with torch.no_grad():\n...     logits = model(**inputs).logits\n\n>>> # model predicts one of the 1000 ImageNet classes\n>>> predicted_label = logits.argmax(-1).item()\n>>> print(model.config.id2label[predicted_label])\ntiger cat\n```\n\n\n\nFor more code examples, we refer to the [documentation](https://huggingface.co/docs/transformers/master/en/model_doc/resnet).",
+              "extracted_code": "from transformers import AutoImageProcessor, AutoModelForImageClassification\nimport torch\nfrom datasets import load_dataset\n\ndataset = load_dataset(\"huggingface/cats-image\")\nimage = dataset[\"test\"][\"image\"][0]\n\nimage_processor = AutoImageProcessor.from_pretrained(\"microsoft/resnet-18\")\nmodel = AutoModelForImageClassification.from_pretrained(\"microsoft/resnet-18\")\n\ninputs = image_processor(image, return_tensors=\"pt\")\n\nwith torch.no_grad():\n    logits = model(**inputs).logits\n\n# model predicts one of the 1000 ImageNet classes\npredicted_label = logits.argmax(-1).item()\nprint(model.config.id2label[predicted_label])"
+            },
+            {
+              "id": "timm/resnet18.tv_in1k",
+              "author": "timm",
+              "sha": "bbd144b3e5565108aad885f145491d11bc6ce807",
+              "created_at": "2023-04-05T18:04:15+00:00",
+              "last_modified": "2025-01-21T21:39:10+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 31424,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "config.json"
+                },
+                {
+                  "rfilename": "model.safetensors"
+                },
+                {
+                  "rfilename": "pytorch_model.bin"
+                }
+              ],
+              "card_data": {
+                "license": "bsd-3-clause",
+                "language": [],
+                "library_name": "timm",
+                "tags": [
+                  "image-classification",
+                  "timm",
+                  "transformers"
+                ],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "timm",
+                "pytorch",
+                "safetensors",
+                "image-classification",
+                "transformers",
+                "arxiv:1512.03385",
+                "license:bsd-3-clause",
+                "region:us"
+              ],
+              "pipeline_tag": "image-classification",
+              "library_name": "timm",
+              "readme": "---\nlicense: bsd-3-clause\nlibrary_name: timm\ntags:\n- image-classification\n- timm\n- transformers\n---\n# Model card for resnet18.tv_in1k\n\nA ResNet-B image classification model.\n\nThis model features:\n * ReLU activations\n * single layer 7x7 convolution with pooling\n * 1x1 convolution shortcut downsample\n\nTrained on ImageNet-1k, original torchvision model weight.\n\n\n## Model Details\n- **Model Type:** Image classification / feature backbone\n- **Model Stats:**\n  - Params (M): 11.7\n  - GMACs: 1.8\n  - Activations (M): 2.5\n  - Image size: 224 x 224\n- **Papers:**\n  - Deep Residual Learning for Image Recognition: https://arxiv.org/abs/1512.03385\n- **Original:** https://github.com/pytorch/vision\n\n## Model Usage\n### Image Classification\n```python\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model('resnet18.tv_in1k', pretrained=True)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\ntop5_probabilities, top5_class_indices = torch.topk(output.softmax(dim=1) * 100, k=5)\n```\n\n### Feature Map Extraction\n```python\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.tv_in1k',\n    pretrained=True,\n    features_only=True,\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\nfor o in output:\n    # print shape of each feature map in output\n    # e.g.:\n    #  torch.Size([1, 64, 112, 112])\n    #  torch.Size([1, 64, 56, 56])\n    #  torch.Size([1, 128, 28, 28])\n    #  torch.Size([1, 256, 14, 14])\n    #  torch.Size([1, 512, 7, 7])\n\n    print(o.shape)\n```\n\n### Image Embeddings\n```python\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.tv_in1k',\n    pretrained=True,\n    num_classes=0,  # remove classifier nn.Linear\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # output is (batch_size, num_features) shaped tensor\n\n# or equivalently (without needing to set num_classes=0)\n\noutput = model.forward_features(transforms(img).unsqueeze(0))\n# output is unpooled, a (1, 512, 7, 7) shaped tensor\n\noutput = model.forward_head(output, pre_logits=True)\n# output is a (1, num_features) shaped tensor\n```\n\n## Model Comparison\nExplore the dataset and runtime metrics of this model in timm [model results](https://github.com/huggingface/pytorch-image-models/tree/main/results).\n\n|model                                     |img_size|top1 |top5 |param_count|gmacs|macts|img/sec|\n|------------------------------------------|--------|-----|-----|-----------|-----|-----|-------|\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k_288](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k_288)|320     |86.72|98.17|93.6       |35.2 |69.7 |451    |\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k_288](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k_288)|288     |86.51|98.08|93.6       |28.5 |56.4 |560    |\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k)|288     |86.49|98.03|93.6       |28.5 |56.4 |557    |\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k)|224     |85.96|97.82|93.6       |17.2 |34.2 |923    |\n|[resnext101_32x32d.fb_wsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x32d.fb_wsl_ig1b_ft_in1k)|224     |85.11|97.44|468.5      |87.3 |91.1 |254    |\n|[resnetrs420.tf_in1k](https://huggingface.co/timm/resnetrs420.tf_in1k)|416     |85.0 |97.12|191.9      |108.4|213.8|134    |\n|[ecaresnet269d.ra2_in1k](https://huggingface.co/timm/ecaresnet269d.ra2_in1k)|352     |84.96|97.22|102.1      |50.2 |101.2|291    |\n|[ecaresnet269d.ra2_in1k](https://huggingface.co/timm/ecaresnet269d.ra2_in1k)|320     |84.73|97.18|102.1      |41.5 |83.7 |353    |\n|[resnetrs350.tf_in1k](https://huggingface.co/timm/resnetrs350.tf_in1k)|384     |84.71|96.99|164.0      |77.6 |154.7|183    |\n|[seresnextaa101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.ah_in1k)|288     |84.57|97.08|93.6       |28.5 |56.4 |557    |\n|[resnetrs200.tf_in1k](https://huggingface.co/timm/resnetrs200.tf_in1k)|320     |84.45|97.08|93.2       |31.5 |67.8 |446    |\n|[resnetrs270.tf_in1k](https://huggingface.co/timm/resnetrs270.tf_in1k)|352     |84.43|96.97|129.9      |51.1 |105.5|280    |\n|[seresnext101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101d_32x8d.ah_in1k)|288     |84.36|96.92|93.6       |27.6 |53.0 |595    |\n|[seresnet152d.ra2_in1k](https://huggingface.co/timm/seresnet152d.ra2_in1k)|320     |84.35|97.04|66.8       |24.1 |47.7 |610    |\n|[resnetrs350.tf_in1k](https://huggingface.co/timm/resnetrs350.tf_in1k)|288     |84.3 |96.94|164.0      |43.7 |87.1 |333    |\n|[resnext101_32x8d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x8d.fb_swsl_ig1b_ft_in1k)|224     |84.28|97.17|88.8       |16.5 |31.2 |1100   |\n|[resnetrs420.tf_in1k](https://huggingface.co/timm/resnetrs420.tf_in1k)|320     |84.24|96.86|191.9      |64.2 |126.6|228    |\n|[seresnext101_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101_32x8d.ah_in1k)|288     |84.19|96.87|93.6       |27.2 |51.6 |613    |\n|[resnext101_32x16d.fb_wsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x16d.fb_wsl_ig1b_ft_in1k)|224     |84.18|97.19|194.0      |36.3 |51.2 |581    |\n|[resnetaa101d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa101d.sw_in12k_ft_in1k)|288     |84.11|97.11|44.6       |15.1 |29.0 |1144   |\n|[resnet200d.ra2_in1k](https://huggingface.co/timm/resnet200d.ra2_in1k)|320     |83.97|96.82|64.7       |31.2 |67.3 |518    |\n|[resnetrs200.tf_in1k](https://huggingface.co/timm/resnetrs200.tf_in1k)|256     |83.87|96.75|93.2       |20.2 |43.4 |692    |\n|[seresnextaa101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.ah_in1k)|224     |83.86|96.65|93.6       |17.2 |34.2 |923    |\n|[resnetrs152.tf_in1k](https://huggingface.co/timm/resnetrs152.tf_in1k)|320     |83.72|96.61|86.6       |24.3 |48.1 |617    |\n|[seresnet152d.ra2_in1k](https://huggingface.co/timm/seresnet152d.ra2_in1k)|256     |83.69|96.78|66.8       |15.4 |30.6 |943    |\n|[seresnext101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101d_32x8d.ah_in1k)|224     |83.68|96.61|93.6       |16.7 |32.0 |986    |\n|[resnet152d.ra2_in1k](https://huggingface.co/timm/resnet152d.ra2_in1k)|320     |83.67|96.74|60.2       |24.1 |47.7 |706    |\n|[resnetrs270.tf_in1k](https://huggingface.co/timm/resnetrs270.tf_in1k)|256     |83.59|96.61|129.9      |27.1 |55.8 |526    |\n|[seresnext101_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101_32x8d.ah_in1k)|224     |83.58|96.4 |93.6       |16.5 |31.2 |1013   |\n|[resnetaa101d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa101d.sw_in12k_ft_in1k)|224     |83.54|96.83|44.6       |9.1  |17.6 |1864   |\n|[resnet152.a1h_in1k](https://huggingface.co/timm/resnet152.a1h_in1k)|288     |83.46|96.54|60.2       |19.1 |37.3 |904    |\n|[resnext101_32x16d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x16d.fb_swsl_ig1b_ft_in1k)|224     |83.35|96.85|194.0      |36.3 |51.2 |582    |\n|[resnet200d.ra2_in1k](https://huggingface.co/timm/resnet200d.ra2_in1k)|256     |83.23|96.53|64.7       |20.0 |43.1 |809    |\n|[resnext101_32x4d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x4d.fb_swsl_ig1b_ft_in1k)|224     |83.22|96.75|44.2       |8.0  |21.2 |1814   |\n|[resnext101_64x4d.c1_in1k](https://huggingface.co/timm/resnext101_64x4d.c1_in1k)|288     |83.16|96.38|83.5       |25.7 |51.6 |590    |\n|[resnet152d.ra2_in1k](https://huggingface.co/timm/resnet152d.ra2_in1k)|256     |83.14|96.38|60.2       |15.4 |30.5 |1096   |\n|[resnet101d.ra2_in1k](https://huggingface.co/timm/resnet101d.ra2_in1k)|320     |83.02|96.45|44.6       |16.5 |34.8 |992    |\n|[ecaresnet101d.miil_in1k](https://huggingface.co/timm/ecaresnet101d.miil_in1k)|288     |82.98|96.54|44.6       |13.4 |28.2 |1077   |\n|[resnext101_64x4d.tv_in1k](https://huggingface.co/timm/resnext101_64x4d.tv_in1k)|224     |82.98|96.25|83.5       |15.5 |31.2 |989    |\n|[resnetrs152.tf_in1k](https://huggingface.co/timm/resnetrs152.tf_in1k)|256     |82.86|96.28|86.6       |15.6 |30.8 |951    |\n|[resnext101_32x8d.tv2_in1k](https://huggingface.co/timm/resnext101_32x8d.tv2_in1k)|224     |82.83|96.22|88.8       |16.5 |31.2 |1099   |\n|[resnet152.a1h_in1k](https://huggingface.co/timm/resnet152.a1h_in1k)|224     |82.8 |96.13|60.2       |11.6 |22.6 |1486   |\n|[resnet101.a1h_in1k](https://huggingface.co/timm/resnet101.a1h_in1k)|288     |82.8 |96.32|44.6       |13.0 |26.8 |1291   |\n|[resnet152.a1_in1k](https://huggingface.co/timm/resnet152.a1_in1k)|288     |82.74|95.71|60.2       |19.1 |37.3 |905    |\n|[resnext101_32x8d.fb_wsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x8d.fb_wsl_ig1b_ft_in1k)|224     |82.69|96.63|88.8       |16.5 |31.2 |1100   |\n|[resnet152.a2_in1k](https://huggingface.co/timm/resnet152.a2_in1k)|288     |82.62|95.75|60.2       |19.1 |37.3 |904    |\n|[resnetaa50d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa50d.sw_in12k_ft_in1k)|288     |82.61|96.49|25.6       |8.9  |20.6 |1729   |\n|[resnet61q.ra2_in1k](https://huggingface.co/timm/resnet61q.ra2_in1k)|288     |82.53|96.13|36.8       |9.9  |21.5 |1773   |\n|[wide_resnet101_2.tv2_in1k](https://huggingface.co/timm/wide_resnet101_2.tv2_in1k)|224     |82.5 |96.02|126.9      |22.8 |21.2 |1078   |\n|[resnext101_64x4d.c1_in1k](https://huggingface.co/timm/resnext101_64x4d.c1_in1k)|224     |82.46|95.92|83.5       |15.5 |31.2 |987    |\n|[resnet51q.ra2_in1k](https://huggingface.co/timm/resnet51q.ra2_in1k)|288     |82.36|96.18|35.7       |8.1  |20.9 |1964   |\n|[ecaresnet50t.ra2_in1k](https://huggingface.co/timm/ecaresnet50t.ra2_in1k)|320     |82.35|96.14|25.6       |8.8  |24.1 |1386   |\n|[resnet101.a1_in1k](https://huggingface.co/timm/resnet101.a1_in1k)|288     |82.31|95.63|44.6       |13.0 |26.8 |1291   |\n|[resnetrs101.tf_in1k](https://huggingface.co/timm/resnetrs101.tf_in1k)|288     |82.29|96.01|63.6       |13.6 |28.5 |1078   |\n|[resnet152.tv2_in1k](https://huggingface.co/timm/resnet152.tv2_in1k)|224     |82.29|96.0 |60.2       |11.6 |22.6 |1484   |\n|[wide_resnet50_2.racm_in1k](https://huggingface.co/timm/wide_resnet50_2.racm_in1k)|288     |82.27|96.06|68.9       |18.9 |23.8 |1176   |\n|[resnet101d.ra2_in1k](https://huggingface.co/timm/resnet101d.ra2_in1k)|256     |82.26|96.07|44.6       |10.6 |22.2 |1542   |\n|[resnet101.a2_in1k](https://huggingface.co/timm/resnet101.a2_in1k)|288     |82.24|95.73|44.6       |13.0 |26.8 |1290   |\n|[seresnext50_32x4d.racm_in1k](https://huggingface.co/timm/seresnext50_32x4d.racm_in1k)|288     |82.2 |96.14|27.6       |7.0  |23.8 |1547   |\n|[ecaresnet101d.miil_in1k](https://huggingface.co/timm/ecaresnet101d.miil_in1k)|224     |82.18|96.05|44.6       |8.1  |17.1 |1771   |\n|[resnext50_32x4d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext50_32x4d.fb_swsl_ig1b_ft_in1k)|224     |82.17|96.22|25.0       |4.3  |14.4 |2943   |\n|[ecaresnet50t.a1_in1k](https://huggingface.co/timm/ecaresnet50t.a1_in1k)|288     |82.12|95.65|25.6       |7.1  |19.6 |1704   |\n|[resnext50_32x4d.a1h_in1k](https://huggingface.co/timm/resnext50_32x4d.a1h_in1k)|288     |82.03|95.94|25.0       |7.0  |23.8 |1745   |\n|[ecaresnet101d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet101d_pruned.miil_in1k)|288     |82.0 |96.15|24.9       |5.8  |12.7 |1787   |\n|[resnet61q.ra2_in1k](https://huggingface.co/timm/resnet61q.ra2_in1k)|256     |81.99|95.85|36.8       |7.8  |17.0 |2230   |\n|[resnext101_32x8d.tv2_in1k](https://huggingface.co/timm/resnext101_32x8d.tv2_in1k)|176     |81.98|95.72|88.8       |10.3 |19.4 |1768   |\n|[resnet152.a1_in1k](https://huggingface.co/timm/resnet152.a1_in1k)|224     |81.97|95.24|60.2       |11.6 |22.6 |1486   |\n|[resnet101.a1h_in1k](https://huggingface.co/timm/resnet101.a1h_in1k)|224     |81.93|95.75|44.6       |7.8  |16.2 |2122   |\n|[resnet101.tv2_in1k](https://huggingface.co/timm/resnet101.tv2_in1k)|224     |81.9 |95.77|44.6       |7.8  |16.2 |2118   |\n|[resnext101_32x16d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext101_32x16d.fb_ssl_yfcc100m_ft_in1k)|224     |81.84|96.1 |194.0      |36.3 |51.2 |583    |\n|[resnet51q.ra2_in1k](https://huggingface.co/timm/resnet51q.ra2_in1k)|256     |81.78|95.94|35.7       |6.4  |16.6 |2471   |\n|[resnet152.a2_in1k](https://huggingface.co/timm/resnet152.a2_in1k)|224     |81.77|95.22|60.2       |11.6 |22.6 |1485   |\n|[resnetaa50d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa50d.sw_in12k_ft_in1k)|224     |81.74|96.06|25.6       |5.4  |12.4 |2813   |\n|[ecaresnet50t.a2_in1k](https://huggingface.co/timm/ecaresnet50t.a2_in1k)|288     |81.65|95.54|25.6       |7.1  |19.6 |1703   |\n|[ecaresnet50d.miil_in1k](https://huggingface.co/timm/ecaresnet50d.miil_in1k)|288     |81.64|95.88|25.6       |7.2  |19.7 |1694   |\n|[resnext101_32x8d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext101_32x8d.fb_ssl_yfcc100m_ft_in1k)|224     |81.62|96.04|88.8       |16.5 |31.2 |1101   |\n|[wide_resnet50_2.tv2_in1k](https://huggingface.co/timm/wide_resnet50_2.tv2_in1k)|224     |81.61|95.76|68.9       |11.4 |14.4 |1930   |\n|[resnetaa50.a1h_in1k](https://huggingface.co/timm/resnetaa50.a1h_in1k)|288     |81.61|95.83|25.6       |8.5  |19.2 |1868   |\n|[resnet101.a1_in1k](https://huggingface.co/timm/resnet101.a1_in1k)|224     |81.5 |95.16|44.6       |7.8  |16.2 |2125   |\n|[resnext50_32x4d.a1_in1k](https://huggingface.co/timm/resnext50_32x4d.a1_in1k)|288     |81.48|95.16|25.0       |7.0  |23.8 |1745   |\n|[gcresnet50t.ra2_in1k](https://huggingface.co/timm/gcresnet50t.ra2_in1k)|288     |81.47|95.71|25.9       |6.9  |18.6 |2071   |\n|[wide_resnet50_2.racm_in1k](https://huggingface.co/timm/wide_resnet50_2.racm_in1k)|224     |81.45|95.53|68.9       |11.4 |14.4 |1929   |\n|[resnet50d.a1_in1k](https://huggingface.co/timm/resnet50d.a1_in1k)|288     |81.44|95.22|25.6       |7.2  |19.7 |1908   |\n|[ecaresnet50t.ra2_in1k](https://huggingface.co/timm/ecaresnet50t.ra2_in1k)|256     |81.44|95.67|25.6       |5.6  |15.4 |2168   |\n|[ecaresnetlight.miil_in1k](https://huggingface.co/timm/ecaresnetlight.miil_in1k)|288     |81.4 |95.82|30.2       |6.8  |13.9 |2132   |\n|[resnet50d.ra2_in1k](https://huggingface.co/timm/resnet50d.ra2_in1k)|288     |81.37|95.74|25.6       |7.2  |19.7 |1910   |\n|[resnet101.a2_in1k](https://huggingface.co/timm/resnet101.a2_in1k)|224     |81.32|95.19|44.6       |7.8  |16.2 |2125   |\n|[seresnet50.ra2_in1k](https://huggingface.co/timm/seresnet50.ra2_in1k)|288     |81.3 |95.65|28.1       |6.8  |18.4 |1803   |\n|[resnext50_32x4d.a2_in1k](https://huggingface.co/timm/resnext50_32x4d.a2_in1k)|288     |81.3 |95.11|25.0       |7.0  |23.8 |1746   |\n|[seresnext50_32x4d.racm_in1k](https://huggingface.co/timm/seresnext50_32x4d.racm_in1k)|224     |81.27|95.62|27.6       |4.3  |14.4 |2591   |\n|[ecaresnet50t.a1_in1k](https://huggingface.co/timm/ecaresnet50t.a1_in1k)|224     |81.26|95.16|25.6       |4.3  |11.8 |2823   |\n|[gcresnext50ts.ch_in1k](https://huggingface.co/timm/gcresnext50ts.ch_in1k)|288     |81.23|95.54|15.7       |4.8  |19.6 |2117   |\n|[senet154.gluon_in1k](https://huggingface.co/timm/senet154.gluon_in1k)|224     |81.23|95.35|115.1      |20.8 |38.7 |545    |\n|[resnet50.a1_in1k](https://huggingface.co/timm/resnet50.a1_in1k)|288     |81.22|95.11|25.6       |6.8  |18.4 |2089   |\n|[resnet50_gn.a1h_in1k](https://huggingface.co/timm/resnet50_gn.a1h_in1k)|288     |81.22|95.63|25.6       |6.8  |18.4 |676    |\n|[resnet50d.a2_in1k](https://huggingface.co/timm/resnet50d.a2_in1k)|288     |81.18|95.09|25.6       |7.2  |19.7 |1908   |\n|[resnet50.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnet50.fb_swsl_ig1b_ft_in1k)|224     |81.18|95.98|25.6       |4.1  |11.1 |3455   |\n|[resnext50_32x4d.tv2_in1k](https://huggingface.co/timm/resnext50_32x4d.tv2_in1k)|224     |81.17|95.34|25.0       |4.3  |14.4 |2933   |\n|[resnext50_32x4d.a1h_in1k](https://huggingface.co/timm/resnext50_32x4d.a1h_in1k)|224     |81.1 |95.33|25.0       |4.3  |14.4 |2934   |\n|[seresnet50.a2_in1k](https://huggingface.co/timm/seresnet50.a2_in1k)|288     |81.1 |95.23|28.1       |6.8  |18.4 |1801   |\n|[seresnet50.a1_in1k](https://huggingface.co/timm/seresnet50.a1_in1k)|288     |81.1 |95.12|28.1       |6.8  |18.4 |1799   |\n|[resnet152s.gluon_in1k](https://huggingface.co/timm/resnet152s.gluon_in1k)|224     |81.02|95.41|60.3       |12.9 |25.0 |1347   |\n|[resnet50.d_in1k](https://huggingface.co/timm/resnet50.d_in1k)|288     |80.97|95.44|25.6       |6.8  |18.4 |2085   |\n|[gcresnet50t.ra2_in1k](https://huggingface.co/timm/gcresnet50t.ra2_in1k)|256     |80.94|95.45|25.9       |5.4  |14.7 |2571   |\n|[resnext101_32x4d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext101_32x4d.fb_ssl_yfcc100m_ft_in1k)|224     |80.93|95.73|44.2       |8.0  |21.2 |1814   |\n|[resnet50.c1_in1k](https://huggingface.co/timm/resnet50.c1_in1k)|288     |80.91|95.55|25.6       |6.8  |18.4 |2084   |\n|[seresnext101_32x4d.gluon_in1k](https://huggingface.co/timm/seresnext101_32x4d.gluon_in1k)|224     |80.9 |95.31|49.0       |8.0  |21.3 |1585   |\n|[seresnext101_64x4d.gluon_in1k](https://huggingface.co/timm/seresnext101_64x4d.gluon_in1k)|224     |80.9 |95.3 |88.2       |15.5 |31.2 |918    |\n|[resnet50.c2_in1k](https://huggingface.co/timm/resnet50.c2_in1k)|288     |80.86|95.52|25.6       |6.8  |18.4 |2085   |\n|[resnet50.tv2_in1k](https://huggingface.co/timm/resnet50.tv2_in1k)|224     |80.85|95.43|25.6       |4.1  |11.1 |3450   |\n|[ecaresnet50t.a2_in1k](https://huggingface.co/timm/ecaresnet50t.a2_in1k)|224     |80.84|95.02|25.6       |4.3  |11.8 |2821   |\n|[ecaresnet101d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet101d_pruned.miil_in1k)|224     |80.79|95.62|24.9       |3.5  |7.7  |2961   |\n|[seresnet33ts.ra2_in1k](https://huggingface.co/timm/seresnet33ts.ra2_in1k)|288     |80.79|95.36|19.8       |6.0  |14.8 |2506   |\n|[ecaresnet50d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet50d_pruned.miil_in1k)|288     |80.79|95.58|19.9       |4.2  |10.6 |2349   |\n|[resnet50.a2_in1k](https://huggingface.co/timm/resnet50.a2_in1k)|288     |80.78|94.99|25.6       |6.8  |18.4 |2088   |\n|[resnet50.b1k_in1k](https://huggingface.co/timm/resnet50.b1k_in1k)|288     |80.71|95.43|25.6       |6.8  |18.4 |2087   |\n|[resnext50_32x4d.ra_in1k](https://huggingface.co/timm/resnext50_32x4d.ra_in1k)|288     |80.7 |95.39|25.0       |7.0  |23.8 |1749   |\n|[resnetrs101.tf_in1k](https://huggingface.co/timm/resnetrs101.tf_in1k)|192     |80.69|95.24|63.6       |6.0  |12.7 |2270   |\n|[resnet50d.a1_in1k](https://huggingface.co/timm/resnet50d.a1_in1k)|224     |80.68|94.71|25.6       |4.4  |11.9 |3162   |\n|[eca_resnet33ts.ra2_in1k](https://huggingface.co/timm/eca_resnet33ts.ra2_in1k)|288     |80.68|95.36|19.7       |6.0  |14.8 |2637   |\n|[resnet50.a1h_in1k](https://huggingface.co/timm/resnet50.a1h_in1k)|224     |80.67|95.3 |25.6       |4.1  |11.1 |3452   |\n|[resnext50d_32x4d.bt_in1k](https://huggingface.co/timm/resnext50d_32x4d.bt_in1k)|288     |80.67|95.42|25.0       |7.4  |25.1 |1626   |\n|[resnetaa50.a1h_in1k](https://huggingface.co/timm/resnetaa50.a1h_in1k)|224     |80.63|95.21|25.6       |5.2  |11.6 |3034   |\n|[ecaresnet50d.miil_in1k](https://huggingface.co/timm/ecaresnet50d.miil_in1k)|224     |80.61|95.32|25.6       |4.4  |11.9 |2813   |\n|[resnext101_64x4d.gluon_in1k](https://huggingface.co/timm/resnext101_64x4d.gluon_in1k)|224     |80.61|94.99|83.5       |15.5 |31.2 |989    |\n|[gcresnet33ts.ra2_in1k](https://huggingface.co/timm/gcresnet33ts.ra2_in1k)|288     |80.6 |95.31|19.9       |6.0  |14.8 |2578   |\n|[gcresnext50ts.ch_in1k](https://huggingface.co/timm/gcresnext50ts.ch_in1k)|256     |80.57|95.17|15.7       |3.8  |15.5 |2710   |\n|[resnet152.a3_in1k](https://huggingface.co/timm/resnet152.a3_in1k)|224     |80.56|95.0 |60.2       |11.6 |22.6 |1483   |\n|[resnet50d.ra2_in1k](https://huggingface.co/timm/resnet50d.ra2_in1k)|224     |80.53|95.16|25.6       |4.4  |11.9 |3164   |\n|[resnext50_32x4d.a1_in1k](https://huggingface.co/timm/resnext50_32x4d.a1_in1k)|224     |80.53|94.46|25.0       |4.3  |14.4 |2930   |\n|[wide_resnet101_2.tv2_in1k](https://huggingface.co/timm/wide_resnet101_2.tv2_in1k)|176     |80.48|94.98|126.9      |14.3 |13.2 |1719   |\n|[resnet152d.gluon_in1k](https://huggingface.co/timm/resnet152d.gluon_in1k)|224     |80.47|95.2 |60.2       |11.8 |23.4 |1428   |\n|[resnet50.b2k_in1k](https://huggingface.co/timm/resnet50.b2k_in1k)|288     |80.45|95.32|25.6       |6.8  |18.4 |2086   |\n|[ecaresnetlight.miil_in1k](https://huggingface.co/timm/ecaresnetlight.miil_in1k)|224     |80.45|95.24|30.2       |4.1  |8.4  |3530   |\n|[resnext50_32x4d.a2_in1k](https://huggingface.co/timm/resnext50_32x4d.a2_in1k)|224     |80.45|94.63|25.0       |4.3  |14.4 |2936   |\n|[wide_resnet50_2.tv2_in1k](https://huggingface.co/timm/wide_resnet50_2.tv2_in1k)|176     |80.43|95.09|68.9       |7.3  |9.0  |3015   |\n|[resnet101d.gluon_in1k](https://huggingface.co/timm/resnet101d.gluon_in1k)|224     |80.42|95.01|44.6       |8.1  |17.0 |2007   |\n|[resnet50.a1_in1k](https://huggingface.co/timm/resnet50.a1_in1k)|224     |80.38|94.6 |25.6       |4.1  |11.1 |3461   |\n|[seresnet33ts.ra2_in1k](https://huggingface.co/timm/seresnet33ts.ra2_in1k)|256     |80.36|95.1 |19.8       |4.8  |11.7 |3267   |\n|[resnext101_32x4d.gluon_in1k](https://huggingface.co/timm/resnext101_32x4d.gluon_in1k)|224     |80.34|94.93|44.2       |8.0  |21.2 |1814   |\n|[resnext50_32x4d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext50_32x4d.fb_ssl_yfcc100m_ft_in1k)|224     |80.32|95.4 |25.0       |4.3  |14.4 |2941   |\n|[resnet101s.gluon_in1k](https://huggingface.co/timm/resnet101s.gluon_in1k)|224     |80.28|95.16|44.7       |9.2  |18.6 |1851   |\n|[seresnet50.ra2_in1k](https://huggingface.co/timm/seresnet50.ra2_in1k)|224     |80.26|95.08|28.1       |4.1  |11.1 |2972   |\n|[resnetblur50.bt_in1k](https://huggingface.co/timm/resnetblur50.bt_in1k)|288     |80.24|95.24|25.6       |8.5  |19.9 |1523   |\n|[resnet50d.a2_in1k](https://huggingface.co/timm/resnet50d.a2_in1k)|224     |80.22|94.63|25.6       |4.4  |11.9 |3162   |\n|[resnet152.tv2_in1k](https://huggingface.co/timm/resnet152.tv2_in1k)|176     |80.2 |94.64|60.2       |7.2  |14.0 |2346   |\n|[seresnet50.a2_in1k](https://huggingface.co/timm/seresnet50.a2_in1k)|224     |80.08|94.74|28.1       |4.1  |11.1 |2969   |\n|[eca_resnet33ts.ra2_in1k](https://huggingface.co/timm/eca_resnet33ts.ra2_in1k)|256     |80.08|94.97|19.7       |4.8  |11.7 |3284   |\n|[gcresnet33ts.ra2_in1k](https://huggingface.co/timm/gcresnet33ts.ra2_in1k)|256     |80.06|94.99|19.9       |4.8  |11.7 |3216   |\n|[resnet50_gn.a1h_in1k](https://huggingface.co/timm/resnet50_gn.a1h_in1k)|224     |80.06|94.95|25.6       |4.1  |11.1 |1109   |\n|[seresnet50.a1_in1k](https://huggingface.co/timm/seresnet50.a1_in1k)|224     |80.02|94.71|28.1       |4.1  |11.1 |2962   |\n|[resnet50.ram_in1k](https://huggingface.co/timm/resnet50.ram_in1k)|288     |79.97|95.05|25.6       |6.8  |18.4 |2086   |\n|[resnet152c.gluon_in1k](https://huggingface.co/timm/resnet152c.gluon_in1k)|224     |79.92|94.84|60.2       |11.8 |23.4 |1455   |\n|[seresnext50_32x4d.gluon_in1k](https://huggingface.co/timm/seresnext50_32x4d.gluon_in1k)|224     |79.91|94.82|27.6       |4.3  |14.4 |2591   |\n|[resnet50.d_in1k](https://huggingface.co/timm/resnet50.d_in1k)|224     |79.91|94.67|25.6       |4.1  |11.1 |3456   |\n|[resnet101.tv2_in1k](https://huggingface.co/timm/resnet101.tv2_in1k)|176     |79.9 |94.6 |44.6       |4.9  |10.1 |3341   |\n|[resnetrs50.tf_in1k](https://huggingface.co/timm/resnetrs50.tf_in1k)|224     |79.89|94.97|35.7       |4.5  |12.1 |2774   |\n|[resnet50.c2_in1k](https://huggingface.co/timm/resnet50.c2_in1k)|224     |79.88|94.87|25.6       |4.1  |11.1 |3455   |\n|[ecaresnet26t.ra2_in1k](https://huggingface.co/timm/ecaresnet26t.ra2_in1k)|320     |79.86|95.07|16.0       |5.2  |16.4 |2168   |\n|[resnet50.a2_in1k](https://huggingface.co/timm/resnet50.a2_in1k)|224     |79.85|94.56|25.6       |4.1  |11.1 |3460   |\n|[resnet50.ra_in1k](https://huggingface.co/timm/resnet50.ra_in1k)|288     |79.83|94.97|25.6       |6.8  |18.4 |2087   |\n|[resnet101.a3_in1k](https://huggingface.co/timm/resnet101.a3_in1k)|224     |79.82|94.62|44.6       |7.8  |16.2 |2114   |\n|[resnext50_32x4d.ra_in1k](https://huggingface.co/timm/resnext50_32x4d.ra_in1k)|224     |79.76|94.6 |25.0       |4.3  |14.4 |2943   |\n|[resnet50.c1_in1k](https://huggingface.co/timm/resnet50.c1_in1k)|224     |79.74|94.95|25.6       |4.1  |11.1 |3455   |\n|[ecaresnet50d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet50d_pruned.miil_in1k)|224     |79.74|94.87|19.9       |2.5  |6.4  |3929   |\n|[resnet33ts.ra2_in1k](https://huggingface.co/timm/resnet33ts.ra2_in1k)|288     |79.71|94.83|19.7       |6.0  |14.8 |2710   |\n|[resnet152.gluon_in1k](https://huggingface.co/timm/resnet152.gluon_in1k)|224     |79.68|94.74|60.2       |11.6 |22.6 |1486   |\n|[resnext50d_32x4d.bt_in1k](https://huggingface.co/timm/resnext50d_32x4d.bt_in1k)|224     |79.67|94.87|25.0       |4.5  |15.2 |2729   |\n|[resnet50.bt_in1k](https://huggingface.co/timm/resnet50.bt_in1k)|288     |79.63|94.91|25.6       |6.8  |18.4 |2086   |\n|[ecaresnet50t.a3_in1k](https://huggingface.co/timm/ecaresnet50t.a3_in1k)|224     |79.56|94.72|25.6       |4.3  |11.8 |2805   |\n|[resnet101c.gluon_in1k](https://huggingface.co/timm/resnet101c.gluon_in1k)|224     |79.53|94.58|44.6       |8.1  |17.0 |2062   |\n|[resnet50.b1k_in1k](https://huggingface.co/timm/resnet50.b1k_in1k)|224     |79.52|94.61|25.6       |4.1  |11.1 |3459   |\n|[resnet50.tv2_in1k](https://huggingface.co/timm/resnet50.tv2_in1k)|176     |79.42|94.64|25.6       |2.6  |6.9  |5397   |\n|[resnet32ts.ra2_in1k](https://huggingface.co/timm/resnet32ts.ra2_in1k)|288     |79.4 |94.66|18.0       |5.9  |14.6 |2752   |\n|[resnet50.b2k_in1k](https://huggingface.co/timm/resnet50.b2k_in1k)|224     |79.38|94.57|25.6       |4.1  |11.1 |3459   |\n|[resnext50_32x4d.tv2_in1k](https://huggingface.co/timm/resnext50_32x4d.tv2_in1k)|176     |79.37|94.3 |25.0       |2.7  |9.0  |4577   |\n|[resnext50_32x4d.gluon_in1k](https://huggingface.co/timm/resnext50_32x4d.gluon_in1k)|224     |79.36|94.43|25.0       |4.3  |14.4 |2942   |\n|[resnext101_32x8d.tv_in1k](https://huggingface.co/timm/resnext101_32x8d.tv_in1k)|224     |79.31|94.52|88.8       |16.5 |31.2 |1100   |\n|[resnet101.gluon_in1k](https://huggingface.co/timm/resnet101.gluon_in1k)|224     |79.31|94.53|44.6       |7.8  |16.2 |2125   |\n|[resnetblur50.bt_in1k](https://huggingface.co/timm/resnetblur50.bt_in1k)|224     |79.31|94.63|25.6       |5.2  |12.0 |2524   |\n|[resnet50.a1h_in1k](https://huggingface.co/timm/resnet50.a1h_in1k)|176     |79.27|94.49|25.6       |2.6  |6.9  |5404   |\n|[resnext50_32x4d.a3_in1k](https://huggingface.co/timm/resnext50_32x4d.a3_in1k)|224     |79.25|94.31|25.0       |4.3  |14.4 |2931   |\n|[resnet50.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnet50.fb_ssl_yfcc100m_ft_in1k)|224     |79.22|94.84|25.6       |4.1  |11.1 |3451   |\n|[resnet33ts.ra2_in1k](https://huggingface.co/timm/resnet33ts.ra2_in1k)|256     |79.21|94.56|19.7       |4.8  |11.7 |3392   |\n|[resnet50d.gluon_in1k](https://huggingface.co/timm/resnet50d.gluon_in1k)|224     |79.07|94.48|25.6       |4.4  |11.9 |3162   |\n|[resnet50.ram_in1k](https://huggingface.co/timm/resnet50.ram_in1k)|224     |79.03|94.38|25.6       |4.1  |11.1 |3453   |\n|[resnet50.am_in1k](https://huggingface.co/timm/resnet50.am_in1k)|224     |79.01|94.39|25.6       |4.1  |11.1 |3461   |\n|[resnet32ts.ra2_in1k](https://huggingface.co/timm/resnet32ts.ra2_in1k)|256     |79.01|94.37|18.0       |4.6  |11.6 |3440   |\n|[ecaresnet26t.ra2_in1k](https://huggingface.co/timm/ecaresnet26t.ra2_in1k)|256     |78.9 |94.54|16.0       |3.4  |10.5 |3421   |\n|[resnet152.a3_in1k](https://huggingface.co/timm/resnet152.a3_in1k)|160     |78.89|94.11|60.2       |5.9  |11.5 |2745   |\n|[wide_resnet101_2.tv_in1k](https://huggingface.co/timm/wide_resnet101_2.tv_in1k)|224     |78.84|94.28|126.9      |22.8 |21.2 |1079   |\n|[seresnext26d_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26d_32x4d.bt_in1k)|288     |78.83|94.24|16.8       |4.5  |16.8 |2251   |\n|[resnet50.ra_in1k](https://huggingface.co/timm/resnet50.ra_in1k)|224     |78.81|94.32|25.6       |4.1  |11.1 |3454   |\n|[seresnext26t_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26t_32x4d.bt_in1k)|288     |78.74|94.33|16.8       |4.5  |16.7 |2264   |\n|[resnet50s.gluon_in1k](https://huggingface.co/timm/resnet50s.gluon_in1k)|224     |78.72|94.23|25.7       |5.5  |13.5 |2796   |\n|[resnet50d.a3_in1k](https://huggingface.co/timm/resnet50d.a3_in1k)|224     |78.71|94.24|25.6       |4.4  |11.9 |3154   |\n|[wide_resnet50_2.tv_in1k](https://huggingface.co/timm/wide_resnet50_2.tv_in1k)|224     |78.47|94.09|68.9       |11.4 |14.4 |1934   |\n|[resnet50.bt_in1k](https://huggingface.co/timm/resnet50.bt_in1k)|224     |78.46|94.27|25.6       |4.1  |11.1 |3454   |\n|[resnet34d.ra2_in1k](https://huggingface.co/timm/resnet34d.ra2_in1k)|288     |78.43|94.35|21.8       |6.5  |7.5  |3291   |\n|[gcresnext26ts.ch_in1k](https://huggingface.co/timm/gcresnext26ts.ch_in1k)|288     |78.42|94.04|10.5       |3.1  |13.3 |3226   |\n|[resnet26t.ra2_in1k](https://huggingface.co/timm/resnet26t.ra2_in1k)|320     |78.33|94.13|16.0       |5.2  |16.4 |2391   |\n|[resnet152.tv_in1k](https://huggingface.co/timm/resnet152.tv_in1k)|224     |78.32|94.04|60.2       |11.6 |22.6 |1487   |\n|[seresnext26ts.ch_in1k](https://huggingface.co/timm/seresnext26ts.ch_in1k)|288     |78.28|94.1 |10.4       |3.1  |13.3 |3062   |\n|[bat_resnext26ts.ch_in1k](https://huggingface.co/timm/bat_resnext26ts.ch_in1k)|256     |78.25|94.1 |10.7       |2.5  |12.5 |3393   |\n|[resnet50.a3_in1k](https://huggingface.co/timm/resnet50.a3_in1k)|224     |78.06|93.78|25.6       |4.1  |11.1 |3450   |\n|[resnet50c.gluon_in1k](https://huggingface.co/timm/resnet50c.gluon_in1k)|224     |78.0 |93.99|25.6       |4.4  |11.9 |3286   |\n|[eca_resnext26ts.ch_in1k](https://huggingface.co/timm/eca_resnext26ts.ch_in1k)|288     |78.0 |93.91|10.3       |3.1  |13.3 |3297   |\n|[seresnext26t_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26t_32x4d.bt_in1k)|224     |77.98|93.75|16.8       |2.7  |10.1 |3841   |\n|[resnet34.a1_in1k](https://huggingface.co/timm/resnet34.a1_in1k)|288     |77.92|93.77|21.8       |6.1  |6.2  |3609   |\n|[resnet101.a3_in1k](https://huggingface.co/timm/resnet101.a3_in1k)|160     |77.88|93.71|44.6       |4.0  |8.3  |3926   |\n|[resnet26t.ra2_in1k](https://huggingface.co/timm/resnet26t.ra2_in1k)|256     |77.87|93.84|16.0       |3.4  |10.5 |3772   |\n|[seresnext26ts.ch_in1k](https://huggingface.co/timm/seresnext26ts.ch_in1k)|256     |77.86|93.79|10.4       |2.4  |10.5 |4263   |\n|[resnetrs50.tf_in1k](https://huggingface.co/timm/resnetrs50.tf_in1k)|160     |77.82|93.81|35.7       |2.3  |6.2  |5238   |\n|[gcresnext26ts.ch_in1k](https://huggingface.co/timm/gcresnext26ts.ch_in1k)|256     |77.81|93.82|10.5       |2.4  |10.5 |4183   |\n|[ecaresnet50t.a3_in1k](https://huggingface.co/timm/ecaresnet50t.a3_in1k)|160     |77.79|93.6 |25.6       |2.2  |6.0  |5329   |\n|[resnext50_32x4d.a3_in1k](https://huggingface.co/timm/resnext50_32x4d.a3_in1k)|160     |77.73|93.32|25.0       |2.2  |7.4  |5576   |\n|[resnext50_32x4d.tv_in1k](https://huggingface.co/timm/resnext50_32x4d.tv_in1k)|224     |77.61|93.7 |25.0       |4.3  |14.4 |2944   |\n|[seresnext26d_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26d_32x4d.bt_in1k)|224     |77.59|93.61|16.8       |2.7  |10.2 |3807   |\n|[resnet50.gluon_in1k](https://huggingface.co/timm/resnet50.gluon_in1k)|224     |77.58|93.72|25.6       |4.1  |11.1 |3455   |\n|[eca_resnext26ts.ch_in1k](https://huggingface.co/timm/eca_resnext26ts.ch_in1k)|256     |77.44|93.56|10.3       |2.4  |10.5 |4284   |\n|[resnet26d.bt_in1k](https://huggingface.co/timm/resnet26d.bt_in1k)|288     |77.41|93.63|16.0       |4.3  |13.5 |2907   |\n|[resnet101.tv_in1k](https://huggingface.co/timm/resnet101.tv_in1k)|224     |77.38|93.54|44.6       |7.8  |16.2 |2125   |\n|[resnet50d.a3_in1k](https://huggingface.co/timm/resnet50d.a3_in1k)|160     |77.22|93.27|25.6       |2.2  |6.1  |5982   |\n|[resnext26ts.ra2_in1k](https://huggingface.co/timm/resnext26ts.ra2_in1k)|288     |77.17|93.47|10.3       |3.1  |13.3 |3392   |\n|[resnet34.a2_in1k](https://huggingface.co/timm/resnet34.a2_in1k)|288     |77.15|93.27|21.8       |6.1  |6.2  |3615   |\n|[resnet34d.ra2_in1k](https://huggingface.co/timm/resnet34d.ra2_in1k)|224     |77.1 |93.37|21.8       |3.9  |4.5  |5436   |\n|[seresnet50.a3_in1k](https://huggingface.co/timm/seresnet50.a3_in1k)|224     |77.02|93.07|28.1       |4.1  |11.1 |2952   |\n|[resnext26ts.ra2_in1k](https://huggingface.co/timm/resnext26ts.ra2_in1k)|256     |76.78|93.13|10.3       |2.4  |10.5 |4410   |\n|[resnet26d.bt_in1k](https://huggingface.co/timm/resnet26d.bt_in1k)|224     |76.7 |93.17|16.0       |2.6  |8.2  |4859   |\n|[resnet34.bt_in1k](https://huggingface.co/timm/resnet34.bt_in1k)|288     |76.5 |93.35|21.8       |6.1  |6.2  |3617   |\n|[resnet34.a1_in1k](https://huggingface.co/timm/resnet34.a1_in1k)|224     |76.42|92.87|21.8       |3.7  |3.7  |5984   |\n|[resnet26.bt_in1k](https://huggingface.co/timm/resnet26.bt_in1k)|288     |76.35|93.18|16.0       |3.9  |12.2 |3331   |\n|[resnet50.tv_in1k](https://huggingface.co/timm/resnet50.tv_in1k)|224     |76.13|92.86|25.6       |4.1  |11.1 |3457   |\n|[resnet50.a3_in1k](https://huggingface.co/timm/resnet50.a3_in1k)|160     |75.96|92.5 |25.6       |2.1  |5.7  |6490   |\n|[resnet34.a2_in1k](https://huggingface.co/timm/resnet34.a2_in1k)|224     |75.52|92.44|21.8       |3.7  |3.7  |5991   |\n|[resnet26.bt_in1k](https://huggingface.co/timm/resnet26.bt_in1k)|224     |75.3 |92.58|16.0       |2.4  |7.4  |5583   |\n|[resnet34.bt_in1k](https://huggingface.co/timm/resnet34.bt_in1k)|224     |75.16|92.18|21.8       |3.7  |3.7  |5994   |\n|[seresnet50.a3_in1k](https://huggingface.co/timm/seresnet50.a3_in1k)|160     |75.1 |92.08|28.1       |2.1  |5.7  |5513   |\n|[resnet34.gluon_in1k](https://huggingface.co/timm/resnet34.gluon_in1k)|224     |74.57|91.98|21.8       |3.7  |3.7  |5984   |\n|[resnet18d.ra2_in1k](https://huggingface.co/timm/resnet18d.ra2_in1k)|288     |73.81|91.83|11.7       |3.4  |5.4  |5196   |\n|[resnet34.tv_in1k](https://huggingface.co/timm/resnet34.tv_in1k)|224     |73.32|91.42|21.8       |3.7  |3.7  |5979   |\n|[resnet18.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnet18.fb_swsl_ig1b_ft_in1k)|224     |73.28|91.73|11.7       |1.8  |2.5  |10213  |\n|[resnet18.a1_in1k](https://huggingface.co/timm/resnet18.a1_in1k)|288     |73.16|91.03|11.7       |3.0  |4.1  |6050   |\n|[resnet34.a3_in1k](https://huggingface.co/timm/resnet34.a3_in1k)|224     |72.98|91.11|21.8       |3.7  |3.7  |5967   |\n|[resnet18.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnet18.fb_ssl_yfcc100m_ft_in1k)|224     |72.6 |91.42|11.7       |1.8  |2.5  |10213  |\n|[resnet18.a2_in1k](https://huggingface.co/timm/resnet18.a2_in1k)|288     |72.37|90.59|11.7       |3.0  |4.1  |6051   |\n|[resnet14t.c3_in1k](https://huggingface.co/timm/resnet14t.c3_in1k)|224     |72.26|90.31|10.1       |1.7  |5.8  |7026   |\n|[resnet18d.ra2_in1k](https://huggingface.co/timm/resnet18d.ra2_in1k)|224     |72.26|90.68|11.7       |2.1  |3.3  |8707   |\n|[resnet18.a1_in1k](https://huggingface.co/timm/resnet18.a1_in1k)|224     |71.49|90.07|11.7       |1.8  |2.5  |10187  |\n|[resnet14t.c3_in1k](https://huggingface.co/timm/resnet14t.c3_in1k)|176     |71.31|89.69|10.1       |1.1  |3.6  |10970  |\n|[resnet18.gluon_in1k](https://huggingface.co/timm/resnet18.gluon_in1k)|224     |70.84|89.76|11.7       |1.8  |2.5  |10210  |\n|[resnet18.a2_in1k](https://huggingface.co/timm/resnet18.a2_in1k)|224     |70.64|89.47|11.7       |1.8  |2.5  |10194  |\n|[resnet34.a3_in1k](https://huggingface.co/timm/resnet34.a3_in1k)|160     |70.56|89.52|21.8       |1.9  |1.9  |10737  |\n|[resnet18.tv_in1k](https://huggingface.co/timm/resnet18.tv_in1k)|224     |69.76|89.07|11.7       |1.8  |2.5  |10205  |\n|[resnet10t.c3_in1k](https://huggingface.co/timm/resnet10t.c3_in1k)|224     |68.34|88.03|5.4        |1.1  |2.4  |13079  |\n|[resnet18.a3_in1k](https://huggingface.co/timm/resnet18.a3_in1k)|224     |68.25|88.17|11.7       |1.8  |2.5  |10167  |\n|[resnet10t.c3_in1k](https://huggingface.co/timm/resnet10t.c3_in1k)|176     |66.71|86.96|5.4        |0.7  |1.5  |20327  |\n|[resnet18.a3_in1k](https://huggingface.co/timm/resnet18.a3_in1k)|160     |65.66|86.26|11.7       |0.9  |1.3  |18229  |\n\n## Citation\n```bibtex\n@article{He2015,\n  author = {Kaiming He and Xiangyu Zhang and Shaoqing Ren and Jian Sun},\n  title = {Deep Residual Learning for Image Recognition},\n  journal = {arXiv preprint arXiv:1512.03385},\n  year = {2015}\n}\n```\n```bibtex\n@misc{rw2019timm,\n  author = {Ross Wightman},\n  title = {PyTorch Image Models},\n  year = {2019},\n  publisher = {GitHub},\n  journal = {GitHub repository},\n  doi = {10.5281/zenodo.4414861},\n  howpublished = {\\url{https://github.com/huggingface/pytorch-image-models}}\n}\n```\n",
+              "extracted_code": "from urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model('resnet18.tv_in1k', pretrained=True)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\ntop5_probabilities, top5_class_indices = torch.topk(output.softmax(dim=1) * 100, k=5)\n\n\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.tv_in1k',\n    pretrained=True,\n    features_only=True,\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\nfor o in output:\n    # print shape of each feature map in output\n    # e.g.:\n    #  torch.Size([1, 64, 112, 112])\n    #  torch.Size([1, 64, 56, 56])\n    #  torch.Size([1, 128, 28, 28])\n    #  torch.Size([1, 256, 14, 14])\n    #  torch.Size([1, 512, 7, 7])\n\n    print(o.shape)\n\n\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.tv_in1k',\n    pretrained=True,\n    num_classes=0,  # remove classifier nn.Linear\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # output is (batch_size, num_features) shaped tensor\n\n# or equivalently (without needing to set num_classes=0)\n\noutput = model.forward_features(transforms(img).unsqueeze(0))\n# output is unpooled, a (1, 512, 7, 7) shaped tensor\n\noutput = model.forward_head(output, pre_logits=True)\n# output is a (1, num_features) shaped tensor"
+            },
+            {
+              "id": "timm/resnet18.a3_in1k",
+              "author": "timm",
+              "sha": "033fbbcc3d67744ed61e1028b131bd7dea9397d5",
+              "created_at": "2023-04-05T18:03:10+00:00",
+              "last_modified": "2025-01-21T21:38:56+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 21028,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "config.json"
+                },
+                {
+                  "rfilename": "model.safetensors"
+                },
+                {
+                  "rfilename": "pytorch_model.bin"
+                }
+              ],
+              "card_data": {
+                "license": "apache-2.0",
+                "language": [],
+                "library_name": "timm",
+                "tags": [
+                  "image-classification",
+                  "timm",
+                  "transformers"
+                ],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "timm",
+                "pytorch",
+                "safetensors",
+                "image-classification",
+                "transformers",
+                "arxiv:2110.00476",
+                "arxiv:1512.03385",
+                "license:apache-2.0",
+                "region:us"
+              ],
+              "pipeline_tag": "image-classification",
+              "library_name": "timm",
+              "readme": "---\nlicense: apache-2.0\nlibrary_name: timm\ntags:\n- image-classification\n- timm\n- transformers\n---\n# Model card for resnet18.a3_in1k\n\nA ResNet-B image classification model.\n\nThis model features:\n * ReLU activations\n * single layer 7x7 convolution with pooling\n * 1x1 convolution shortcut downsample\n\nTrained on ImageNet-1k in `timm` using recipe template described below.\n\nRecipe details:\n * ResNet Strikes Back `A3` recipe\n * LAMB optimizer with BCE loss\n * Cosine LR schedule with warmup\n\n\n## Model Details\n- **Model Type:** Image classification / feature backbone\n- **Model Stats:**\n  - Params (M): 11.7\n  - GMACs: 0.9\n  - Activations (M): 1.3\n  - Image size: train = 160 x 160, test = 224 x 224\n- **Papers:**\n  - ResNet strikes back: An improved training procedure in timm: https://arxiv.org/abs/2110.00476\n  - Deep Residual Learning for Image Recognition: https://arxiv.org/abs/1512.03385\n- **Original:** https://github.com/huggingface/pytorch-image-models\n\n## Model Usage\n### Image Classification\n```python\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model('resnet18.a3_in1k', pretrained=True)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\ntop5_probabilities, top5_class_indices = torch.topk(output.softmax(dim=1) * 100, k=5)\n```\n\n### Feature Map Extraction\n```python\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.a3_in1k',\n    pretrained=True,\n    features_only=True,\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\nfor o in output:\n    # print shape of each feature map in output\n    # e.g.:\n    #  torch.Size([1, 64, 80, 80])\n    #  torch.Size([1, 64, 40, 40])\n    #  torch.Size([1, 128, 20, 20])\n    #  torch.Size([1, 256, 10, 10])\n    #  torch.Size([1, 512, 5, 5])\n\n    print(o.shape)\n```\n\n### Image Embeddings\n```python\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.a3_in1k',\n    pretrained=True,\n    num_classes=0,  # remove classifier nn.Linear\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # output is (batch_size, num_features) shaped tensor\n\n# or equivalently (without needing to set num_classes=0)\n\noutput = model.forward_features(transforms(img).unsqueeze(0))\n# output is unpooled, a (1, 512, 5, 5) shaped tensor\n\noutput = model.forward_head(output, pre_logits=True)\n# output is a (1, num_features) shaped tensor\n```\n\n## Model Comparison\nExplore the dataset and runtime metrics of this model in timm [model results](https://github.com/huggingface/pytorch-image-models/tree/main/results).\n\n|model                                     |img_size|top1 |top5 |param_count|gmacs|macts|img/sec|\n|------------------------------------------|--------|-----|-----|-----------|-----|-----|-------|\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k_288](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k_288)|320     |86.72|98.17|93.6       |35.2 |69.7 |451    |\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k_288](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k_288)|288     |86.51|98.08|93.6       |28.5 |56.4 |560    |\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k)|288     |86.49|98.03|93.6       |28.5 |56.4 |557    |\n|[seresnextaa101d_32x8d.sw_in12k_ft_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.sw_in12k_ft_in1k)|224     |85.96|97.82|93.6       |17.2 |34.2 |923    |\n|[resnext101_32x32d.fb_wsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x32d.fb_wsl_ig1b_ft_in1k)|224     |85.11|97.44|468.5      |87.3 |91.1 |254    |\n|[resnetrs420.tf_in1k](https://huggingface.co/timm/resnetrs420.tf_in1k)|416     |85.0 |97.12|191.9      |108.4|213.8|134    |\n|[ecaresnet269d.ra2_in1k](https://huggingface.co/timm/ecaresnet269d.ra2_in1k)|352     |84.96|97.22|102.1      |50.2 |101.2|291    |\n|[ecaresnet269d.ra2_in1k](https://huggingface.co/timm/ecaresnet269d.ra2_in1k)|320     |84.73|97.18|102.1      |41.5 |83.7 |353    |\n|[resnetrs350.tf_in1k](https://huggingface.co/timm/resnetrs350.tf_in1k)|384     |84.71|96.99|164.0      |77.6 |154.7|183    |\n|[seresnextaa101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.ah_in1k)|288     |84.57|97.08|93.6       |28.5 |56.4 |557    |\n|[resnetrs200.tf_in1k](https://huggingface.co/timm/resnetrs200.tf_in1k)|320     |84.45|97.08|93.2       |31.5 |67.8 |446    |\n|[resnetrs270.tf_in1k](https://huggingface.co/timm/resnetrs270.tf_in1k)|352     |84.43|96.97|129.9      |51.1 |105.5|280    |\n|[seresnext101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101d_32x8d.ah_in1k)|288     |84.36|96.92|93.6       |27.6 |53.0 |595    |\n|[seresnet152d.ra2_in1k](https://huggingface.co/timm/seresnet152d.ra2_in1k)|320     |84.35|97.04|66.8       |24.1 |47.7 |610    |\n|[resnetrs350.tf_in1k](https://huggingface.co/timm/resnetrs350.tf_in1k)|288     |84.3 |96.94|164.0      |43.7 |87.1 |333    |\n|[resnext101_32x8d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x8d.fb_swsl_ig1b_ft_in1k)|224     |84.28|97.17|88.8       |16.5 |31.2 |1100   |\n|[resnetrs420.tf_in1k](https://huggingface.co/timm/resnetrs420.tf_in1k)|320     |84.24|96.86|191.9      |64.2 |126.6|228    |\n|[seresnext101_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101_32x8d.ah_in1k)|288     |84.19|96.87|93.6       |27.2 |51.6 |613    |\n|[resnext101_32x16d.fb_wsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x16d.fb_wsl_ig1b_ft_in1k)|224     |84.18|97.19|194.0      |36.3 |51.2 |581    |\n|[resnetaa101d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa101d.sw_in12k_ft_in1k)|288     |84.11|97.11|44.6       |15.1 |29.0 |1144   |\n|[resnet200d.ra2_in1k](https://huggingface.co/timm/resnet200d.ra2_in1k)|320     |83.97|96.82|64.7       |31.2 |67.3 |518    |\n|[resnetrs200.tf_in1k](https://huggingface.co/timm/resnetrs200.tf_in1k)|256     |83.87|96.75|93.2       |20.2 |43.4 |692    |\n|[seresnextaa101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnextaa101d_32x8d.ah_in1k)|224     |83.86|96.65|93.6       |17.2 |34.2 |923    |\n|[resnetrs152.tf_in1k](https://huggingface.co/timm/resnetrs152.tf_in1k)|320     |83.72|96.61|86.6       |24.3 |48.1 |617    |\n|[seresnet152d.ra2_in1k](https://huggingface.co/timm/seresnet152d.ra2_in1k)|256     |83.69|96.78|66.8       |15.4 |30.6 |943    |\n|[seresnext101d_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101d_32x8d.ah_in1k)|224     |83.68|96.61|93.6       |16.7 |32.0 |986    |\n|[resnet152d.ra2_in1k](https://huggingface.co/timm/resnet152d.ra2_in1k)|320     |83.67|96.74|60.2       |24.1 |47.7 |706    |\n|[resnetrs270.tf_in1k](https://huggingface.co/timm/resnetrs270.tf_in1k)|256     |83.59|96.61|129.9      |27.1 |55.8 |526    |\n|[seresnext101_32x8d.ah_in1k](https://huggingface.co/timm/seresnext101_32x8d.ah_in1k)|224     |83.58|96.4 |93.6       |16.5 |31.2 |1013   |\n|[resnetaa101d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa101d.sw_in12k_ft_in1k)|224     |83.54|96.83|44.6       |9.1  |17.6 |1864   |\n|[resnet152.a1h_in1k](https://huggingface.co/timm/resnet152.a1h_in1k)|288     |83.46|96.54|60.2       |19.1 |37.3 |904    |\n|[resnext101_32x16d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x16d.fb_swsl_ig1b_ft_in1k)|224     |83.35|96.85|194.0      |36.3 |51.2 |582    |\n|[resnet200d.ra2_in1k](https://huggingface.co/timm/resnet200d.ra2_in1k)|256     |83.23|96.53|64.7       |20.0 |43.1 |809    |\n|[resnext101_32x4d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x4d.fb_swsl_ig1b_ft_in1k)|224     |83.22|96.75|44.2       |8.0  |21.2 |1814   |\n|[resnext101_64x4d.c1_in1k](https://huggingface.co/timm/resnext101_64x4d.c1_in1k)|288     |83.16|96.38|83.5       |25.7 |51.6 |590    |\n|[resnet152d.ra2_in1k](https://huggingface.co/timm/resnet152d.ra2_in1k)|256     |83.14|96.38|60.2       |15.4 |30.5 |1096   |\n|[resnet101d.ra2_in1k](https://huggingface.co/timm/resnet101d.ra2_in1k)|320     |83.02|96.45|44.6       |16.5 |34.8 |992    |\n|[ecaresnet101d.miil_in1k](https://huggingface.co/timm/ecaresnet101d.miil_in1k)|288     |82.98|96.54|44.6       |13.4 |28.2 |1077   |\n|[resnext101_64x4d.tv_in1k](https://huggingface.co/timm/resnext101_64x4d.tv_in1k)|224     |82.98|96.25|83.5       |15.5 |31.2 |989    |\n|[resnetrs152.tf_in1k](https://huggingface.co/timm/resnetrs152.tf_in1k)|256     |82.86|96.28|86.6       |15.6 |30.8 |951    |\n|[resnext101_32x8d.tv2_in1k](https://huggingface.co/timm/resnext101_32x8d.tv2_in1k)|224     |82.83|96.22|88.8       |16.5 |31.2 |1099   |\n|[resnet152.a1h_in1k](https://huggingface.co/timm/resnet152.a1h_in1k)|224     |82.8 |96.13|60.2       |11.6 |22.6 |1486   |\n|[resnet101.a1h_in1k](https://huggingface.co/timm/resnet101.a1h_in1k)|288     |82.8 |96.32|44.6       |13.0 |26.8 |1291   |\n|[resnet152.a1_in1k](https://huggingface.co/timm/resnet152.a1_in1k)|288     |82.74|95.71|60.2       |19.1 |37.3 |905    |\n|[resnext101_32x8d.fb_wsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext101_32x8d.fb_wsl_ig1b_ft_in1k)|224     |82.69|96.63|88.8       |16.5 |31.2 |1100   |\n|[resnet152.a2_in1k](https://huggingface.co/timm/resnet152.a2_in1k)|288     |82.62|95.75|60.2       |19.1 |37.3 |904    |\n|[resnetaa50d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa50d.sw_in12k_ft_in1k)|288     |82.61|96.49|25.6       |8.9  |20.6 |1729   |\n|[resnet61q.ra2_in1k](https://huggingface.co/timm/resnet61q.ra2_in1k)|288     |82.53|96.13|36.8       |9.9  |21.5 |1773   |\n|[wide_resnet101_2.tv2_in1k](https://huggingface.co/timm/wide_resnet101_2.tv2_in1k)|224     |82.5 |96.02|126.9      |22.8 |21.2 |1078   |\n|[resnext101_64x4d.c1_in1k](https://huggingface.co/timm/resnext101_64x4d.c1_in1k)|224     |82.46|95.92|83.5       |15.5 |31.2 |987    |\n|[resnet51q.ra2_in1k](https://huggingface.co/timm/resnet51q.ra2_in1k)|288     |82.36|96.18|35.7       |8.1  |20.9 |1964   |\n|[ecaresnet50t.ra2_in1k](https://huggingface.co/timm/ecaresnet50t.ra2_in1k)|320     |82.35|96.14|25.6       |8.8  |24.1 |1386   |\n|[resnet101.a1_in1k](https://huggingface.co/timm/resnet101.a1_in1k)|288     |82.31|95.63|44.6       |13.0 |26.8 |1291   |\n|[resnetrs101.tf_in1k](https://huggingface.co/timm/resnetrs101.tf_in1k)|288     |82.29|96.01|63.6       |13.6 |28.5 |1078   |\n|[resnet152.tv2_in1k](https://huggingface.co/timm/resnet152.tv2_in1k)|224     |82.29|96.0 |60.2       |11.6 |22.6 |1484   |\n|[wide_resnet50_2.racm_in1k](https://huggingface.co/timm/wide_resnet50_2.racm_in1k)|288     |82.27|96.06|68.9       |18.9 |23.8 |1176   |\n|[resnet101d.ra2_in1k](https://huggingface.co/timm/resnet101d.ra2_in1k)|256     |82.26|96.07|44.6       |10.6 |22.2 |1542   |\n|[resnet101.a2_in1k](https://huggingface.co/timm/resnet101.a2_in1k)|288     |82.24|95.73|44.6       |13.0 |26.8 |1290   |\n|[seresnext50_32x4d.racm_in1k](https://huggingface.co/timm/seresnext50_32x4d.racm_in1k)|288     |82.2 |96.14|27.6       |7.0  |23.8 |1547   |\n|[ecaresnet101d.miil_in1k](https://huggingface.co/timm/ecaresnet101d.miil_in1k)|224     |82.18|96.05|44.6       |8.1  |17.1 |1771   |\n|[resnext50_32x4d.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnext50_32x4d.fb_swsl_ig1b_ft_in1k)|224     |82.17|96.22|25.0       |4.3  |14.4 |2943   |\n|[ecaresnet50t.a1_in1k](https://huggingface.co/timm/ecaresnet50t.a1_in1k)|288     |82.12|95.65|25.6       |7.1  |19.6 |1704   |\n|[resnext50_32x4d.a1h_in1k](https://huggingface.co/timm/resnext50_32x4d.a1h_in1k)|288     |82.03|95.94|25.0       |7.0  |23.8 |1745   |\n|[ecaresnet101d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet101d_pruned.miil_in1k)|288     |82.0 |96.15|24.9       |5.8  |12.7 |1787   |\n|[resnet61q.ra2_in1k](https://huggingface.co/timm/resnet61q.ra2_in1k)|256     |81.99|95.85|36.8       |7.8  |17.0 |2230   |\n|[resnext101_32x8d.tv2_in1k](https://huggingface.co/timm/resnext101_32x8d.tv2_in1k)|176     |81.98|95.72|88.8       |10.3 |19.4 |1768   |\n|[resnet152.a1_in1k](https://huggingface.co/timm/resnet152.a1_in1k)|224     |81.97|95.24|60.2       |11.6 |22.6 |1486   |\n|[resnet101.a1h_in1k](https://huggingface.co/timm/resnet101.a1h_in1k)|224     |81.93|95.75|44.6       |7.8  |16.2 |2122   |\n|[resnet101.tv2_in1k](https://huggingface.co/timm/resnet101.tv2_in1k)|224     |81.9 |95.77|44.6       |7.8  |16.2 |2118   |\n|[resnext101_32x16d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext101_32x16d.fb_ssl_yfcc100m_ft_in1k)|224     |81.84|96.1 |194.0      |36.3 |51.2 |583    |\n|[resnet51q.ra2_in1k](https://huggingface.co/timm/resnet51q.ra2_in1k)|256     |81.78|95.94|35.7       |6.4  |16.6 |2471   |\n|[resnet152.a2_in1k](https://huggingface.co/timm/resnet152.a2_in1k)|224     |81.77|95.22|60.2       |11.6 |22.6 |1485   |\n|[resnetaa50d.sw_in12k_ft_in1k](https://huggingface.co/timm/resnetaa50d.sw_in12k_ft_in1k)|224     |81.74|96.06|25.6       |5.4  |12.4 |2813   |\n|[ecaresnet50t.a2_in1k](https://huggingface.co/timm/ecaresnet50t.a2_in1k)|288     |81.65|95.54|25.6       |7.1  |19.6 |1703   |\n|[ecaresnet50d.miil_in1k](https://huggingface.co/timm/ecaresnet50d.miil_in1k)|288     |81.64|95.88|25.6       |7.2  |19.7 |1694   |\n|[resnext101_32x8d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext101_32x8d.fb_ssl_yfcc100m_ft_in1k)|224     |81.62|96.04|88.8       |16.5 |31.2 |1101   |\n|[wide_resnet50_2.tv2_in1k](https://huggingface.co/timm/wide_resnet50_2.tv2_in1k)|224     |81.61|95.76|68.9       |11.4 |14.4 |1930   |\n|[resnetaa50.a1h_in1k](https://huggingface.co/timm/resnetaa50.a1h_in1k)|288     |81.61|95.83|25.6       |8.5  |19.2 |1868   |\n|[resnet101.a1_in1k](https://huggingface.co/timm/resnet101.a1_in1k)|224     |81.5 |95.16|44.6       |7.8  |16.2 |2125   |\n|[resnext50_32x4d.a1_in1k](https://huggingface.co/timm/resnext50_32x4d.a1_in1k)|288     |81.48|95.16|25.0       |7.0  |23.8 |1745   |\n|[gcresnet50t.ra2_in1k](https://huggingface.co/timm/gcresnet50t.ra2_in1k)|288     |81.47|95.71|25.9       |6.9  |18.6 |2071   |\n|[wide_resnet50_2.racm_in1k](https://huggingface.co/timm/wide_resnet50_2.racm_in1k)|224     |81.45|95.53|68.9       |11.4 |14.4 |1929   |\n|[resnet50d.a1_in1k](https://huggingface.co/timm/resnet50d.a1_in1k)|288     |81.44|95.22|25.6       |7.2  |19.7 |1908   |\n|[ecaresnet50t.ra2_in1k](https://huggingface.co/timm/ecaresnet50t.ra2_in1k)|256     |81.44|95.67|25.6       |5.6  |15.4 |2168   |\n|[ecaresnetlight.miil_in1k](https://huggingface.co/timm/ecaresnetlight.miil_in1k)|288     |81.4 |95.82|30.2       |6.8  |13.9 |2132   |\n|[resnet50d.ra2_in1k](https://huggingface.co/timm/resnet50d.ra2_in1k)|288     |81.37|95.74|25.6       |7.2  |19.7 |1910   |\n|[resnet101.a2_in1k](https://huggingface.co/timm/resnet101.a2_in1k)|224     |81.32|95.19|44.6       |7.8  |16.2 |2125   |\n|[seresnet50.ra2_in1k](https://huggingface.co/timm/seresnet50.ra2_in1k)|288     |81.3 |95.65|28.1       |6.8  |18.4 |1803   |\n|[resnext50_32x4d.a2_in1k](https://huggingface.co/timm/resnext50_32x4d.a2_in1k)|288     |81.3 |95.11|25.0       |7.0  |23.8 |1746   |\n|[seresnext50_32x4d.racm_in1k](https://huggingface.co/timm/seresnext50_32x4d.racm_in1k)|224     |81.27|95.62|27.6       |4.3  |14.4 |2591   |\n|[ecaresnet50t.a1_in1k](https://huggingface.co/timm/ecaresnet50t.a1_in1k)|224     |81.26|95.16|25.6       |4.3  |11.8 |2823   |\n|[gcresnext50ts.ch_in1k](https://huggingface.co/timm/gcresnext50ts.ch_in1k)|288     |81.23|95.54|15.7       |4.8  |19.6 |2117   |\n|[senet154.gluon_in1k](https://huggingface.co/timm/senet154.gluon_in1k)|224     |81.23|95.35|115.1      |20.8 |38.7 |545    |\n|[resnet50.a1_in1k](https://huggingface.co/timm/resnet50.a1_in1k)|288     |81.22|95.11|25.6       |6.8  |18.4 |2089   |\n|[resnet50_gn.a1h_in1k](https://huggingface.co/timm/resnet50_gn.a1h_in1k)|288     |81.22|95.63|25.6       |6.8  |18.4 |676    |\n|[resnet50d.a2_in1k](https://huggingface.co/timm/resnet50d.a2_in1k)|288     |81.18|95.09|25.6       |7.2  |19.7 |1908   |\n|[resnet50.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnet50.fb_swsl_ig1b_ft_in1k)|224     |81.18|95.98|25.6       |4.1  |11.1 |3455   |\n|[resnext50_32x4d.tv2_in1k](https://huggingface.co/timm/resnext50_32x4d.tv2_in1k)|224     |81.17|95.34|25.0       |4.3  |14.4 |2933   |\n|[resnext50_32x4d.a1h_in1k](https://huggingface.co/timm/resnext50_32x4d.a1h_in1k)|224     |81.1 |95.33|25.0       |4.3  |14.4 |2934   |\n|[seresnet50.a2_in1k](https://huggingface.co/timm/seresnet50.a2_in1k)|288     |81.1 |95.23|28.1       |6.8  |18.4 |1801   |\n|[seresnet50.a1_in1k](https://huggingface.co/timm/seresnet50.a1_in1k)|288     |81.1 |95.12|28.1       |6.8  |18.4 |1799   |\n|[resnet152s.gluon_in1k](https://huggingface.co/timm/resnet152s.gluon_in1k)|224     |81.02|95.41|60.3       |12.9 |25.0 |1347   |\n|[resnet50.d_in1k](https://huggingface.co/timm/resnet50.d_in1k)|288     |80.97|95.44|25.6       |6.8  |18.4 |2085   |\n|[gcresnet50t.ra2_in1k](https://huggingface.co/timm/gcresnet50t.ra2_in1k)|256     |80.94|95.45|25.9       |5.4  |14.7 |2571   |\n|[resnext101_32x4d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext101_32x4d.fb_ssl_yfcc100m_ft_in1k)|224     |80.93|95.73|44.2       |8.0  |21.2 |1814   |\n|[resnet50.c1_in1k](https://huggingface.co/timm/resnet50.c1_in1k)|288     |80.91|95.55|25.6       |6.8  |18.4 |2084   |\n|[seresnext101_32x4d.gluon_in1k](https://huggingface.co/timm/seresnext101_32x4d.gluon_in1k)|224     |80.9 |95.31|49.0       |8.0  |21.3 |1585   |\n|[seresnext101_64x4d.gluon_in1k](https://huggingface.co/timm/seresnext101_64x4d.gluon_in1k)|224     |80.9 |95.3 |88.2       |15.5 |31.2 |918    |\n|[resnet50.c2_in1k](https://huggingface.co/timm/resnet50.c2_in1k)|288     |80.86|95.52|25.6       |6.8  |18.4 |2085   |\n|[resnet50.tv2_in1k](https://huggingface.co/timm/resnet50.tv2_in1k)|224     |80.85|95.43|25.6       |4.1  |11.1 |3450   |\n|[ecaresnet50t.a2_in1k](https://huggingface.co/timm/ecaresnet50t.a2_in1k)|224     |80.84|95.02|25.6       |4.3  |11.8 |2821   |\n|[ecaresnet101d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet101d_pruned.miil_in1k)|224     |80.79|95.62|24.9       |3.5  |7.7  |2961   |\n|[seresnet33ts.ra2_in1k](https://huggingface.co/timm/seresnet33ts.ra2_in1k)|288     |80.79|95.36|19.8       |6.0  |14.8 |2506   |\n|[ecaresnet50d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet50d_pruned.miil_in1k)|288     |80.79|95.58|19.9       |4.2  |10.6 |2349   |\n|[resnet50.a2_in1k](https://huggingface.co/timm/resnet50.a2_in1k)|288     |80.78|94.99|25.6       |6.8  |18.4 |2088   |\n|[resnet50.b1k_in1k](https://huggingface.co/timm/resnet50.b1k_in1k)|288     |80.71|95.43|25.6       |6.8  |18.4 |2087   |\n|[resnext50_32x4d.ra_in1k](https://huggingface.co/timm/resnext50_32x4d.ra_in1k)|288     |80.7 |95.39|25.0       |7.0  |23.8 |1749   |\n|[resnetrs101.tf_in1k](https://huggingface.co/timm/resnetrs101.tf_in1k)|192     |80.69|95.24|63.6       |6.0  |12.7 |2270   |\n|[resnet50d.a1_in1k](https://huggingface.co/timm/resnet50d.a1_in1k)|224     |80.68|94.71|25.6       |4.4  |11.9 |3162   |\n|[eca_resnet33ts.ra2_in1k](https://huggingface.co/timm/eca_resnet33ts.ra2_in1k)|288     |80.68|95.36|19.7       |6.0  |14.8 |2637   |\n|[resnet50.a1h_in1k](https://huggingface.co/timm/resnet50.a1h_in1k)|224     |80.67|95.3 |25.6       |4.1  |11.1 |3452   |\n|[resnext50d_32x4d.bt_in1k](https://huggingface.co/timm/resnext50d_32x4d.bt_in1k)|288     |80.67|95.42|25.0       |7.4  |25.1 |1626   |\n|[resnetaa50.a1h_in1k](https://huggingface.co/timm/resnetaa50.a1h_in1k)|224     |80.63|95.21|25.6       |5.2  |11.6 |3034   |\n|[ecaresnet50d.miil_in1k](https://huggingface.co/timm/ecaresnet50d.miil_in1k)|224     |80.61|95.32|25.6       |4.4  |11.9 |2813   |\n|[resnext101_64x4d.gluon_in1k](https://huggingface.co/timm/resnext101_64x4d.gluon_in1k)|224     |80.61|94.99|83.5       |15.5 |31.2 |989    |\n|[gcresnet33ts.ra2_in1k](https://huggingface.co/timm/gcresnet33ts.ra2_in1k)|288     |80.6 |95.31|19.9       |6.0  |14.8 |2578   |\n|[gcresnext50ts.ch_in1k](https://huggingface.co/timm/gcresnext50ts.ch_in1k)|256     |80.57|95.17|15.7       |3.8  |15.5 |2710   |\n|[resnet152.a3_in1k](https://huggingface.co/timm/resnet152.a3_in1k)|224     |80.56|95.0 |60.2       |11.6 |22.6 |1483   |\n|[resnet50d.ra2_in1k](https://huggingface.co/timm/resnet50d.ra2_in1k)|224     |80.53|95.16|25.6       |4.4  |11.9 |3164   |\n|[resnext50_32x4d.a1_in1k](https://huggingface.co/timm/resnext50_32x4d.a1_in1k)|224     |80.53|94.46|25.0       |4.3  |14.4 |2930   |\n|[wide_resnet101_2.tv2_in1k](https://huggingface.co/timm/wide_resnet101_2.tv2_in1k)|176     |80.48|94.98|126.9      |14.3 |13.2 |1719   |\n|[resnet152d.gluon_in1k](https://huggingface.co/timm/resnet152d.gluon_in1k)|224     |80.47|95.2 |60.2       |11.8 |23.4 |1428   |\n|[resnet50.b2k_in1k](https://huggingface.co/timm/resnet50.b2k_in1k)|288     |80.45|95.32|25.6       |6.8  |18.4 |2086   |\n|[ecaresnetlight.miil_in1k](https://huggingface.co/timm/ecaresnetlight.miil_in1k)|224     |80.45|95.24|30.2       |4.1  |8.4  |3530   |\n|[resnext50_32x4d.a2_in1k](https://huggingface.co/timm/resnext50_32x4d.a2_in1k)|224     |80.45|94.63|25.0       |4.3  |14.4 |2936   |\n|[wide_resnet50_2.tv2_in1k](https://huggingface.co/timm/wide_resnet50_2.tv2_in1k)|176     |80.43|95.09|68.9       |7.3  |9.0  |3015   |\n|[resnet101d.gluon_in1k](https://huggingface.co/timm/resnet101d.gluon_in1k)|224     |80.42|95.01|44.6       |8.1  |17.0 |2007   |\n|[resnet50.a1_in1k](https://huggingface.co/timm/resnet50.a1_in1k)|224     |80.38|94.6 |25.6       |4.1  |11.1 |3461   |\n|[seresnet33ts.ra2_in1k](https://huggingface.co/timm/seresnet33ts.ra2_in1k)|256     |80.36|95.1 |19.8       |4.8  |11.7 |3267   |\n|[resnext101_32x4d.gluon_in1k](https://huggingface.co/timm/resnext101_32x4d.gluon_in1k)|224     |80.34|94.93|44.2       |8.0  |21.2 |1814   |\n|[resnext50_32x4d.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnext50_32x4d.fb_ssl_yfcc100m_ft_in1k)|224     |80.32|95.4 |25.0       |4.3  |14.4 |2941   |\n|[resnet101s.gluon_in1k](https://huggingface.co/timm/resnet101s.gluon_in1k)|224     |80.28|95.16|44.7       |9.2  |18.6 |1851   |\n|[seresnet50.ra2_in1k](https://huggingface.co/timm/seresnet50.ra2_in1k)|224     |80.26|95.08|28.1       |4.1  |11.1 |2972   |\n|[resnetblur50.bt_in1k](https://huggingface.co/timm/resnetblur50.bt_in1k)|288     |80.24|95.24|25.6       |8.5  |19.9 |1523   |\n|[resnet50d.a2_in1k](https://huggingface.co/timm/resnet50d.a2_in1k)|224     |80.22|94.63|25.6       |4.4  |11.9 |3162   |\n|[resnet152.tv2_in1k](https://huggingface.co/timm/resnet152.tv2_in1k)|176     |80.2 |94.64|60.2       |7.2  |14.0 |2346   |\n|[seresnet50.a2_in1k](https://huggingface.co/timm/seresnet50.a2_in1k)|224     |80.08|94.74|28.1       |4.1  |11.1 |2969   |\n|[eca_resnet33ts.ra2_in1k](https://huggingface.co/timm/eca_resnet33ts.ra2_in1k)|256     |80.08|94.97|19.7       |4.8  |11.7 |3284   |\n|[gcresnet33ts.ra2_in1k](https://huggingface.co/timm/gcresnet33ts.ra2_in1k)|256     |80.06|94.99|19.9       |4.8  |11.7 |3216   |\n|[resnet50_gn.a1h_in1k](https://huggingface.co/timm/resnet50_gn.a1h_in1k)|224     |80.06|94.95|25.6       |4.1  |11.1 |1109   |\n|[seresnet50.a1_in1k](https://huggingface.co/timm/seresnet50.a1_in1k)|224     |80.02|94.71|28.1       |4.1  |11.1 |2962   |\n|[resnet50.ram_in1k](https://huggingface.co/timm/resnet50.ram_in1k)|288     |79.97|95.05|25.6       |6.8  |18.4 |2086   |\n|[resnet152c.gluon_in1k](https://huggingface.co/timm/resnet152c.gluon_in1k)|224     |79.92|94.84|60.2       |11.8 |23.4 |1455   |\n|[seresnext50_32x4d.gluon_in1k](https://huggingface.co/timm/seresnext50_32x4d.gluon_in1k)|224     |79.91|94.82|27.6       |4.3  |14.4 |2591   |\n|[resnet50.d_in1k](https://huggingface.co/timm/resnet50.d_in1k)|224     |79.91|94.67|25.6       |4.1  |11.1 |3456   |\n|[resnet101.tv2_in1k](https://huggingface.co/timm/resnet101.tv2_in1k)|176     |79.9 |94.6 |44.6       |4.9  |10.1 |3341   |\n|[resnetrs50.tf_in1k](https://huggingface.co/timm/resnetrs50.tf_in1k)|224     |79.89|94.97|35.7       |4.5  |12.1 |2774   |\n|[resnet50.c2_in1k](https://huggingface.co/timm/resnet50.c2_in1k)|224     |79.88|94.87|25.6       |4.1  |11.1 |3455   |\n|[ecaresnet26t.ra2_in1k](https://huggingface.co/timm/ecaresnet26t.ra2_in1k)|320     |79.86|95.07|16.0       |5.2  |16.4 |2168   |\n|[resnet50.a2_in1k](https://huggingface.co/timm/resnet50.a2_in1k)|224     |79.85|94.56|25.6       |4.1  |11.1 |3460   |\n|[resnet50.ra_in1k](https://huggingface.co/timm/resnet50.ra_in1k)|288     |79.83|94.97|25.6       |6.8  |18.4 |2087   |\n|[resnet101.a3_in1k](https://huggingface.co/timm/resnet101.a3_in1k)|224     |79.82|94.62|44.6       |7.8  |16.2 |2114   |\n|[resnext50_32x4d.ra_in1k](https://huggingface.co/timm/resnext50_32x4d.ra_in1k)|224     |79.76|94.6 |25.0       |4.3  |14.4 |2943   |\n|[resnet50.c1_in1k](https://huggingface.co/timm/resnet50.c1_in1k)|224     |79.74|94.95|25.6       |4.1  |11.1 |3455   |\n|[ecaresnet50d_pruned.miil_in1k](https://huggingface.co/timm/ecaresnet50d_pruned.miil_in1k)|224     |79.74|94.87|19.9       |2.5  |6.4  |3929   |\n|[resnet33ts.ra2_in1k](https://huggingface.co/timm/resnet33ts.ra2_in1k)|288     |79.71|94.83|19.7       |6.0  |14.8 |2710   |\n|[resnet152.gluon_in1k](https://huggingface.co/timm/resnet152.gluon_in1k)|224     |79.68|94.74|60.2       |11.6 |22.6 |1486   |\n|[resnext50d_32x4d.bt_in1k](https://huggingface.co/timm/resnext50d_32x4d.bt_in1k)|224     |79.67|94.87|25.0       |4.5  |15.2 |2729   |\n|[resnet50.bt_in1k](https://huggingface.co/timm/resnet50.bt_in1k)|288     |79.63|94.91|25.6       |6.8  |18.4 |2086   |\n|[ecaresnet50t.a3_in1k](https://huggingface.co/timm/ecaresnet50t.a3_in1k)|224     |79.56|94.72|25.6       |4.3  |11.8 |2805   |\n|[resnet101c.gluon_in1k](https://huggingface.co/timm/resnet101c.gluon_in1k)|224     |79.53|94.58|44.6       |8.1  |17.0 |2062   |\n|[resnet50.b1k_in1k](https://huggingface.co/timm/resnet50.b1k_in1k)|224     |79.52|94.61|25.6       |4.1  |11.1 |3459   |\n|[resnet50.tv2_in1k](https://huggingface.co/timm/resnet50.tv2_in1k)|176     |79.42|94.64|25.6       |2.6  |6.9  |5397   |\n|[resnet32ts.ra2_in1k](https://huggingface.co/timm/resnet32ts.ra2_in1k)|288     |79.4 |94.66|18.0       |5.9  |14.6 |2752   |\n|[resnet50.b2k_in1k](https://huggingface.co/timm/resnet50.b2k_in1k)|224     |79.38|94.57|25.6       |4.1  |11.1 |3459   |\n|[resnext50_32x4d.tv2_in1k](https://huggingface.co/timm/resnext50_32x4d.tv2_in1k)|176     |79.37|94.3 |25.0       |2.7  |9.0  |4577   |\n|[resnext50_32x4d.gluon_in1k](https://huggingface.co/timm/resnext50_32x4d.gluon_in1k)|224     |79.36|94.43|25.0       |4.3  |14.4 |2942   |\n|[resnext101_32x8d.tv_in1k](https://huggingface.co/timm/resnext101_32x8d.tv_in1k)|224     |79.31|94.52|88.8       |16.5 |31.2 |1100   |\n|[resnet101.gluon_in1k](https://huggingface.co/timm/resnet101.gluon_in1k)|224     |79.31|94.53|44.6       |7.8  |16.2 |2125   |\n|[resnetblur50.bt_in1k](https://huggingface.co/timm/resnetblur50.bt_in1k)|224     |79.31|94.63|25.6       |5.2  |12.0 |2524   |\n|[resnet50.a1h_in1k](https://huggingface.co/timm/resnet50.a1h_in1k)|176     |79.27|94.49|25.6       |2.6  |6.9  |5404   |\n|[resnext50_32x4d.a3_in1k](https://huggingface.co/timm/resnext50_32x4d.a3_in1k)|224     |79.25|94.31|25.0       |4.3  |14.4 |2931   |\n|[resnet50.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnet50.fb_ssl_yfcc100m_ft_in1k)|224     |79.22|94.84|25.6       |4.1  |11.1 |3451   |\n|[resnet33ts.ra2_in1k](https://huggingface.co/timm/resnet33ts.ra2_in1k)|256     |79.21|94.56|19.7       |4.8  |11.7 |3392   |\n|[resnet50d.gluon_in1k](https://huggingface.co/timm/resnet50d.gluon_in1k)|224     |79.07|94.48|25.6       |4.4  |11.9 |3162   |\n|[resnet50.ram_in1k](https://huggingface.co/timm/resnet50.ram_in1k)|224     |79.03|94.38|25.6       |4.1  |11.1 |3453   |\n|[resnet50.am_in1k](https://huggingface.co/timm/resnet50.am_in1k)|224     |79.01|94.39|25.6       |4.1  |11.1 |3461   |\n|[resnet32ts.ra2_in1k](https://huggingface.co/timm/resnet32ts.ra2_in1k)|256     |79.01|94.37|18.0       |4.6  |11.6 |3440   |\n|[ecaresnet26t.ra2_in1k](https://huggingface.co/timm/ecaresnet26t.ra2_in1k)|256     |78.9 |94.54|16.0       |3.4  |10.5 |3421   |\n|[resnet152.a3_in1k](https://huggingface.co/timm/resnet152.a3_in1k)|160     |78.89|94.11|60.2       |5.9  |11.5 |2745   |\n|[wide_resnet101_2.tv_in1k](https://huggingface.co/timm/wide_resnet101_2.tv_in1k)|224     |78.84|94.28|126.9      |22.8 |21.2 |1079   |\n|[seresnext26d_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26d_32x4d.bt_in1k)|288     |78.83|94.24|16.8       |4.5  |16.8 |2251   |\n|[resnet50.ra_in1k](https://huggingface.co/timm/resnet50.ra_in1k)|224     |78.81|94.32|25.6       |4.1  |11.1 |3454   |\n|[seresnext26t_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26t_32x4d.bt_in1k)|288     |78.74|94.33|16.8       |4.5  |16.7 |2264   |\n|[resnet50s.gluon_in1k](https://huggingface.co/timm/resnet50s.gluon_in1k)|224     |78.72|94.23|25.7       |5.5  |13.5 |2796   |\n|[resnet50d.a3_in1k](https://huggingface.co/timm/resnet50d.a3_in1k)|224     |78.71|94.24|25.6       |4.4  |11.9 |3154   |\n|[wide_resnet50_2.tv_in1k](https://huggingface.co/timm/wide_resnet50_2.tv_in1k)|224     |78.47|94.09|68.9       |11.4 |14.4 |1934   |\n|[resnet50.bt_in1k](https://huggingface.co/timm/resnet50.bt_in1k)|224     |78.46|94.27|25.6       |4.1  |11.1 |3454   |\n|[resnet34d.ra2_in1k](https://huggingface.co/timm/resnet34d.ra2_in1k)|288     |78.43|94.35|21.8       |6.5  |7.5  |3291   |\n|[gcresnext26ts.ch_in1k](https://huggingface.co/timm/gcresnext26ts.ch_in1k)|288     |78.42|94.04|10.5       |3.1  |13.3 |3226   |\n|[resnet26t.ra2_in1k](https://huggingface.co/timm/resnet26t.ra2_in1k)|320     |78.33|94.13|16.0       |5.2  |16.4 |2391   |\n|[resnet152.tv_in1k](https://huggingface.co/timm/resnet152.tv_in1k)|224     |78.32|94.04|60.2       |11.6 |22.6 |1487   |\n|[seresnext26ts.ch_in1k](https://huggingface.co/timm/seresnext26ts.ch_in1k)|288     |78.28|94.1 |10.4       |3.1  |13.3 |3062   |\n|[bat_resnext26ts.ch_in1k](https://huggingface.co/timm/bat_resnext26ts.ch_in1k)|256     |78.25|94.1 |10.7       |2.5  |12.5 |3393   |\n|[resnet50.a3_in1k](https://huggingface.co/timm/resnet50.a3_in1k)|224     |78.06|93.78|25.6       |4.1  |11.1 |3450   |\n|[resnet50c.gluon_in1k](https://huggingface.co/timm/resnet50c.gluon_in1k)|224     |78.0 |93.99|25.6       |4.4  |11.9 |3286   |\n|[eca_resnext26ts.ch_in1k](https://huggingface.co/timm/eca_resnext26ts.ch_in1k)|288     |78.0 |93.91|10.3       |3.1  |13.3 |3297   |\n|[seresnext26t_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26t_32x4d.bt_in1k)|224     |77.98|93.75|16.8       |2.7  |10.1 |3841   |\n|[resnet34.a1_in1k](https://huggingface.co/timm/resnet34.a1_in1k)|288     |77.92|93.77|21.8       |6.1  |6.2  |3609   |\n|[resnet101.a3_in1k](https://huggingface.co/timm/resnet101.a3_in1k)|160     |77.88|93.71|44.6       |4.0  |8.3  |3926   |\n|[resnet26t.ra2_in1k](https://huggingface.co/timm/resnet26t.ra2_in1k)|256     |77.87|93.84|16.0       |3.4  |10.5 |3772   |\n|[seresnext26ts.ch_in1k](https://huggingface.co/timm/seresnext26ts.ch_in1k)|256     |77.86|93.79|10.4       |2.4  |10.5 |4263   |\n|[resnetrs50.tf_in1k](https://huggingface.co/timm/resnetrs50.tf_in1k)|160     |77.82|93.81|35.7       |2.3  |6.2  |5238   |\n|[gcresnext26ts.ch_in1k](https://huggingface.co/timm/gcresnext26ts.ch_in1k)|256     |77.81|93.82|10.5       |2.4  |10.5 |4183   |\n|[ecaresnet50t.a3_in1k](https://huggingface.co/timm/ecaresnet50t.a3_in1k)|160     |77.79|93.6 |25.6       |2.2  |6.0  |5329   |\n|[resnext50_32x4d.a3_in1k](https://huggingface.co/timm/resnext50_32x4d.a3_in1k)|160     |77.73|93.32|25.0       |2.2  |7.4  |5576   |\n|[resnext50_32x4d.tv_in1k](https://huggingface.co/timm/resnext50_32x4d.tv_in1k)|224     |77.61|93.7 |25.0       |4.3  |14.4 |2944   |\n|[seresnext26d_32x4d.bt_in1k](https://huggingface.co/timm/seresnext26d_32x4d.bt_in1k)|224     |77.59|93.61|16.8       |2.7  |10.2 |3807   |\n|[resnet50.gluon_in1k](https://huggingface.co/timm/resnet50.gluon_in1k)|224     |77.58|93.72|25.6       |4.1  |11.1 |3455   |\n|[eca_resnext26ts.ch_in1k](https://huggingface.co/timm/eca_resnext26ts.ch_in1k)|256     |77.44|93.56|10.3       |2.4  |10.5 |4284   |\n|[resnet26d.bt_in1k](https://huggingface.co/timm/resnet26d.bt_in1k)|288     |77.41|93.63|16.0       |4.3  |13.5 |2907   |\n|[resnet101.tv_in1k](https://huggingface.co/timm/resnet101.tv_in1k)|224     |77.38|93.54|44.6       |7.8  |16.2 |2125   |\n|[resnet50d.a3_in1k](https://huggingface.co/timm/resnet50d.a3_in1k)|160     |77.22|93.27|25.6       |2.2  |6.1  |5982   |\n|[resnext26ts.ra2_in1k](https://huggingface.co/timm/resnext26ts.ra2_in1k)|288     |77.17|93.47|10.3       |3.1  |13.3 |3392   |\n|[resnet34.a2_in1k](https://huggingface.co/timm/resnet34.a2_in1k)|288     |77.15|93.27|21.8       |6.1  |6.2  |3615   |\n|[resnet34d.ra2_in1k](https://huggingface.co/timm/resnet34d.ra2_in1k)|224     |77.1 |93.37|21.8       |3.9  |4.5  |5436   |\n|[seresnet50.a3_in1k](https://huggingface.co/timm/seresnet50.a3_in1k)|224     |77.02|93.07|28.1       |4.1  |11.1 |2952   |\n|[resnext26ts.ra2_in1k](https://huggingface.co/timm/resnext26ts.ra2_in1k)|256     |76.78|93.13|10.3       |2.4  |10.5 |4410   |\n|[resnet26d.bt_in1k](https://huggingface.co/timm/resnet26d.bt_in1k)|224     |76.7 |93.17|16.0       |2.6  |8.2  |4859   |\n|[resnet34.bt_in1k](https://huggingface.co/timm/resnet34.bt_in1k)|288     |76.5 |93.35|21.8       |6.1  |6.2  |3617   |\n|[resnet34.a1_in1k](https://huggingface.co/timm/resnet34.a1_in1k)|224     |76.42|92.87|21.8       |3.7  |3.7  |5984   |\n|[resnet26.bt_in1k](https://huggingface.co/timm/resnet26.bt_in1k)|288     |76.35|93.18|16.0       |3.9  |12.2 |3331   |\n|[resnet50.tv_in1k](https://huggingface.co/timm/resnet50.tv_in1k)|224     |76.13|92.86|25.6       |4.1  |11.1 |3457   |\n|[resnet50.a3_in1k](https://huggingface.co/timm/resnet50.a3_in1k)|160     |75.96|92.5 |25.6       |2.1  |5.7  |6490   |\n|[resnet34.a2_in1k](https://huggingface.co/timm/resnet34.a2_in1k)|224     |75.52|92.44|21.8       |3.7  |3.7  |5991   |\n|[resnet26.bt_in1k](https://huggingface.co/timm/resnet26.bt_in1k)|224     |75.3 |92.58|16.0       |2.4  |7.4  |5583   |\n|[resnet34.bt_in1k](https://huggingface.co/timm/resnet34.bt_in1k)|224     |75.16|92.18|21.8       |3.7  |3.7  |5994   |\n|[seresnet50.a3_in1k](https://huggingface.co/timm/seresnet50.a3_in1k)|160     |75.1 |92.08|28.1       |2.1  |5.7  |5513   |\n|[resnet34.gluon_in1k](https://huggingface.co/timm/resnet34.gluon_in1k)|224     |74.57|91.98|21.8       |3.7  |3.7  |5984   |\n|[resnet18d.ra2_in1k](https://huggingface.co/timm/resnet18d.ra2_in1k)|288     |73.81|91.83|11.7       |3.4  |5.4  |5196   |\n|[resnet34.tv_in1k](https://huggingface.co/timm/resnet34.tv_in1k)|224     |73.32|91.42|21.8       |3.7  |3.7  |5979   |\n|[resnet18.fb_swsl_ig1b_ft_in1k](https://huggingface.co/timm/resnet18.fb_swsl_ig1b_ft_in1k)|224     |73.28|91.73|11.7       |1.8  |2.5  |10213  |\n|[resnet18.a1_in1k](https://huggingface.co/timm/resnet18.a1_in1k)|288     |73.16|91.03|11.7       |3.0  |4.1  |6050   |\n|[resnet34.a3_in1k](https://huggingface.co/timm/resnet34.a3_in1k)|224     |72.98|91.11|21.8       |3.7  |3.7  |5967   |\n|[resnet18.fb_ssl_yfcc100m_ft_in1k](https://huggingface.co/timm/resnet18.fb_ssl_yfcc100m_ft_in1k)|224     |72.6 |91.42|11.7       |1.8  |2.5  |10213  |\n|[resnet18.a2_in1k](https://huggingface.co/timm/resnet18.a2_in1k)|288     |72.37|90.59|11.7       |3.0  |4.1  |6051   |\n|[resnet14t.c3_in1k](https://huggingface.co/timm/resnet14t.c3_in1k)|224     |72.26|90.31|10.1       |1.7  |5.8  |7026   |\n|[resnet18d.ra2_in1k](https://huggingface.co/timm/resnet18d.ra2_in1k)|224     |72.26|90.68|11.7       |2.1  |3.3  |8707   |\n|[resnet18.a1_in1k](https://huggingface.co/timm/resnet18.a1_in1k)|224     |71.49|90.07|11.7       |1.8  |2.5  |10187  |\n|[resnet14t.c3_in1k](https://huggingface.co/timm/resnet14t.c3_in1k)|176     |71.31|89.69|10.1       |1.1  |3.6  |10970  |\n|[resnet18.gluon_in1k](https://huggingface.co/timm/resnet18.gluon_in1k)|224     |70.84|89.76|11.7       |1.8  |2.5  |10210  |\n|[resnet18.a2_in1k](https://huggingface.co/timm/resnet18.a2_in1k)|224     |70.64|89.47|11.7       |1.8  |2.5  |10194  |\n|[resnet34.a3_in1k](https://huggingface.co/timm/resnet34.a3_in1k)|160     |70.56|89.52|21.8       |1.9  |1.9  |10737  |\n|[resnet18.tv_in1k](https://huggingface.co/timm/resnet18.tv_in1k)|224     |69.76|89.07|11.7       |1.8  |2.5  |10205  |\n|[resnet10t.c3_in1k](https://huggingface.co/timm/resnet10t.c3_in1k)|224     |68.34|88.03|5.4        |1.1  |2.4  |13079  |\n|[resnet18.a3_in1k](https://huggingface.co/timm/resnet18.a3_in1k)|224     |68.25|88.17|11.7       |1.8  |2.5  |10167  |\n|[resnet10t.c3_in1k](https://huggingface.co/timm/resnet10t.c3_in1k)|176     |66.71|86.96|5.4        |0.7  |1.5  |20327  |\n|[resnet18.a3_in1k](https://huggingface.co/timm/resnet18.a3_in1k)|160     |65.66|86.26|11.7       |0.9  |1.3  |18229  |\n\n## Citation\n```bibtex\n@inproceedings{wightman2021resnet,\n  title={ResNet strikes back: An improved training procedure in timm},\n  author={Wightman, Ross and Touvron, Hugo and Jegou, Herve},\n  booktitle={NeurIPS 2021 Workshop on ImageNet: Past, Present, and Future}\n}\n```\n```bibtex\n@misc{rw2019timm,\n  author = {Ross Wightman},\n  title = {PyTorch Image Models},\n  year = {2019},\n  publisher = {GitHub},\n  journal = {GitHub repository},\n  doi = {10.5281/zenodo.4414861},\n  howpublished = {\\url{https://github.com/huggingface/pytorch-image-models}}\n}\n```\n```bibtex\n@article{He2015,\n  author = {Kaiming He and Xiangyu Zhang and Shaoqing Ren and Jian Sun},\n  title = {Deep Residual Learning for Image Recognition},\n  journal = {arXiv preprint arXiv:1512.03385},\n  year = {2015}\n}\n```\n",
+              "extracted_code": "from urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model('resnet18.a3_in1k', pretrained=True)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\ntop5_probabilities, top5_class_indices = torch.topk(output.softmax(dim=1) * 100, k=5)\n\n\n\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.a3_in1k',\n    pretrained=True,\n    features_only=True,\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # unsqueeze single image into batch of 1\n\nfor o in output:\n    # print shape of each feature map in output\n    # e.g.:\n    #  torch.Size([1, 64, 80, 80])\n    #  torch.Size([1, 64, 40, 40])\n    #  torch.Size([1, 128, 20, 20])\n    #  torch.Size([1, 256, 10, 10])\n    #  torch.Size([1, 512, 5, 5])\n\n    print(o.shape)\n\n\n\nfrom urllib.request import urlopen\nfrom PIL import Image\nimport timm\n\nimg = Image.open(urlopen(\n    'https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/beignets-task-guide.png'\n))\n\nmodel = timm.create_model(\n    'resnet18.a3_in1k',\n    pretrained=True,\n    num_classes=0,  # remove classifier nn.Linear\n)\nmodel = model.eval()\n\n# get model specific transforms (normalization, resize)\ndata_config = timm.data.resolve_model_data_config(model)\ntransforms = timm.data.create_transform(**data_config, is_training=False)\n\noutput = model(transforms(img).unsqueeze(0))  # output is (batch_size, num_features) shaped tensor\n\n# or equivalently (without needing to set num_classes=0)\n\noutput = model.forward_features(transforms(img).unsqueeze(0))\n# output is unpooled, a (1, 512, 5, 5) shaped tensor\n\noutput = model.forward_head(output, pre_logits=True)\n# output is a (1, num_features) shaped tensor"
+            },
+            {
+              "id": "XGBooster/LunarLanderPPO",
+              "author": "XGBooster",
+              "sha": "6d955a4b9af5695ec10d0a7a22e89ae5b2159298",
+              "created_at": "2022-05-19T07:29:22+00:00",
+              "last_modified": "2022-05-19T07:39:27+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 2,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "config.json"
+                },
+                {
+                  "rfilename": "lunar-lander-2e6-ppo.zip"
+                },
+                {
+                  "rfilename": "lunar-lander-2e6-ppo/_stable_baselines3_version"
+                },
+                {
+                  "rfilename": "lunar-lander-2e6-ppo/data"
+                },
+                {
+                  "rfilename": "lunar-lander-2e6-ppo/policy.optimizer.pth"
+                },
+                {
+                  "rfilename": "lunar-lander-2e6-ppo/policy.pth"
+                },
+                {
+                  "rfilename": "lunar-lander-2e6-ppo/pytorch_variables.pth"
+                },
+                {
+                  "rfilename": "lunar-lander-2e6-ppo/system_info.txt"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "library_name": "stable-baselines3",
+                "tags": [
+                  "LunarLander-v2",
+                  "deep-reinforcement-learning",
+                  "reinforcement-learning",
+                  "stable-baselines3"
+                ],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "stable-baselines3",
+                "LunarLander-v2",
+                "deep-reinforcement-learning",
+                "reinforcement-learning",
+                "model-index",
+                "region:us"
+              ],
+              "pipeline_tag": "reinforcement-learning",
+              "library_name": "stable-baselines3",
+              "readme": "---\nlibrary_name: stable-baselines3\ntags:\n- LunarLander-v2\n- deep-reinforcement-learning\n- reinforcement-learning\n- stable-baselines3\nmodel-index:\n- name: PPO\n  results:\n  - metrics:\n    - type: mean_reward\n      value: 286.59 +/- 13.63\n      name: mean_reward\n    task:\n      type: reinforcement-learning\n      name: reinforcement-learning\n    dataset:\n      name: LunarLander-v2\n      type: LunarLander-v2\n---\n\n  # **PPO** Agent playing **LunarLander-v2**\n  This is a trained model of a **PPO** agent playing **LunarLander-v2** using the [stable-baselines3 library](https://github.com/DLR-RM/stable-baselines3).\n  \n  ## Usage (with Stable-baselines3)\n  from huggingface_sb3 import load_from_hub\n  \n  checkpoint = load_from_hub(repo_id=\"XGBooster/LunarLanderPPO\",\n\tfilename=\"{MODEL FILENAME}.zip\",  )\n  ",
+              "extracted_code": "from huggingface_sb3 import load_from_hub\n\ncheckpoint = load_from_hub(repo_id=\"XGBooster/LunarLanderPPO\",\n                           filename=\"{MODEL FILENAME}.zip\",  )"
+            }
+          ],
+          "datasets": [
+            {
+              "id": "ylecun/mnist",
+              "author": "ylecun",
+              "sha": "77f3279092a1c1579b2250db8eafed0ad422088c",
+              "created_at": "2022-03-02T23:29:22+00:00",
+              "last_modified": "2024-08-08T06:07:00+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 50151,
+              "likes": 196,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "mnist/test-00000-of-00001.parquet"
+                },
+                {
+                  "rfilename": "mnist/train-00000-of-00001.parquet"
+                }
+              ],
+              "card_data": {
+                "license": [
+                  "mit"
+                ],
+                "language": [
+                  "en"
+                ],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [
+                  "image-classification"
+                ],
+                "size_categories": [
+                  "10K<n<100K"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:image-classification",
+                "task_ids:multi-class-image-classification",
+                "annotations_creators:expert-generated",
+                "language_creators:found",
+                "multilinguality:monolingual",
+                "source_datasets:extended|other-nist",
+                "language:en",
+                "license:mit",
+                "size_categories:10K<n<100K",
+                "format:parquet",
+                "modality:image",
+                "library:datasets",
+                "library:pandas",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\nannotations_creators:\n- expert-generated\nlanguage_creators:\n- found\nlanguage:\n- en\nlicense:\n- mit\nmultilinguality:\n- monolingual\nsize_categories:\n- 10K<n<100K\nsource_datasets:\n- extended|other-nist\ntask_categories:\n- image-classification\ntask_ids:\n- multi-class-image-classification\npaperswithcode_id: mnist\npretty_name: MNIST\ndataset_info:\n  config_name: mnist\n  features:\n  - name: image\n    dtype: image\n  - name: label\n    dtype:\n      class_label:\n        names:\n          '0': '0'\n          '1': '1'\n          '2': '2'\n          '3': '3'\n          '4': '4'\n          '5': '5'\n          '6': '6'\n          '7': '7'\n          '8': '8'\n          '9': '9'\n  splits:\n  - name: train\n    num_bytes: 17223300.0\n    num_examples: 60000\n  - name: test\n    num_bytes: 2875182.0\n    num_examples: 10000\n  download_size: 18157506\n  dataset_size: 20098482.0\nconfigs:\n- config_name: mnist\n  data_files:\n  - split: train\n    path: mnist/train-*\n  - split: test\n    path: mnist/test-*\n  default: true\n---\n\n# Dataset Card for MNIST\n\n## Table of Contents\n- [Dataset Description](#dataset-description)\n  - [Dataset Summary](#dataset-summary)\n  - [Supported Tasks and Leaderboards](#supported-tasks-and-leaderboards)\n  - [Languages](#languages)\n- [Dataset Structure](#dataset-structure)\n  - [Data Instances](#data-instances)\n  - [Data Fields](#data-fields)\n  - [Data Splits](#data-splits)\n- [Dataset Creation](#dataset-creation)\n  - [Curation Rationale](#curation-rationale)\n  - [Source Data](#source-data)\n  - [Annotations](#annotations)\n  - [Personal and Sensitive Information](#personal-and-sensitive-information)\n- [Considerations for Using the Data](#considerations-for-using-the-data)\n  - [Social Impact of Dataset](#social-impact-of-dataset)\n  - [Discussion of Biases](#discussion-of-biases)\n  - [Other Known Limitations](#other-known-limitations)\n- [Additional Information](#additional-information)\n  - [Dataset Curators](#dataset-curators)\n  - [Licensing Information](#licensing-information)\n  - [Citation Information](#citation-information)\n  - [Contributions](#contributions)\n\n## Dataset Description\n\n- **Homepage:** http://yann.lecun.com/exdb/mnist/\n- **Repository:** \n- **Paper:** MNIST handwritten digit database by Yann LeCun, Corinna Cortes, and CJ Burges\n- **Leaderboard:**\n- **Point of Contact:**\n\n### Dataset Summary\n\nThe MNIST dataset consists of 70,000 28x28 black-and-white images of handwritten digits extracted from two NIST databases. There are 60,000 images in the training dataset and 10,000 images in the validation dataset, one class per digit so a total of 10 classes, with 7,000 images (6,000 train images and 1,000 test images) per class.\nHalf of the image were drawn by Census Bureau employees and the other half by high school students (this split is evenly distributed in the training and testing sets).\n\n### Supported Tasks and Leaderboards\n\n- `image-classification`: The goal of this task is to classify a given image of a handwritten digit into one of 10 classes representing integer values from 0 to 9, inclusively. The leaderboard is available [here](https://paperswithcode.com/sota/image-classification-on-mnist).\n\n### Languages\n\nEnglish\n\n## Dataset Structure\n\n### Data Instances\n\nA data point comprises an image and its label:\n\n```\n{\n  'image': <PIL.PngImagePlugin.PngImageFile image mode=L size=28x28 at 0x276021F6DD8>,\n  'label': 5\n}\n```\n\n### Data Fields\n\n- `image`: A `PIL.Image.Image` object containing the 28x28 image. Note that when accessing the image column: `dataset[0][\"image\"]` the image file is automatically decoded. Decoding of a large number of image files might take a significant amount of time. Thus it is important to first query the sample index before the `\"image\"` column, *i.e.* `dataset[0][\"image\"]` should **always** be preferred over `dataset[\"image\"][0]`\n- `label`: an integer between 0 and 9 representing the digit.\n\n### Data Splits\n\nThe data is split into training and test set. All the images in the test set were drawn by different individuals than the images in the training set. The training set contains 60,000 images and the test set 10,000 images. \n\n## Dataset Creation\n\n### Curation Rationale\n\nThe MNIST database was created to provide a testbed for people wanting to try pattern recognition methods or machine learning algorithms while spending minimal efforts on preprocessing and formatting. Images of the original dataset (NIST) were  in two groups, one consisting of images drawn by Census Bureau employees and one consisting of images drawn by high school students. In NIST, the training set was built by grouping all the images of the Census Bureau employees, and the test set was built by grouping the images form the high school students.\nThe goal in building MNIST was to have a training and test set following the same distributions, so the training set contains 30,000 images drawn by Census Bureau employees and 30,000 images drawn by high school students, and the test set contains 5,000 images of each group. The curators took care to make sure all the images in the test set were drawn by different individuals than the images in the training set. \n\n### Source Data\n\n#### Initial Data Collection and Normalization\n\nThe original images from NIST were size normalized to fit a 20x20 pixel box while preserving their aspect ratio. The resulting images contain grey levels (i.e., pixels don't simply have a value of black and white, but a level of greyness from 0 to 255) as a result of the anti-aliasing technique used by the normalization algorithm. The images were then centered in a 28x28 image by computing the center of mass of the pixels, and translating the image so as to position this point at the center of the 28x28 field.\n\n#### Who are the source language producers?\n\nHalf of the source images were drawn by Census Bureau employees, half by high school students. According to the dataset curator, the images from the first group are more easily recognizable.\n\n### Annotations\n\n#### Annotation process\n\nThe images were not annotated after their creation: the image creators annotated their images with the corresponding label after drawing them.\n\n#### Who are the annotators?\n\nSame as the source data creators.\n\n### Personal and Sensitive Information\n\n[More Information Needed]\n\n## Considerations for Using the Data\n\n### Social Impact of Dataset\n\n[More Information Needed]\n\n### Discussion of Biases\n\n[More Information Needed]\n\n### Other Known Limitations\n\n[More Information Needed]\n\n## Additional Information\n\n### Dataset Curators\n\nChris Burges, Corinna Cortes and Yann LeCun\n\n### Licensing Information\n\nMIT Licence\n\n### Citation Information\n\n```\n@article{lecun2010mnist,\n  title={MNIST handwritten digit database},\n  author={LeCun, Yann and Cortes, Corinna and Burges, CJ},\n  journal={ATT Labs [Online]. Available: http://yann.lecun.com/exdb/mnist},\n  volume={2},\n  year={2010}\n}\n```\n\n### Contributions\n\nThanks to [@sgugger](https://github.com/sgugger) for adding this dataset.",
+              "extracted_code": ""
+            },
+            {
+              "id": "FrankCCCCC/mnist_32_c3",
+              "author": "FrankCCCCC",
+              "sha": "a89d33dc54936f87f48d1fb1d85cb02c54f6d100",
+              "created_at": "2025-08-18T09:49:00+00:00",
+              "last_modified": "2025-08-18T09:55:50+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 17182,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "test-00000-of-00001.parquet"
+                },
+                {
+                  "rfilename": "train-00000-of-00001.parquet"
+                }
+              ],
+              "card_data": {
+                "license": "apache-2.0",
+                "language": [
+                  "en"
+                ],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [
+                  "image-classification",
+                  "unconditional-image-generation"
+                ],
+                "size_categories": [
+                  "10K<n<100K"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:image-classification",
+                "task_categories:unconditional-image-generation",
+                "language:en",
+                "license:apache-2.0",
+                "size_categories:10K<n<100K",
+                "format:parquet",
+                "modality:image",
+                "library:datasets",
+                "library:pandas",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\nlicense: apache-2.0\ntask_categories:\n- image-classification\n- unconditional-image-generation\nlanguage:\n- en\nsize_categories:\n- 10K<n<100K\n---\n# MNIST 32×32 RGB Dataset\n\nA preprocessed version of the classic MNIST dataset with handwritten digits, upscaled to 32×32 pixels and converted to RGB format for enhanced deep learning applications.\n\n## Overview\n\nThis dataset takes the original MNIST handwritten digit dataset and transforms it for modern computer vision tasks:\n- **Original format**: 28×28 grayscale images\n- **Enhanced format**: 32×32 RGB images\n- **Digit labels**: 0-9 (single-label classification)\n- **Image format**: RGB PIL Images\n\n## Dataset Statistics\n\n### Training Set (60,000 samples)\n| Digit | Count | Digit | Count |\n|-------|-------|-------|-------|\n| 0     | 5,923 | 5     | 5,421 |\n| 1     | 6,742 | 6     | 5,918 |\n| 2     | 5,958 | 7     | 6,265 |\n| 3     | 6,131 | 8     | 5,851 |\n| 4     | 5,842 | 9     | 5,949 |\n\n### Test Set (10,000 samples)\n| Digit | Count | Digit | Count |\n|-------|-------|-------|-------|\n| 0     | 980   | 5     | 892   |\n| 1     | 1,135 | 6     | 958   |\n| 2     | 1,032 | 7     | 1,028 |\n| 3     | 1,010 | 8     | 974   |\n| 4     | 982   | 9     | 1,009 |\n\n## Directory Structure\n\n```\nmnist_32_c3/\n├── README.md                               # This documentation\n├── train-00000-of-00001.parquet            # Training data (Parquet format)\n└── test-00000-of-00001.parquet             # Test data (Parquet format)\n```\n\n## Key Features\n\n- **Upscaled Resolution**: Enhanced from 28×28 to 32×32 pixels for better feature extraction\n- **RGB Format**: Converted from grayscale to RGB (3-channel) format\n- **PIL Integration**: Images loaded as PIL RGB objects ready for preprocessing\n- **Standard Splits**: Maintains original MNIST train/test division\n- **HuggingFace Compatible**: Full integration with datasets library\n- **Efficient Loading**: Parquet format for fast columnar data access and compression\n\n## Usage\n\n### Loading with HuggingFace Datasets\n\n```python\nfrom datasets import load_dataset\n\n# Load the dataset using the custom script\ndataset = load_dataset(\"FrankCCCCC/mnist_32_c3\", trust_remote_code=True)\n\nprint(f\"Train samples: {len(dataset['train'])}\")\nprint(f\"Test samples: {len(dataset['test'])}\")\n\n# Access a sample\nsample = dataset['train'][0]\nprint(f\"Image shape: {sample['image'].size}\")    # (32, 32)\nprint(f\"Image mode: {sample['image'].mode}\")     # RGB\nprint(f\"Label: {sample['label']}\")               # Integer: 0-9\n```\n\n## Transformations Applied\n\nThe dataset preprocessing pipeline includes:\n\n1. **Format Conversion**: IDX → Parquet\n2. **Channel Expansion**: Grayscale → RGB (L → RGB)\n3. **Resolution Upscaling**: 28×28 → 32×32 (using PIL resize)\n4. **Data Storage**: Parquet format for efficient storage and loading\n5. **Data Type**: PIL Image objects for easy integration\n\n## Dataset Format\n\nEach sample contains:\n```python\n{\n    'image': PIL.Image,    # 32×32 RGB image\n    'label': int,          # Digit class (0-9)\n}\n```\n\n## Technical Details\n\n- **Original Source**: MNIST Database of Handwritten Digits\n- **Format**: Parquet files for efficient columnar storage\n- **Preprocessing**: Grayscale → RGB conversion, 28×28 → 32×32 upscaling\n- **Loading**: HuggingFace Datasets with custom GeneratorBasedBuilder\n- **Compression**: Parquet format provides built-in compression and fast access\n\n## Citation\n\n```bibtex\n@article{lecun1998mnist,\n  title={The MNIST database of handwritten digits},\n  author={LeCun, Yann and Bottou, L{\\'e}on and Bengio, Yoshua and Haffner, Patrick},\n  year={1998},\n  url={http://yann.lecun.com/exdb/mnist/}\n}\n\n@misc{mnist32c3,\n  title={MNIST 32×32 RGB Dataset},\n  author={Enhanced MNIST for Modern Deep Learning},\n  year={2024},\n  note={Preprocessed version of original MNIST with RGB format and 32×32 resolution}\n}\n```\n\n## License\n\nThis dataset follows the same license as the original MNIST dataset. The original MNIST database is available under the Creative Commons Attribution-Share Alike 3.0 license.\n\n## Acknowledgments\n\n- Based on the original MNIST dataset by Yann LeCun, Corinna Cortes, and Christopher J.C. Burges\n- Enhanced for modern deep learning applications with RGB format and increased resolution\n- Compatible with HuggingFace Datasets ecosystem for seamless integration\n- Optimized for CNN architectures and transfer learning applications",
+              "extracted_code": "from datasets import load_dataset\n\n# Load the dataset using the custom script\ndataset = load_dataset(\"FrankCCCCC/mnist_32_c3\", trust_remote_code=True)\n\nprint(f\"Train samples: {len(dataset['train'])}\")\nprint(f\"Test samples: {len(dataset['test'])}\")\n\n# Access a sample\nsample = dataset['train'][0]\nprint(f\"Image shape: {sample['image'].size}\")    # (32, 32)\nprint(f\"Image mode: {sample['image'].mode}\")     # RGB\nprint(f\"Label: {sample['label']}\")               # Integer: 0-9"
+            },
+            {
+              "id": "zalando-datasets/fashion_mnist",
+              "author": "zalando-datasets",
+              "sha": "531be5e2ccc9dba0c201ad3ae567a4f3d16ecdd2",
+              "created_at": "2022-03-02T23:29:22+00:00",
+              "last_modified": "2024-08-08T06:10:25+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 10713,
+              "likes": 63,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "fashion_mnist/test-00000-of-00001.parquet"
+                },
+                {
+                  "rfilename": "fashion_mnist/train-00000-of-00001.parquet"
+                }
+              ],
+              "card_data": {
+                "license": [
+                  "mit"
+                ],
+                "language": [
+                  "en"
+                ],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [
+                  "image-classification"
+                ],
+                "size_categories": [
+                  "10K<n<100K"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:image-classification",
+                "task_ids:multi-class-image-classification",
+                "annotations_creators:expert-generated",
+                "language_creators:found",
+                "multilinguality:monolingual",
+                "source_datasets:original",
+                "language:en",
+                "license:mit",
+                "size_categories:10K<n<100K",
+                "format:parquet",
+                "modality:image",
+                "library:datasets",
+                "library:pandas",
+                "library:mlcroissant",
+                "library:polars",
+                "arxiv:1708.07747",
+                "region:us"
+              ],
+              "readme": "---\nannotations_creators:\n- expert-generated\nlanguage_creators:\n- found\nlanguage:\n- en\nlicense:\n- mit\nmultilinguality:\n- monolingual\nsize_categories:\n- 10K<n<100K\nsource_datasets:\n- original\ntask_categories:\n- image-classification\ntask_ids:\n- multi-class-image-classification\npaperswithcode_id: fashion-mnist\npretty_name: FashionMNIST\ndataset_info:\n  config_name: fashion_mnist\n  features:\n  - name: image\n    dtype: image\n  - name: label\n    dtype:\n      class_label:\n        names:\n          '0': T - shirt / top\n          '1': Trouser\n          '2': Pullover\n          '3': Dress\n          '4': Coat\n          '5': Sandal\n          '6': Shirt\n          '7': Sneaker\n          '8': Bag\n          '9': Ankle boot\n  splits:\n  - name: train\n    num_bytes: 31049107.0\n    num_examples: 60000\n  - name: test\n    num_bytes: 5192560.0\n    num_examples: 10000\n  download_size: 36106894\n  dataset_size: 36241667.0\nconfigs:\n- config_name: fashion_mnist\n  data_files:\n  - split: train\n    path: fashion_mnist/train-*\n  - split: test\n    path: fashion_mnist/test-*\n  default: true\n---\n\n# Dataset Card for FashionMNIST\n\n## Table of Contents\n- [Dataset Description](#dataset-description)\n  - [Dataset Summary](#dataset-summary)\n  - [Supported Tasks and Leaderboards](#supported-tasks-and-leaderboards)\n  - [Languages](#languages)\n- [Dataset Structure](#dataset-structure)\n  - [Data Instances](#data-instances)\n  - [Data Fields](#data-fields)\n  - [Data Splits](#data-splits)\n- [Dataset Creation](#dataset-creation)\n  - [Curation Rationale](#curation-rationale)\n  - [Source Data](#source-data)\n  - [Annotations](#annotations)\n  - [Personal and Sensitive Information](#personal-and-sensitive-information)\n- [Considerations for Using the Data](#considerations-for-using-the-data)\n  - [Social Impact of Dataset](#social-impact-of-dataset)\n  - [Discussion of Biases](#discussion-of-biases)\n  - [Other Known Limitations](#other-known-limitations)\n- [Additional Information](#additional-information)\n  - [Dataset Curators](#dataset-curators)\n  - [Licensing Information](#licensing-information)\n  - [Citation Information](#citation-information)\n  - [Contributions](#contributions)\n\n## Dataset Description\n\n- **Homepage:** [GitHub](https://github.com/zalandoresearch/fashion-mnist)\n- **Repository:** [GitHub](https://github.com/zalandoresearch/fashion-mnist)\n- **Paper:** [arXiv](https://arxiv.org/pdf/1708.07747.pdf)\n- **Leaderboard:**\n- **Point of Contact:**\n\n### Dataset Summary\n\nFashion-MNIST is a dataset of Zalando's article images—consisting of a training set of 60,000 examples and a test set of 10,000 examples. Each example is a 28x28 grayscale image, associated with a label from 10 classes. We intend Fashion-MNIST to serve as a direct drop-in replacement for the original MNIST dataset for benchmarking machine learning algorithms. It shares the same image size and structure of training and testing splits.\n\n### Supported Tasks and Leaderboards\n\n- `image-classification`: The goal of this task is to classify a given image of Zalando's article into one of 10 classes. The leaderboard is available [here](https://paperswithcode.com/sota/image-classification-on-fashion-mnist).\n\n### Languages\n\n[More Information Needed]\n\n## Dataset Structure\n\n### Data Instances\n\nA data point comprises an image and its label.\n\n```\n{\n  'image': <PIL.PngImagePlugin.PngImageFile image mode=L size=28x28 at 0x27601169DD8>,\n  'label': 9\n}\n```\n\n### Data Fields\n\n- `image`: A `PIL.Image.Image` object containing the 28x28 image. Note that when accessing the image column: `dataset[0][\"image\"]` the image file is automatically decoded. Decoding of a large number of image files might take a significant amount of time. Thus it is important to first query the sample index before the `\"image\"` column, *i.e.* `dataset[0][\"image\"]` should **always** be preferred over `dataset[\"image\"][0]`.\n- `label`: an integer between 0 and 9 representing the classes with the following mapping:\n  | Label | Description |\n  | --- | --- |\n  | 0 | T-shirt/top |\n  | 1 | Trouser |\n  | 2 | Pullover |\n  | 3 | Dress |\n  | 4 | Coat |\n  | 5 | Sandal |\n  | 6 | Shirt |\n  | 7 | Sneaker |\n  | 8 | Bag |\n  | 9 | Ankle boot |\n\n### Data Splits\n\nThe data is split into training and test set. The training set contains 60,000 images and the test set 10,000 images.\n\n## Dataset Creation\n\n### Curation Rationale\n\n**From the arXiv paper:**\nThe original MNIST dataset contains a lot of handwritten digits. Members of the AI/ML/Data Science community love this dataset and use it as a benchmark to validate their algorithms. In fact, MNIST is often the first dataset researchers try. \"If it doesn't work on MNIST, it won't work at all\", they said. \"Well, if it does work on MNIST, it may still fail on others.\"\n\nHere are some good reasons:\n\n- MNIST is too easy. Convolutional nets can achieve 99.7% on MNIST. Classic machine learning algorithms can also achieve 97% easily. Check out our side-by-side benchmark for Fashion-MNIST vs. MNIST, and read \"Most pairs of MNIST digits can be distinguished pretty well by just one pixel.\"\n- MNIST is overused. In this April 2017 Twitter thread, Google Brain research scientist and deep learning expert Ian Goodfellow calls for people to move away from MNIST.\n- MNIST can not represent modern CV tasks, as noted in this April 2017 Twitter thread, deep learning expert/Keras author François Chollet.\n\n### Source Data\n\n#### Initial Data Collection and Normalization\n\n**From the arXiv paper:**\nFashion-MNIST is based on the assortment on Zalando’s website. Every fashion product on Zalando has a set of pictures shot by professional photographers, demonstrating different aspects of the product, i.e. front and back looks, details, looks with model and in an outfit. The original picture has a light-gray background (hexadecimal color: #fdfdfd) and stored in 762 × 1000 JPEG format. For efficiently serving different frontend components, the original picture is resampled with multiple resolutions, e.g. large, medium, small, thumbnail and tiny.\n\nWe use the front look thumbnail images of 70,000 unique products to build Fashion-MNIST. Those products come from different gender groups: men, women, kids and neutral. In particular, whitecolor products are not included in the dataset as they have low contrast to the background. The thumbnails (51 × 73) are then fed into the following conversion pipeline:\n\n1. Converting the input to a PNG image.\n2. Trimming any edges that are close to the color of the corner pixels. The “closeness” is defined by the distance within 5% of the maximum possible intensity in RGB space.\n3. Resizing the longest edge of the image to 28 by subsampling the pixels, i.e. some rows and columns are skipped over.\n4. Sharpening pixels using a Gaussian operator of the radius and standard deviation of 1.0, with increasing effect near outlines.\n5. Extending the shortest edge to 28 and put the image to the center of the canvas.\n6. Negating the intensities of the image.\n7. Converting the image to 8-bit grayscale pixels.\n\n#### Who are the source language producers?\n\n**From the arXiv paper:**\nEvery fashion product on Zalando has a set of pictures shot by professional photographers, demonstrating different aspects of the product, i.e. front and back looks, details, looks with model and in an outfit.\n\n### Annotations\n\n#### Annotation process\n\n**From the arXiv paper:**\nFor the class labels, they use the silhouette code of the product. The silhouette code is manually labeled by the in-house fashion experts and reviewed by a separate team at Zalando. Each product Zalando is the Europe’s largest online fashion platform. Each product contains only one silhouette code.\n\n#### Who are the annotators?\n\n**From the arXiv paper:**\nThe silhouette code is manually labeled by the in-house fashion experts and reviewed by a separate team at Zalando.\n\n### Personal and Sensitive Information\n\n[More Information Needed]\n\n## Considerations for Using the Data\n\n### Social Impact of Dataset\n\n[More Information Needed]\n\n### Discussion of Biases\n\n[More Information Needed]\n\n### Other Known Limitations\n\n[More Information Needed]\n\n## Additional Information\n\n### Dataset Curators\n\nHan Xiao and Kashif Rasul and Roland Vollgraf\n\n### Licensing Information\n\nMIT Licence\n\n### Citation Information\n\n```\n@article{DBLP:journals/corr/abs-1708-07747,\n  author    = {Han Xiao and\n               Kashif Rasul and\n               Roland Vollgraf},\n  title     = {Fashion-MNIST: a Novel Image Dataset for Benchmarking Machine Learning\n               Algorithms},\n  journal   = {CoRR},\n  volume    = {abs/1708.07747},\n  year      = {2017},\n  url       = {http://arxiv.org/abs/1708.07747},\n  archivePrefix = {arXiv},\n  eprint    = {1708.07747},\n  timestamp = {Mon, 13 Aug 2018 16:47:27 +0200},\n  biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1708-07747},\n  bibsource = {dblp computer science bibliography, https://dblp.org}\n}\n```\n\n### Contributions\n\nThanks to [@gchhablani](https://github.com/gchablani) for adding this dataset.",
+              "extracted_code": ""
+            },
+            {
+              "id": "FrankCCCCC/colored_mnist_28",
+              "author": "FrankCCCCC",
+              "sha": "a9565562419e1824a259781fc9d066360a708dc8",
+              "created_at": "2025-08-12T10:22:03+00:00",
+              "last_modified": "2025-08-13T05:48:34+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 728,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".DS_Store"
+                },
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "colored_mnist.py"
+                },
+                {
+                  "rfilename": "images/blue_312.png"
+                },
+                {
+                  "rfilename": "images/green_8218.png"
+                },
+                {
+                  "rfilename": "images/red_8428.png"
+                },
+                {
+                  "rfilename": "testing.h5"
+                },
+                {
+                  "rfilename": "testing/0/blue_10.png"
+                },
+                {
+                  "rfilename": "testing/0/blue_1009.png"
+                }
+              ],
+              "card_data": {
+                "license": "apache-2.0",
+                "language": [
+                  "en"
+                ],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [
+                  "image-classification"
+                ],
+                "size_categories": [
+                  "10K<n<100K"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:image-classification",
+                "language:en",
+                "license:apache-2.0",
+                "size_categories:10K<n<100K",
+                "format:imagefolder",
+                "modality:image",
+                "library:datasets",
+                "library:mlcroissant",
+                "region:us"
+              ],
+              "readme": "---\nlicense: apache-2.0\ntask_categories:\n- image-classification\nlanguage:\n- en\nsize_categories:\n- 10K<n<100K\n---\n# Colored MNIST Dataset\n\nA comprehensive dataset of MNIST digits with RGB colored backgrounds, designed for multi-objective classification tasks including digit recognition and background color classification.\n\n![Blue Example](images/blue_312.png) ![Green Example](images/green_8218.png) ![Red Example](images/red_8428.png)\n\n## Overview\n\nThis dataset extends the classic MNIST digit dataset by adding colored backgrounds (blue, green, red) to create a multi-label classification challenge. Each image contains:\n- **Digit label**: 0-9 (digit recognition)  \n- **Color label**: blue, green, red (background color classification)\n- **Image format**: 28×28 RGB PNG files\n\n## Dataset Statistics\n\n### Training Set (8,835 samples)\n| Digit | Count | Digit | Count |\n|-------|-------|-------|-------|\n| 0     | 868   | 5     | 764   |\n| 1     | 1,000 | 6     | 893   |\n| 2     | 858   | 7     | 948   |\n| 3     | 909   | 8     | 835   |\n| 4     | 883   | 9     | 877   |\n\n### Test Set (10,000 samples)\n| Digit | Count | Digit | Count |\n|-------|-------|-------|-------|\n| 0     | 980   | 5     | 892   |\n| 1     | 1,135 | 6     | 958   |\n| 2     | 1,032 | 7     | 1,028 |\n| 3     | 1,010 | 8     | 974   |\n| 4     | 982   | 9     | 1,009 |\n\n### Color Distribution\n- **Blue**: ~2,946 training samples\n- **Green**: ~2,968 training samples  \n- **Red**: ~2,921 training samples\n\n## Directory Structure\n\n```\ncolored_mnist/\n├── README.md\n├── colored_mnist.py          # HuggingFace dataset loader\n├── images/                   # Example images\n│   ├── blue_312.png         # Blue background, digit 3\n│   ├── green_8218.png       # Green background, digit 8  \n│   └── red_8428.png         # Red background, digit 4\n├── training/                 # Training data\n│   ├── 0/                   # Digit 0 samples\n│   │   ├── blue_1015.png\n│   │   ├── green_1000.png\n│   │   └── red_1028.png\n│   └── ...                  # Digits 1-9\n├── testing/                  # Test data\n│   ├── 0/                   # Digit 0 samples\n│   │   ├── blue_10.png\n│   │   ├── green_1084.png\n│   │   └── red_1001.png\n│   └── ...                  # Digits 1-9\n├── training.h5              # HDF5 format (optional)\n└── testing.h5               # HDF5 format (optional)\n```\n\n## Usage\n\n### Loading with HuggingFace Datasets\n\n```python\nfrom datasets import load_dataset\n\n# Load the dataset using the custom script\ndataset = load_dataset(\"FrankCCCCC/colored_mnist\", trust_remote_code=True)\n\nprint(f\"Train samples: {len(dataset['train'])}\")\nprint(f\"Test samples: {len(dataset['test'])}\")\n\n# Access a sample\nsample = dataset['train'][0]\nprint(f\"Image shape: {sample['image'].shape}\")  # PIL.Image: Raw Image with shape (28, 28, 3)\nprint(f\"Digit Label: {sample['digit_label']}\")  # Integer: Digit class 0-9\nprint(f\"Color Label: {sample['color_label']}\")  # String: Color class: 'blue', 'green', 'red'\nprint(f\"filename: {sample['filename']}\")        # String: file name\nprint(f\"image_path: {sample['image_path']}\")    # String: file path\n```\n\n## Applications\n\nThis dataset is ideal for:\n\n1. **Multi-task Learning**: Train models to simultaneously classify digits and colors\n2. **Domain Adaptation**: Study how background colors affect digit recognition\n3. **Bias Analysis**: Investigate color-digit correlations and model robustness\n4. **Transfer Learning**: Pre-train on one task (digit/color) and fine-tune on another\n5. **Curriculum Learning**: Start with single-task then progress to multi-task\n6. **Attention Mechanisms**: Visualize what models focus on (digit vs. background)\n\n## Features\n\n- **Multi-label Classification**: Both digit and color labels for each image\n- **Balanced Colors**: Approximately equal distribution across blue, green, red\n- **Standard Format**: Compatible with PyTorch, TensorFlow, and HuggingFace\n- **PIL Integration**: Images loaded as PIL objects for easy preprocessing\n- **Metadata**: Includes original filename and image path information\n\n## Dataset Format\n\nEach sample contains:\n```python\n{\n    'image': PIL.Image,           # 28×28 RGB image\n    'digit_label': int,           # Digit class (0-9)\n    'color_label': str,           # Color class ('blue'|'green'|'red')\n    'filename': str,              # Original filename\n    'image_path': str             # Full path to image file\n}\n```\n\n## Requirements\n\n```bash\npip install datasets pillow torch torchvision matplotlib numpy\n```\n\n## Citation\n\n```bibtex\n@misc{colorized-mnist,\n  title={Colorized MNIST},\n  author={Original MNIST Dataset},\n  year={2024},\n  url={https://github.com/jayaneetha/colorized-MNIST}\n}\n```\n\n## License\n\nThis dataset follows the same license as the original MNIST dataset. Please cite both the original MNIST work and this colored extension when using this dataset.\n\n## Acknowledgments\n\n- Based on the original MNIST dataset by Yann LeCun et al.\n- Color augmentation creates additional research opportunities for multi-task learning\n- Compatible with modern deep learning frameworks and HuggingFace ecosystem",
+              "extracted_code": "from datasets import load_dataset\n\n# Load the dataset using the custom script\ndataset = load_dataset(\"FrankCCCCC/colored_mnist\", trust_remote_code=True)\n\nprint(f\"Train samples: {len(dataset['train'])}\")\nprint(f\"Test samples: {len(dataset['test'])}\")\n\n# Access a sample\nsample = dataset['train'][0]\nprint(f\"Image shape: {sample['image'].shape}\")  # PIL.Image: Raw Image with shape (28, 28, 3)\nprint(f\"Digit Label: {sample['digit_label']}\")  # Integer: Digit class 0-9\nprint(f\"Color Label: {sample['color_label']}\")  # String: Color class: 'blue', 'green', 'red'\nprint(f\"filename: {sample['filename']}\")        # String: file name\nprint(f\"image_path: {sample['image_path']}\")    # String: file path"
+            },
+            {
+              "id": "Voxel51/curated-mnist",
+              "author": "Voxel51",
+              "sha": "6fb4c3d269707c49d05391cba6d8390e83826a65",
+              "created_at": "2025-07-06T17:22:50+00:00",
+              "last_modified": "2025-08-08T17:26:36+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 468,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/data_0/000001.jpg"
+                },
+                {
+                  "rfilename": "data/data_0/000002.jpg"
+                },
+                {
+                  "rfilename": "data/data_0/000003.jpg"
+                },
+                {
+                  "rfilename": "data/data_0/000005.jpg"
+                },
+                {
+                  "rfilename": "data/data_0/000006.jpg"
+                },
+                {
+                  "rfilename": "data/data_0/000007.jpg"
+                },
+                {
+                  "rfilename": "data/data_0/000008.jpg"
+                },
+                {
+                  "rfilename": "data/data_0/000009.jpg"
+                }
+              ],
+              "card_data": {
+                "license": "mit",
+                "language": "en",
+                "tags": [
+                  "fiftyone",
+                  "image",
+                  "image-classification"
+                ],
+                "datasets": [],
+                "task_categories": [
+                  "image-classification"
+                ],
+                "size_categories": [
+                  "10K<n<100K"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:image-classification",
+                "language:en",
+                "license:mit",
+                "size_categories:10K<n<100K",
+                "modality:image",
+                "library:fiftyone",
+                "arxiv:2103.00020",
+                "region:us",
+                "fiftyone",
+                "image",
+                "image-classification"
+              ],
+              "readme": "---\nannotations_creators: []\nlanguage: en\nlicense: mit\nsize_categories:\n- 10K<n<100K\ntask_categories:\n- image-classification\ntask_ids: []\npretty_name: curated-mnist\ntags:\n- fiftyone\n- image\n- image-classification\ndescription: 'Curated MNIST dataset with train/val/test splits, including predictions of different models: CLIP, LeNet, and retrained LeNet.'\nsplit_field: tags\ndataset_name: curated-mnist\norganization: andandandand\ncommit_message: Add curated MNIST dataset with train/val/test splits\ndataset_summary: |\n  ![image/png](dataset_preview.webp)\n\n  This is a [FiftyOne](https://github.com/voxel51/fiftyone) dataset with 70000 samples.\n\n  ## Installation\n\n  If you haven't already, install FiftyOne:\n\n  ```bash\n  pip install -U fiftyone\n  ```\n\n  ## Usage\n\n  ```python\n  import fiftyone as fo\n  from fiftyone.utils.huggingface import load_from_hub\n\n  # Load the dataset\n  # Note: other available arguments include 'max_samples', etc\n  dataset = load_from_hub(\"andandandand/curated-mnist\")\n\n  # Launch the App\n  session = fo.launch_app(dataset)\n  ```\n---\n\n# Dataset Card for CuratedMNIST\n\nThis dataset is a curated version of the classic MNIST dataset, enriched with model predictions, embeddings, and various analytical fields generated using the [FiftyOne](https://github.com/voxel51/fiftyone) library. It was created as part of the \"Image Classification and Dataset Curation with FiftyOne and PyTorch\" tutorial to demonstrate practical computer vision workflows.\n\nThe dataset contains the original 60,000 training and 10,000 test samples, with the training set further split into training (85%) and validation (15%) subsets. It includes predictions from OpenAI's CLIP model (zero-shot), a custom-trained LeNet-5 model, and a final LeNet-5 model that was fine-tuned on an augmented set of challenging samples. This structure makes it ideal for educational purposes, allowing users to explore model comparison, error analysis, and data-centric AI techniques.\n\n![image/png](dataset_preview.webp)\n\nThis is a [FiftyOne](https://github.com/voxel51/fiftyone) dataset with 70000 samples.\n\n## Installation\n\nIf you haven't already, install FiftyOne:\n\n```bash\npip install -U fiftyone\n```\n\n## Usage\n\n```python\nimport fiftyone as fo\nfrom fiftyone.utils.huggingface import load_from_hub\n\n# Load the dataset\n# Note: other available arguments include 'max_samples', etc\ndataset = load_from_hub(\"Voxel51/curated-mnist\")\n\n# Launch the App\nsession = fo.launch_app(dataset)\n```\n\n### Dataset Description\n\nThis curated version of MNIST serves as a comprehensive resource for learning and experimenting with image classification workflows. Starting with the original MNIST dataset, this version adds multiple layers of metadata and analysis to each sample. It is designed to accompany a Voxel51 tutorial focused on dataset curation and model evaluation.\n\nThe key additions include:\n*   **Train/Validation/Test Splits:** The original 60,000 training images are split into a training set (51,000 samples) and a validation set (9,000 samples). The original 10,000 test images are maintained as the test set.\n*   **Model Predictions:** Each sample in the appropriate split contains predictions from different models:\n    *   Zero-shot predictions from OpenAI's CLIP (`clip-vit-base32-torch`).\n    *   Predictions from a baseline LeNet-5 CNN trained from scratch on the training set.\n    *   Predictions from a retrained LeNet-5 model, fine-tuned on a curated set of misclassified and challenging samples with data augmentation.\n*   **Embeddings:** Both image embeddings from CLIP and feature embeddings from the trained LeNet-5 model are included.\n*   **Analysis Fields:** FiftyOne's \"Brain\" methods were used to compute `hardness`, `mistakenness`, `uniqueness`, and `representativeness` scores, enabling deep dives into data quality and model behavior.\n\n- **Curated by:** Antonio Rueda-Toicen\n- **Funded by:** Voxel51\n- **Language(s) (NLP):** en\n- **License:** mit\n\n### Dataset Sources\n\n- **Repository:** [andandandand/practical-computer-vision](https://github.com/andandandand/practical-computer-vision)\n- **Paper:**\n    - For MNIST: [Gradient-Based Learning Applied to Document Recognition](http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf)\n    - For CLIP: [Learning Transferable Visual Models From Natural Language Supervision](https://arxiv.org/abs/2103.00020)\n- **Source:**\n    - [Notebook on GitHub](https://github.com/andandandand/practical-computer-vision/blob/main/notebooks/Image_Classification_and_Dataset_Curation_with_FiftyOne_and_PyTorch_Getting_Started.ipynb) \n    - [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/andandandand/practical-computer-vision/blob/main/notebooks/Image_Classification_and_Dataset_Curation_with_FiftyOne_and_PyTorch_Getting_Started.ipynb)\n\n\n### Direct Use\n\nThis dataset is primarily intended for educational and research purposes in computer vision and data-centric AI. Suitable uses include:\n*   Learning how to load, visualize, and interact with image classification datasets using FiftyOne.\n*   Comparing the performance of different classification models (e.g., zero-shot vs. supervised, baseline vs. fine-tuned).\n*   Understanding and applying techniques for error analysis, such as identifying hard samples, potential label errors (`mistakenness`), and outliers (`uniqueness`).\n*   Exploring the concept of image embeddings for visualization (PCA, UMAP) and similarity search.\n*   Practicing data curation workflows, such as identifying problematic samples for augmentation and retraining.\n*   Benchmarking new classification algorithms or data augmentation strategies on a well-understood but richly annotated dataset.\n\n### Out-of-Scope Use\n\nThis dataset is not intended for training production-level models for general-purpose digit recognition, as it is based on the relatively simple and constrained MNIST domain (28x28 grayscale images). Models trained on this dataset will not generalize to real-world images of digits with complex backgrounds, colors, or fonts. The dataset should not be used to draw conclusions about model performance on natural images.\n\n## Dataset Structure\n\nThe dataset contains three splits, identified by the `tags` field on each sample: `train`, `validation`, and `test`.\n\nEach sample contains the following fields:\n*   `filepath`: The path to the 28x28 grayscale PNG image.\n*   `ground_truth`: A `fiftyone.Classification` object containing the ground truth digit label (0-9).\n*   `tags`: A list of tags indicating the split (`train`, `validation`, or `test`).\n*   `metadata`: A `fiftyone.Metadata` object with image properties like width, height, and size in bytes.\n*   `clip_embeddings`: A 512-dimensional vector from the `clip-vit-base32-torch` model. (Test set only)\n*   `clip_zero_shot_classification`: A `fiftyone.Classification` object with the zero-shot prediction from CLIP. (Test set only)\n*   `lenet_embeddings`: An 84-dimensional feature vector from the penultimate layer of the trained LeNet-5 model. (Train set only)\n*   `lenet_classification`: A `fiftyone.Classification` object with the prediction from the baseline LeNet-5 model. (Test set only)\n*   `lenet_train_classification`: Predictions from the LeNet-5 model on the training data, used for analysis. (Train set only)\n*   `retrained_lenet_classification`: Predictions from the final fine-tuned LeNet-5 model. (Test set only)\n*   `hardness`: A float score indicating how challenging the sample was for a model to classify.\n*   `mistakenness`: A float score indicating the likelihood of a sample being mislabeled, based on model disagreement with the ground truth.\n*   `uniqueness`: A float score measuring how distinct a sample's embedding is from others.\n*   `representativeness`: A float score measuring how well a sample's embedding represents its local cluster.\n\n\n### Curation Rationale\n\nThe primary motivation for creating this dataset was to provide a hands-on, practical resource for a tutorial on modern computer vision workflows. While MNIST is a \"solved\" problem, its familiarity makes it an excellent canvas for demonstrating advanced techniques. By enriching MNIST with model predictions, embeddings, and analytical scores, the dataset enables users to move beyond simple model training and focus on the iterative process of data curation, model evaluation, and error analysis that is central to building robust machine learning systems.\n\n\n#### Data Collection and Processing\n\nThe source data is the Modified National Institute of Standards and Technology (MNIST) dataset. The curation process was performed programmatically as follows:\n1.  The official `train` and `test` splits of MNIST were loaded from the FiftyOne Dataset Zoo.\n2.  The 60,000-sample `train` split was deterministically divided into an 85% training set (51,000 samples) and a 15% validation set (9,000 samples).\n3.  A modern variant of the LeNet-5 architecture was trained from scratch in PyTorch on the new training set, with the best model checkpoint selected based on validation loss.\n4.  The trained LeNet-5 model and a pre-trained `clip-vit-base32-torch` model from the FiftyOne Model Zoo were applied to the test set to generate predictions (`lenet_classification`, `clip_zero_shot_classification`).\n5.  The LeNet-5 model was also run on the training set to identify misclassified samples and samples classified with low confidence.\n6.  Analysis fields (embeddings, hardness, mistakenness, etc.) were computed using FiftyOne Brain methods.\n7.  A subset of problematic training samples (misclassified, unique, highly representative, or low-confidence) were identified for data augmentation.\n8.  The baseline LeNet-5 model was fine-tuned on a new dataset composed of the original training data plus augmented versions of the problematic samples.\n9.  The final, retrained model was applied to the test set to generate `retrained_lenet_classification` predictions.\n\n#### Who are the source data producers?\n\nThe original MNIST data was collected by the National Institute of Standards and Technology. The dataset was later processed and popularized by Yann LeCun, Corinna Cortes, and Christopher J.C. Burges. The handwritten digits were sourced from two groups: American Census Bureau employees and American high school students.\n\n### Annotations\n\nThe dataset contains two types of annotations:\n1.  **Ground Truth Labels**: These are the original digit labels (0-9) from the MNIST dataset. The annotators were the original writers of the digits (Census Bureau employees and high school students).\n2.  **Model Predictions**: These are generated labels from the CLIP, LeNet-5, and retrained LeNet-5 models. The \"annotators\" in this case are the machine learning models themselves. These predictions are stored in separate fields and are intended for model evaluation and comparison, not as ground truth.\n\nThe curation process used `mistakenness` scores to identify samples where the ground truth label is likely incorrect, but these labels were not corrected in order to preserve the original dataset benchmark.\n\n## Bias, Risks, and Limitations\n\n*   **Label Noise:** As discussed in the curation notebook and academic literature, the original MNIST dataset contains a small number of ambiguous or incorrectly labeled samples. This dataset's `mistakenness` field helps identify these, but they have not been removed or corrected.\n*   **Lack of Diversity:** MNIST consists of small, centered, grayscale handwritten digits. It is not representative of digits in natural scenes (\"in the wild\"). Models trained on this dataset will perform poorly on other visual domains without significant adaptation.\n*   **Demographic Bias:** The handwriting styles are sourced from American Census Bureau employees and high school students from the 1990s. The dataset may not be representative of global handwriting styles or handwriting from different demographic groups.\n*   **Model-Specific Biases:** The added predictions and embeddings reflect the specific architectures and training data of the models used (CLIP, LeNet-5). The `lenet_` fields are specific to the model trained in the tutorial and may not generalize to other architectures.\n\n## Citation\n\n**BibTeX:**\n\nTo cite the original MNIST dataset:\n```bibtex\n@article{lecun1998gradient,\n  title={Gradient-based learning applied to document recognition},\n  author={LeCun, Yann and Bottou, L{\\'e}on and Bengio, Yoshua and Haffner, Patrick},\n  journal={Proceedings of the IEEE},\n  volume={86},\n  number={11},\n  pages={2278--2324},\n  year={1998},\n  publisher={IEEE}\n}\n```\n\nTo cite the CLIP model:\n```bibtex\n@inproceedings{radford2021learning,\n  title={Learning transferable visual models from natural language supervision},\n  author={Radford, Alec and Kim, Jong Wook and Hallacy, Chris and Ramesh, Aditya and Goh, Gabriel and Agarwal, Sandhini and Sastry, Girish and Askell, Amanda and Mishkin, Pamela and Clark, Jack and Krueger, Gretchen and Sutskever, Ilya},\n  booktitle={International conference on machine learning},\n  pages={8748--8763},\n  year={2021},\n  organization={PMLR}\n}\n```\n\n## Dataset Card Authors\n\nAntonio Rueda-Toicen\n\n## Dataset Card Contact\n\n[GitHub: andandandand](https://github.com/andandandand)",
+              "extracted_code": "import fiftyone as fo\nfrom fiftyone.utils.huggingface import load_from_hub\n\n# Load the dataset\n# Note: other available arguments include 'max_samples', etc\ndataset = load_from_hub(\"andandandand/curated-mnist\")\n\n# Launch the App\nsession = fo.launch_app(dataset)\n\nimport fiftyone as fo\nfrom fiftyone.utils.huggingface import load_from_hub\n\n# Load the dataset\n# Note: other available arguments include 'max_samples', etc\ndataset = load_from_hub(\"Voxel51/curated-mnist\")\n\n# Launch the App\nsession = fo.launch_app(dataset)"
+            },
+            {
+              "id": "Arkaen-AtC/mnist_bakery_data",
+              "author": "Arkaen-AtC",
+              "sha": "b6254af41460e702a81f7d7209d6f5606c2f6f32",
+              "created_at": "2025-05-22T21:37:17+00:00",
+              "last_modified": "2025-06-04T23:19:54+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 357,
+              "likes": 1,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "0/0__10__001.jpg"
+                },
+                {
+                  "rfilename": "0/0__10__002.jpg"
+                },
+                {
+                  "rfilename": "0/0__10__003.jpg"
+                },
+                {
+                  "rfilename": "0/0__10__004.jpg"
+                },
+                {
+                  "rfilename": "0/0__10__005.jpg"
+                },
+                {
+                  "rfilename": "0/0__10__006.jpg"
+                },
+                {
+                  "rfilename": "0/0__10__007.jpg"
+                },
+                {
+                  "rfilename": "0/0__10__008.jpg"
+                },
+                {
+                  "rfilename": "0/0__10__009.jpg"
+                }
+              ],
+              "card_data": {
+                "license": "mit",
+                "language": [
+                  "en"
+                ],
+                "tags": [
+                  "mnist",
+                  "image",
+                  "digit",
+                  "synthetic",
+                  "houdini"
+                ],
+                "datasets": [],
+                "task_categories": [
+                  "image-classification"
+                ],
+                "size_categories": [
+                  "10K<n<100K"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:image-classification",
+                "language:en",
+                "license:mit",
+                "size_categories:10K<n<100K",
+                "format:imagefolder",
+                "modality:image",
+                "library:datasets",
+                "library:mlcroissant",
+                "region:us",
+                "mnist",
+                "image",
+                "digit",
+                "synthetic",
+                "houdini"
+              ],
+              "readme": "---\nlicense: mit\ntask_categories:\n- image-classification\nlanguage:\n- en\ntags:\n- mnist\n- image\n- digit\n- synthetic\n- houdini\npretty_name: MNIST Bakery Dataset\nsize_categories:\n- 10K<n<100K\n---\n# 🧁 MNIST Bakery Dataset\n\n![digits samples](https://i.imgur.com/kcKvfR7.png)\n\nA procedurally synthesized variant of the classic MNIST dataset, created using **SideFX Houdini** and designed for experimentation in **data augmentation**, **synthetic data generation**, and **model robustness research**. \nSee the [ML-Research](https://github.com/atcarter714/ML-Research) repository on GitHub for Python notebooks, experiments and the Houdini scene files.\n\n![houdini viewport](https://i.imgur.com/LZqdiKN.png)\n\n\n---\n\n## 🎯 Purpose\n\nThis dataset demonstrates how **procedural generation pipelines** in 3D tools like Houdini can be used to create **high-quality, synthetic training data** for machine learning tasks. It is intended for:\n\n- Benchmarking model performance using synthetic vs. real data  \n- Training models in **low-data** or **zero-shot** environments  \n- Developing robust classifiers that generalize beyond typical datasets  \n- Evaluating augmentation and generalization strategies in vision models\n\n---\n\n## 🛠️ Generation Pipeline\n\nAll data was generated using the `.hip` scene:  \n```bash\n./houdini/digitgen_v02.hip\n```\n\n## 🧪 Methodology\n\n### 1. Procedural Digit Assembly\n- Each digit `0`–`9` is generated using a random font in each frame via Houdini’s **Font SOP**.\n- Digits are arranged in a clean **8×8 grid**, forming sprite sheets with **64 digits per render**.\n\n### 2. Scene Variability\n- Fonts are randomly selected per frame.\n- Procedural distortions are applied including:\n  - Rotation\n  - Translation\n  - Skew\n  - Mountain noise displacement\n- This ensures high variability across samples.\n\n### 3. Rendering\n- Scene renders are executed via **Mantra** or **Karma**.\n- Output format: **grayscale 224×224 px** sprite sheets (`.exr` or `.jpg`).\n\n![stage/](https://i.imgur.com/LqPks5t.png)\n\n\n### 4. Compositing & Cropping\n- A **COP2 network** slices the sprite sheet into **28×28** digit tiles.\n- Each tile is labeled by its original digit and saved to:\n```\n./output/0/img_00001.jpg\n./output/1/img_00001.jpg\n...\n```\n\n![compositing](https://i.imgur.com/mAnMQuB.png)\n\n\n### 🧾 Dataset Structure\n\n```bash\nmnist_bakery_data/\n├── 0/\n│   ├── img_00001.jpg\n│   ├── ...\n├── 1/\n│   ├── img_00001.jpg\n│   └── ...\n...\n├── 9/\n│   └── img_00001.jpg\n```\n\n\n- All images: grayscale `.jpg`, 28×28 resolution\n- Total: **40,960 samples**\n- ~4,096 samples per digit\n\n---\n\n## 📊 Statistics\n\n| Set       | Samples | Mean    | StdDev   |\n|-----------|---------|---------|----------|\n| MNIST     | 60,000  | 0.1307  | 0.3081   |\n| Synthetic | 40,960  | 0.01599 | 0.07722  |\n\n> Combine mean/std using weighted averaging if mixing both datasets.\n\n---\n\n## 📚 Usage Example\n\n```python\nfrom torchvision import transforms, datasets\n\ntransform = transforms.Compose([\n    transforms.Grayscale(),\n    transforms.ToTensor(),\n    transforms.Normalize(mean=[0.01599], std=[0.07722])  # Approximate weighted normalization\n])\n\ndataset = datasets.ImageFolder('./mnist_bakery_data', transform=transform)\n```\n\n---\n\n#### 🧠 Credits\n\n**Author**: Aaron T. Carter\n\n**Organization**: Arkaen Solutions\n\n**Tools Used**: Houdini, PyTorch, PIL\n\n___\n\n",
+              "extracted_code": "from torchvision import transforms, datasets\n\ntransform = transforms.Compose([\n    transforms.Grayscale(),\n    transforms.ToTensor(),\n    transforms.Normalize(mean=[0.01599], std=[0.07722])  # Approximate weighted normalization\n])\n\ndataset = datasets.ImageFolder('./mnist_bakery_data', transform=transform)"
+            },
+            {
+              "id": "Mike0307/MNIST-M",
+              "author": "Mike0307",
+              "sha": "bca0c963fd95756a36b8fbcff13417770310ffb6",
+              "created_at": "2023-07-03T15:48:24+00:00",
+              "last_modified": "2024-04-09T15:17:56+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 344,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/test-00000-of-00001-ba3ad971b105ff65.parquet"
+                },
+                {
+                  "rfilename": "data/train-00000-of-00001-571b6b1e2c195186.parquet"
+                }
+              ],
+              "card_data": {
+                "license": "mit",
+                "language": [],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "license:mit",
+                "size_categories:10K<n<100K",
+                "format:parquet",
+                "modality:image",
+                "library:datasets",
+                "library:pandas",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\nlicense: mit\ndataset_info:\n  features:\n  - name: image\n    dtype: image\n  - name: label\n    dtype:\n      class_label:\n        names:\n          '0': '0'\n          '1': '1'\n          '2': '2'\n          '3': '3'\n          '4': '4'\n          '5': '5'\n          '6': '6'\n          '7': '7'\n          '8': '8'\n          '9': '9'\n  splits:\n  - name: train\n    num_bytes: 119131988.027\n    num_examples: 59001\n  - name: test\n    num_bytes: 18049625.166\n    num_examples: 9001\n  download_size: 143468539\n  dataset_size: 137181613.193\n---\n\n## Train Example\n👉[Domain-Adversarial-Neural-Network](https://github.com/yeyuting0307/Domain-Adversarial-Neural-Network)\n\n\n",
+              "extracted_code": ""
+            },
+            {
+              "id": "uoft-cs/cifar10",
+              "author": "uoft-cs",
+              "sha": "0b2714987fa478483af9968de7c934580d0bb9a2",
+              "created_at": "2022-03-02T23:29:22+00:00",
+              "last_modified": "2024-01-04T06:53:11+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 71114,
+              "likes": 85,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "plain_text/test-00000-of-00001.parquet"
+                },
+                {
+                  "rfilename": "plain_text/train-00000-of-00001.parquet"
+                }
+              ],
+              "card_data": {
+                "license": [
+                  "unknown"
+                ],
+                "language": [
+                  "en"
+                ],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [
+                  "image-classification"
+                ],
+                "size_categories": [
+                  "10K<n<100K"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "task_categories:image-classification",
+                "annotations_creators:crowdsourced",
+                "language_creators:found",
+                "multilinguality:monolingual",
+                "source_datasets:extended|other-80-Million-Tiny-Images",
+                "language:en",
+                "license:unknown",
+                "size_categories:10K<n<100K",
+                "format:parquet",
+                "modality:image",
+                "library:datasets",
+                "library:pandas",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\nannotations_creators:\n- crowdsourced\nlanguage_creators:\n- found\nlanguage:\n- en\nlicense:\n- unknown\nmultilinguality:\n- monolingual\nsize_categories:\n- 10K<n<100K\nsource_datasets:\n- extended|other-80-Million-Tiny-Images\ntask_categories:\n- image-classification\ntask_ids: []\npaperswithcode_id: cifar-10\npretty_name: Cifar10\ndataset_info:\n  config_name: plain_text\n  features:\n  - name: img\n    dtype: image\n  - name: label\n    dtype:\n      class_label:\n        names:\n          '0': airplane\n          '1': automobile\n          '2': bird\n          '3': cat\n          '4': deer\n          '5': dog\n          '6': frog\n          '7': horse\n          '8': ship\n          '9': truck\n  splits:\n  - name: train\n    num_bytes: 113648310.0\n    num_examples: 50000\n  - name: test\n    num_bytes: 22731580.0\n    num_examples: 10000\n  download_size: 143646105\n  dataset_size: 136379890.0\nconfigs:\n- config_name: plain_text\n  data_files:\n  - split: train\n    path: plain_text/train-*\n  - split: test\n    path: plain_text/test-*\n  default: true\n---\n\n# Dataset Card for CIFAR-10\n\n## Table of Contents\n- [Dataset Description](#dataset-description)\n  - [Dataset Summary](#dataset-summary)\n  - [Supported Tasks and Leaderboards](#supported-tasks-and-leaderboards)\n  - [Languages](#languages)\n- [Dataset Structure](#dataset-structure)\n  - [Data Instances](#data-instances)\n  - [Data Fields](#data-fields)\n  - [Data Splits](#data-splits)\n- [Dataset Creation](#dataset-creation)\n  - [Curation Rationale](#curation-rationale)\n  - [Source Data](#source-data)\n  - [Annotations](#annotations)\n  - [Personal and Sensitive Information](#personal-and-sensitive-information)\n- [Considerations for Using the Data](#considerations-for-using-the-data)\n  - [Social Impact of Dataset](#social-impact-of-dataset)\n  - [Discussion of Biases](#discussion-of-biases)\n  - [Other Known Limitations](#other-known-limitations)\n- [Additional Information](#additional-information)\n  - [Dataset Curators](#dataset-curators)\n  - [Licensing Information](#licensing-information)\n  - [Citation Information](#citation-information)\n  - [Contributions](#contributions)\n\n## Dataset Description\n\n- **Homepage:** https://www.cs.toronto.edu/~kriz/cifar.html\n- **Repository:** \n- **Paper:** Learning Multiple Layers of Features from Tiny Images by Alex Krizhevsky\n- **Leaderboard:**\n- **Point of Contact:**\n\n### Dataset Summary\n\nThe CIFAR-10 dataset consists of 60000 32x32 colour images in 10 classes, with 6000 images per class. There are 50000 training images and 10000 test images.\nThe dataset is divided into five training batches and one test batch, each with 10000 images. The test batch contains exactly 1000 randomly-selected images from each class. The training batches contain the remaining images in random order, but some training batches may contain more images from one class than another. Between them, the training batches contain exactly 5000 images from each class.\n\n### Supported Tasks and Leaderboards\n\n- `image-classification`: The goal of this task is to classify a given image into one of 10 classes. The leaderboard is available [here](https://paperswithcode.com/sota/image-classification-on-cifar-10).\n\n### Languages\n\nEnglish\n\n## Dataset Structure\n\n### Data Instances\n\nA sample from the training set is provided below:\n\n```\n{\n  'img': <PIL.PngImagePlugin.PngImageFile image mode=RGB size=32x32 at 0x201FA6EE748>,\n  'label': 0\n}\n```\n\n### Data Fields\n\n- img: A `PIL.Image.Image` object containing the 32x32 image. Note that when accessing the image column: `dataset[0][\"image\"]` the image file is automatically decoded. Decoding of a large number of image files might take a significant amount of time. Thus it is important to first query the sample index before the `\"image\"` column, *i.e.* `dataset[0][\"image\"]` should **always** be preferred over `dataset[\"image\"][0]`\n- label: 0-9 with the following correspondence\n         0 airplane\n         1 automobile\n         2 bird\n         3 cat\n         4 deer\n         5 dog\n         6 frog\n         7 horse\n         8 ship\n         9 truck\n\n### Data Splits\n\nTrain and Test\n\n## Dataset Creation\n\n### Curation Rationale\n\n[More Information Needed]\n\n### Source Data\n\n#### Initial Data Collection and Normalization\n\n[More Information Needed]\n\n#### Who are the source language producers?\n\n[More Information Needed]\n\n### Annotations\n\n#### Annotation process\n\n[More Information Needed]\n\n#### Who are the annotators?\n\n[More Information Needed]\n\n### Personal and Sensitive Information\n\n[More Information Needed]\n\n## Considerations for Using the Data\n\n### Social Impact of Dataset\n\n[More Information Needed]\n\n### Discussion of Biases\n\n[More Information Needed]\n\n### Other Known Limitations\n\n[More Information Needed]\n\n## Additional Information\n\n### Dataset Curators\n\n[More Information Needed]\n\n### Licensing Information\n\n[More Information Needed]\n\n### Citation Information\n\n```\n@TECHREPORT{Krizhevsky09learningmultiple,\n    author = {Alex Krizhevsky},\n    title = {Learning multiple layers of features from tiny images},\n    institution = {},\n    year = {2009}\n}\n```\n\n### Contributions\n\nThanks to [@czabo](https://github.com/czabo) for adding this dataset.",
+              "extracted_code": ""
+            },
+            {
+              "id": "NathanGavenski/CartPole-v1",
+              "author": "NathanGavenski",
+              "sha": "523ca21d86ef6844bad6e520cfa364ad132f1ed1",
+              "created_at": "2023-10-24T17:30:02+00:00",
+              "last_modified": "2024-06-11T13:50:17+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 372,
+              "likes": 4,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "teacher.jsonl"
+                }
+              ],
+              "card_data": {
+                "license": "mit",
+                "language": [],
+                "tags": [
+                  "Imitation Learning",
+                  "Expert Trajectory"
+                ],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [
+                  "10M<n<100M"
+                ],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "license:mit",
+                "size_categories:100K<n<1M",
+                "format:json",
+                "modality:tabular",
+                "library:datasets",
+                "library:pandas",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us",
+                "Imitation Learning",
+                "Expert Trajectory"
+              ],
+              "readme": "---\nlicense: mit\ntags:\n- Imitation Learning\n- Expert Trajectory\npretty_name: CartPole-v1 Expert Dataset\nsize_categories:\n- 10M<n<100M\n---\n\n# CartPole-v1 - Imitation Learning Datasets\n\nThis is a dataset created by [Imitation Learning Datasets](https://github.com/NathanGavenski/IL-Datasets) project. \nIt was created by using Stable Baselines weights from a PPO policy from [HuggingFace](https://huggingface.co/sb3/ppo-CartPole-v1).\n\n## Description\n\nThe dataset consists of 1,000 episodes with an average episodic reward of 500.\nEach entry consists of:\n```\nobs (list): observation with length 4.\naction (int): action (0 or 1).\nreward (float): reward point for that timestep.\nepisode_returns (bool): if that state was the initial timestep for an episode.\n```\n\n## Usage\n\nFeel free to download and use the `teacher.jsonl` dataset as you please.\nIf you are interested in using our PyTorch Dataset implementation, feel free to check the [IL Datasets](https://github.com/NathanGavenski/IL-Datasets/blob/main/src/imitation_datasets/dataset/dataset.py) project.\nThere, we implement a base Dataset that downloads this dataset and all other datasets directly from HuggingFace.\nThe Baseline Dataset also allows for more control over train and test splits and how many episodes you want to use (in cases where the 1k episodes are not necessary).\n\n## Citation\n\n```{bibtex}\n@inproceedings{gavenski2024ildatasets,\n  author = {Gavenski, Nathan and Luck, Michael and Rodrigues, Odinaldo},\n  title = {Imitation Learning Datasets: A Toolkit For Creating Datasets, Training Agents and Benchmarking},\n  year = {2024},\n  isbn = {9798400704864},\n  publisher = {International Foundation for Autonomous Agents and Multiagent Systems},\n  address = {Richland, SC},\n  abstract = {Imitation learning field requires expert data to train agents in a task. Most often, this learning approach suffers from the absence of available data, which results in techniques being tested on its dataset. Creating datasets is a cumbersome process requiring researchers to train expert agents from scratch, record their interactions and test each benchmark method with newly created data. Moreover, creating new datasets for each new technique results in a lack of consistency in the evaluation process since each dataset can drastically vary in state and action distribution. In response, this work aims to address these issues by creating Imitation Learning Datasets, a toolkit that allows for: (i) curated expert policies with multithreaded support for faster dataset creation; (ii) readily available datasets and techniques with precise measurements; and (iii) sharing implementations of common imitation learning techniques. Demonstration link: https://nathangavenski.github.io/#/il-datasets-video},\n  booktitle = {Proceedings of the 23rd International Conference on Autonomous Agents and Multiagent Systems},\n  pages = {2800–2802},\n  numpages = {3},\n  keywords = {benchmarking, dataset, imitation learning},\n  location = {<conf-loc>, <city>Auckland</city>, <country>New Zealand</country>, </conf-loc>},\n  series = {AAMAS '24}\n}\n```",
+              "extracted_code": ""
+            },
+            {
+              "id": "HumanCompatibleAI/ppo-CartPole-v1",
+              "author": "HumanCompatibleAI",
+              "sha": "fa7716d37326e3c998211f5a7d7750cdf019bb16",
+              "created_at": "2023-07-18T14:43:44+00:00",
+              "last_modified": "2023-07-18T14:43:49+00:00",
+              "private": false,
+              "gated": false,
+              "disabled": false,
+              "downloads": 29,
+              "likes": 0,
+              "siblings": [
+                {
+                  "rfilename": ".gitattributes"
+                },
+                {
+                  "rfilename": "README.md"
+                },
+                {
+                  "rfilename": "data/train-00000-of-00001-4a072b61282dc4f2.parquet"
+                }
+              ],
+              "card_data": {
+                "language": [],
+                "tags": [],
+                "datasets": [],
+                "task_categories": [],
+                "size_categories": [],
+                "metrics": [],
+                "widget": []
+              },
+              "tags": [
+                "size_categories:n<1K",
+                "format:parquet",
+                "modality:text",
+                "library:datasets",
+                "library:pandas",
+                "library:mlcroissant",
+                "library:polars",
+                "region:us"
+              ],
+              "readme": "---\ndataset_info:\n  features:\n  - name: obs\n    sequence:\n      sequence: float32\n  - name: acts\n    sequence: int64\n  - name: infos\n    sequence: string\n  - name: terminal\n    dtype: bool\n  - name: rews\n    sequence: float64\n  splits:\n  - name: train\n    num_bytes: 2103613\n    num_examples: 100\n  download_size: 1263834\n  dataset_size: 2103613\n---\n# Dataset Card for \"ppo-CartPole-v1\"\n\n[More Information needed](https://github.com/huggingface/datasets/blob/main/CONTRIBUTING.md#how-to-contribute-to-the-dataset-cards)",
+              "extracted_code": ""
+            }
+          ]
+        }
+      }
     }
   },
   "idea_info_history": [
