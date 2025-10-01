@@ -1,0 +1,44 @@
+
+Input:
+You are a cutting-edge AI researcher. Based on the new research method described in # New Methods, please design an overall experimental strategy that will be applied across all experiments to demonstrate the effectiveness of this method.
+
+# Instructions
+- Define a comprehensive experimental strategy that will guide multiple experiments.
+- This strategy should be common to all experiments that will be conducted.
+- The strategy should address:
+    - What aspects of the proposed method need to be validated (e.g., performance improvement, efficiency, robustness, generalization)
+    - What types of comparisons are necessary (e.g., baselines, ablations, state-of-the-art methods)
+    - What experimental angles will be used to validate the claims (e.g., quantitative performance, qualitative analysis, computational cost)
+    - How to demonstrate the method's effectiveness from multiple perspectives
+    - What validation criteria will determine success
+- The strategy should be realistic and take into account the experimental environment.
+- Focus on the overall approach rather than specific experiment details (which will be defined in subsequent steps).
+
+## Output Format
+Please provide:
+- experiment_strategy: A comprehensive strategy statement that describes the overall approach for validating the proposed method across all experiments
+
+# Experimental Environment
+NVIDIA A100
+VRAM：80GB
+RAM：2048 GB
+
+# Current Research Method (Target for Experiment Design)
+{
+    "Open Problems": "1. Current subset–based accelerators such as AUTOMATA use a *fixed* fraction of the training set.  In practice the smallest subset that preserves the ranking of competing hyper–parameter (HP) configurations is task-dependent and changes during training.  \n2. When the subset is too small the scheduler (ASHA/Hyperband) receives noisy signals and kills potentially good configurations; if it is too large we lose most of the speed-up.  \n3. There is no cheap, on-the-fly criterion telling us *when* to increase the subset size or to fall back to the full data.",
+    "Methods": "We propose Dynamic Gradient Matching for Hyper-parameter Optimization (DyGraM-HPO), a one–line change to AUTOMATA that *adapts the subset size automatically.*  \n\nCore idea\n──────────\nStart from a tiny subset S₀ (e.g. 1 % of the data). At the beginning of every training epoch for a configuration θ we compute the cosine distance ∆ₜ between the full-batch gradient g_full (cached once every K epochs) and the weighted subset gradient g_S (already available from AUTOMATA):\n\n    ∆ₜ = 1 – ⟨g_full , g_S⟩ / (‖g_full‖‖g_S‖).\n\nIf ∆ₜ > τ we *double* the subset size for this configuration (S ← S ∪ S_new sampled with GradMatchPB); otherwise we keep the current subset. τ starts large (e.g. 0.2) and decays linearly to 0.05.\n\nKey modifications over AUTOMATA\n1. add one gradient-similarity test per epoch → O(1) extra cost because g_S is already computed and g_full is reused for all configs for K epochs.  \n2. call GradMatchPB with the new target subset size only when needed (at most ⌈log₂(1/fraction_min)⌉ times per config).",
+    "Experimental Setup": "Benchmarks: CIFAR-10/100 (ResNet-18), SST-2 (BiLSTM) and LIBSVM tabular sets, identical to AUTOMATA paper.  \nBaselines: FULL, RANDOM(10 %), AUTOMATA(10 %), DyGraM-HPO(1 %→10 %).  \nHyper-parameter search:   – random search 50 trials + ASHA,   – TPE 50 trials + ASHA.  \nK=5 epochs, τ₀=0.2→0.05, fraction_min=1 %.",
+    "Experimental Code": "# only the new block inside the training loop\nif epoch % K == 0:\n    g_full = accumulate_gradients(full_loader, model)   # cached\n\nfor epoch in range(num_epochs):\n    g_S = accumulate_gradients(subset_loader, model, weights)\n    delta = 1 - torch.dot(g_full, g_S)/(g_full.norm()*g_S.norm()+1e-12)\n    if delta > tau(epoch):\n        subset_size *= 2                     # grow subset\n        subset_loader = gradmatch_pb(dataset, subset_size)\n    train_one_epoch(subset_loader)",
+    "Expected Result": "• Mean wall-clock speed-up vs FULL:   AUTOMATA ≈ 6×,   DyGraM-HPO ≈ 9×.  \n• Mean test accuracy drop < 0.3 % compared with FULL and equal or better than fixed-fraction AUTOMATA.  \n• Number of subset re-computations ≤ 3 per configuration.",
+    "Expected Conclusion": "A single, gradient-based adaptive rule eliminates the need to guess the right subset fraction beforehand.  DyGraM-HPO keeps the strong anytime performance of AUTOMATA while bringing an additional 1.5-2× speed-up, pushing hyper-parameter optimisation further towards real-time usability without any model-specific tuning."
+}
+
+---
+
+
+# Reference Information from Previous Iteration
+
+Output:
+{
+    "experiment_strategy": "Objective: Build a single, coherent validation pipeline that proves DyGraM-HPO is (a) faster, (b) at least as accurate, and (c) more broadly useful than fixed-subset or full-data HPO, while remaining stable to design-choice and task variations.\n\n1. Key Properties to Validate\n   1.1 Performance-Accuracy Trade-off – wall-clock speed-up vs. best-achieved test metric.\n   1.2 Ranking Fidelity – correlation between early (subset) and final (full-data) HP ranking.\n   1.3 Adaptivity Benefit – how subset sizes evolve and how often expansions occur.\n   1.4 Computational Efficiency – GPU hours, FLOPs, memory and communication overhead.\n   1.5 Robustness & Generalization – stability over seeds, tasks, model scales, HP searchers, and τ / K schedules.\n\n2. Comparison Grid (applied in every experiment)\n   • Strong baselines: FULL (no sub-sampling), RANDOM-p% (same fraction), and AUTOMATA-p% (best fixed fraction per prior work).\n   • State-of-the-art adaptive subset/HPO methods if available (e.g., HyperShrink, SHA++).\n   • Internal ablations:\n       – DyGraM-HPO-noDecay (fixed τ)\n       – DyGraM-HPO-noCache (recompute g_full each epoch) to isolate caching benefit\n       – DyGraM-HPO-fixedStart (start at 10%) to isolate starting-size choice.\n\n3. Validation Angles\n   A. Quantitative Metrics\n      • Speed-up = GPU-time(FULL)/GPU-time(method) @ equal final accuracy.\n      • Accuracy Gap = |Acc(method) – Acc(FULL)|.\n      • Ranking Spearman ρ between top-k configs under subset vs. full evaluation.\n      • Sample Efficiency = best-valid-score vs. wall-clock curve (any-time plot).\n      • Resource Usage = FLOPs, peak VRAM, number of gradient-similarity tests.\n   B. Qualitative / Diagnostic\n      • Subset-size trajectory per configuration.\n      • Δ_t (cosine distance) histogram over epochs.\n      • Survival curves of configurations under ASHA (did noise kill good ones?).\n      • Heat-maps of τ, K sensitivity.\n\n4. Multi-Perspective Demonstration Plan\n   Phase 1: Reproduce baseline numbers on CIFAR-10/100, SST-2, LIBSVM to establish trust.\n   Phase 2: Controlled speed/accuracy studies under identical HP-search budgets (50 trials, same seeds) comparing all baselines + DyGraM variants; record above metrics.\n   Phase 3: Stress-tests\n       – Larger backbone (ResNet-50) and larger dataset (ImageNet-64 subset) to test scaling.\n       – Different searchers (Random+ASHA, TPE+ASHA, BOHB) to show searcher-agnosticism.\n       – Perturbed τ/K schedules and noise-injected gradients to test robustness.\n   Phase 4: Ablation synthesis – compile results to quantify contribution of each design element.\n\n5. Success Criteria (must satisfy ALL in ≥80% of tasks/seeds)\n   • Speed-up ≥1.5× over best fixed AUTOMATA and ≥6× over FULL.\n   • Accuracy Gap ≤0.5% absolute (classification) or within 95% CI of FULL.\n   • Spearman ρ ≥0.9 for top-20% configurations after pruning.\n   • Additional gradient-similarity overhead ≤5% of total runtime.\n   • Subset expansions per config ≤log2(1/fraction_min) +1 (empirically ≤4).\n   • No catastrophic failures: worst-case gap <2% on any task/seed.\n\n6. Practical Execution Notes\n   • Use NVIDIA A100 nodes; run jobs in containers with deterministic cudnn settings; cap GPU util ≥90% to reflect realistic high-throughput workload.\n   • Record raw logs and publish scripts for full reproducibility.\n   • Employ 3 random seeds per experiment; report mean ± std.\n\nThis unified strategy, applied verbatim to every benchmark, ensures that DyGraM-HPO’s claimed benefits are examined from efficiency, accuracy, robustness, and usability viewpoints, against rigorous baselines and ablations, with clear quantitative thresholds defining success."
+}
