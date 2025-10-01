@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+DAD learns a design network, πφ, which maps from previous design-observation pairs (history, ht) to the next design (ξt). This network is trained by simulating hypothetical experimental trajectories to make near-optimal design decisions automatically. The core objective is reformulated from an iterative problem into a single holistic objective, IT(π), representing the total expected information gained from the entire experiment, eliminating the need for direct posterior or marginal likelihood estimation during the experiment. To optimize this intractable objective, DAD derives contrastive lower bounds called sequential PCE (sPCE) and uses stochastic gradient ascent for end-to-end training. For gradient estimation, it uses the reparameterization trick for continuous, reparametrizable likelihoods and a score function (REINFORCE) gradient estimator for discrete observations or non-reparametrizable likelihoods. The network architecture exploits permutation invariance of the BOED problem, representing history ht with a fixed-dimensional pooled representation R(ht) = ∑t k=1 Eφ1 (ξk,yk) (using an encoder Eφ1), and then passing this to an emitter network Fφ2 to output the design πφ(ht) = Fφ2 (R(ht)).
+
+# GitHub URLs List
+['https://github.com/ae-foster/dad', 'https://github.com/drbenvincent/darc-experiments-matlab']
+Output:
+{
+    "index": 0
+}
