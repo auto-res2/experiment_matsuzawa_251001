@@ -11,6 +11,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader, random_split
+from torchvision import datasets, transforms
 
 ###########################################################################
 # ----------------------- Generic / Placeholder Datasets --------------- #
@@ -59,6 +60,50 @@ def _build_random_loaders(ds_cfg: Dict[str, Any], smoke_test: bool):
     return train_loader, val_loader, num_classes, input_shape
 
 
+def _build_cifar10_loaders(ds_cfg: Dict[str, Any], smoke_test: bool):
+    """Internal helper to create loaders for CIFAR-10 dataset."""
+    params = ds_cfg.get("params", {})
+    root = params.get("root", "./data")
+    train_frac = params.get("train_fraction", 0.9)
+    batch_size = params.get("batch_size", 128)
+
+    # CIFAR-10 specific parameters
+    num_classes = 10
+    input_shape = (3, 32, 32)
+
+    # Standard CIFAR-10 augmentations for training
+    transform_train = transforms.Compose([
+        transforms.RandomCrop(32, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    transform_test = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    ])
+
+    # Load CIFAR-10 dataset
+    train_dataset = datasets.CIFAR10(root=root, train=True, download=True, transform=transform_train)
+    test_dataset = datasets.CIFAR10(root=root, train=False, download=True, transform=transform_test)
+
+    # Split train into train and validation
+    n_train = int(train_frac * len(train_dataset))
+    n_val = len(train_dataset) - n_train
+    train_set, val_set = random_split(train_dataset, [n_train, n_val])
+
+    # For smoke test, use tiny subset
+    if smoke_test:
+        train_set = torch.utils.data.Subset(train_set, range(min(256, len(train_set))))
+        val_set = torch.utils.data.Subset(val_set, range(min(64, len(val_set))))
+
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=2)
+    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False, num_workers=2)
+
+    return train_loader, val_loader, num_classes, input_shape
+
+
 def get_dataloaders(dataset_cfg: Dict[str, Any], smoke_test: bool):
     """Public entry-point used by src.train.
 
@@ -85,7 +130,13 @@ def get_dataloaders(dataset_cfg: Dict[str, Any], smoke_test: bool):
         return _build_random_loaders(dataset_cfg, smoke_test)
 
     # ------------------------------------------------------------------ #
-    # 2) Placeholder for *real* datasets – must be filled in derived code
+    # 2) CIFAR-10 dataset
+    # ------------------------------------------------------------------ #
+    if name == "CIFAR10":
+        return _build_cifar10_loaders(dataset_cfg, smoke_test)
+
+    # ------------------------------------------------------------------ #
+    # 3) Placeholder for *real* datasets – must be filled in derived code
     # ------------------------------------------------------------------ #
     if name == "DATASET_PLACEHOLDER":
         raise NotImplementedError(
@@ -93,6 +144,6 @@ def get_dataloaders(dataset_cfg: Dict[str, Any], smoke_test: bool):
             "in the derived, dataset-specific experiment code.")
 
     # ------------------------------------------------------------------ #
-    # 3) Fallback – allow future extensions via registry mechanism
+    # 4) Fallback – allow future extensions via registry mechanism
     # ------------------------------------------------------------------ #
     raise ValueError(f"Unknown dataset name '{name}'. Please register it in preprocess.py")

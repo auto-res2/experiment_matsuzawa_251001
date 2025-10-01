@@ -1,0 +1,118 @@
+experiments:
+- dataset:
+    name: CIFAR10
+    params:
+      batch_size: 128
+      root: ./data
+      train_fraction: 0.9
+  id: FULL
+  model:
+    name: RESNET18
+    params: {}
+  optimizer:
+    lr: 0.1
+    momentum: 0.9
+    name: SGD
+  seed: 0
+  training:
+    batch_size: 128
+    epochs: 150
+- dataset:
+    name: CIFAR10
+    params:
+      batch_size: 128
+      root: ./data
+      subset_fraction: 0.1
+      subset_strategy: random
+      train_fraction: 0.9
+  id: RANDOM-10%
+  method_specific:
+    algo: RANDOM_SUBSET
+    params:
+      fraction: 0.1
+  model:
+    name: RESNET18
+    params: {}
+  optimizer:
+    lr: 0.1
+    momentum: 0.9
+    name: SGD
+  seed: 0
+  training:
+    batch_size: 128
+    epochs: 150
+- dataset:
+    name: CIFAR10
+    params:
+      batch_size: 128
+      root: ./data
+      subset_fraction: 0.1
+      subset_strategy: gradmatch
+      train_fraction: 0.9
+  id: AUTOMATA-10%
+  method_specific:
+    algo: AUTOMATA
+    params:
+      fraction: 0.1
+  model:
+    name: RESNET18
+    params: {}
+  optimizer:
+    lr: 0.1
+    momentum: 0.9
+    name: SGD
+  seed: 0
+  training:
+    batch_size: 128
+    epochs: 150
+- dataset:
+    name: CIFAR10
+    params:
+      batch_size: 128
+      root: ./data
+      subset_fraction: 0.01
+      subset_strategy: gradmatch_dynamic
+      train_fraction: 0.9
+  id: DyGraM-HPO
+  method_specific:
+    algo: DyGraM-HPO
+    params:
+      K: 5
+      tau_end: 0.05
+      tau_start: 0.2
+  model:
+    name: RESNET18
+    params: {}
+  optimizer:
+    lr: 0.1
+    momentum: 0.9
+    name: SGD
+  seed: 0
+  training:
+    batch_size: 128
+    epochs: 150
+- dataset:
+    name: CIFAR10
+    params:
+      batch_size: 128
+      root: ./data
+      subset_fraction: 0.01
+      subset_strategy: gradmatch_dynamic
+      train_fraction: 0.9
+  id: DyGraM-HPO-noDecay
+  method_specific:
+    algo: DyGraM-HPO-noDecay
+    params:
+      K: 5
+      tau_fixed: 0.1
+  model:
+    name: RESNET18
+    params: {}
+  optimizer:
+    lr: 0.1
+    momentum: 0.9
+    name: SGD
+  seed: 0
+  training:
+    batch_size: 128
+    epochs: 150
