@@ -1,0 +1,17 @@
+
+Input:
+# Task
+You carefully read the contents of the “Paper Outline” and select one GitHub link from the “GitHub URLs List” that you think is most relevant to the contents.
+# Constraints
+- Output the index number corresponding to the selected GitHub URL.
+- Be sure to select only one GitHub URL.
+- If there is no related GitHub link, output None.
+# Paper Outline
+The policy search problem is framed as a zeroth-order black-box optimization problem. GIBO models the objective function and its Jacobian (gradient) jointly using a Gaussian Process (GP), leveraging the property that the derivative of a GP is also a GP. A novel acquisition function, 'Gradient Information (GI)', is introduced to actively suggest query points that maximize the expected reduction in the Jacobian's variance at the current parameters. The GIBO algorithm consists of two loops: an outer loop for iterative parameter updates (e.g., gradient ascent using the GP's posterior gradient estimate) and an inner loop where the GI acquisition function queries points to increase gradient information. Implementation choices include a local GP model (using only the most recent samples), local optimization of the acquisition function within bounded search spaces, gradient normalization using the Mahalanobis norm with GP lengthscales, and state normalization for RL environments.
+
+# GitHub URLs List
+['https://github.com/sarmueller/gibo']
+Output:
+{
+    "index": 0
+}
