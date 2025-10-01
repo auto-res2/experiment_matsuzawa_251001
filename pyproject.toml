@@ -1,1 +1,18 @@
-# Please list the required python packages.
+[project]
+name = "common-core-foundation"
+version = "0.1.0"
+description = "Common experimental framework with unified evaluation logic"
+requires-python = ">=3.9"
+authors = [{name = "AI Researcher", email="ai@researcher.test"}]
+
+[project.dependencies]
+torch = "*"
+pyyaml = "*"
+matplotlib = "*"
+seaborn = "*"
+pandas = "*"
+scikit-learn = "*"
+tqdm = "*"
+
+[tool.setuptools.packages.find]
+where = ["src"]

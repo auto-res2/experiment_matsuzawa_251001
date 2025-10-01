@@ -1,0 +1,23 @@
+# config/smoke_test.yaml
+# Lightweight configuration that runs quickly end-to-end on dummy data.
+experiments:
+  - run_id: dummy_classification
+    mode: training
+    seed: 1
+    dataset:
+      name: DUMMY_CLASSIFICATION  # PLACEHOLDER: replace with real dataset builder
+      params:
+        num_samples: 200
+        input_dim: 20
+        num_classes: 3
+        batch_size: 32
+      val_fraction: 0.2
+    model:
+      name: DUMMY_MLP              # PLACEHOLDER: replace with real model builder
+      params:
+        hidden_dim: 32
+    training:
+      epochs: 2
+      learning_rate: 1e-3
+    task:
+      type: classification

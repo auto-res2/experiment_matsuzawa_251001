@@ -1,0 +1,3 @@
+# config/full_experiment.yaml
+# Full experiment grid – currently kept empty but YAML is valid.
+experiments: []
