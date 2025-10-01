@@ -1,0 +1,2052 @@
+
+Input:
+You are a researcher with expertise in engineering in the field of machine learning.
+
+# Instructions
+- The content described in “Repository Content” corresponds to the GitHub repository of the method described in “Method.”
+- Please extract the following two pieces of information from “Repository Content”:
+    - experimental_code：Extract the implementation sections that are directly related to the method described in “Method.”
+    - experimental_info：Extract and output the experimental settings related to the method described in “Method.”
+
+# Method
+The methodology leverages MLMC to approximate analytically intractable multi-step look-ahead acquisition functions formulated as Markov Decision Processes (MDPs). It uses a nested Sample Average Approximation (SAA) to handle nested optimization and Monte Carlo (MC) estimations. MLMC constructs a telescoping sum of estimators from low to high accuracy, performing most simulations with low-accuracy and low-cost to reduce overall computational complexity. An antithetic coupling approach is introduced to further improve the convergence rate. The approach is applied to approximate the maximizer of the acquisition function directly, as well as the acquisition function itself (for theoretical analysis), within a Gaussian Process-based BO framework.
+
+# Repository Content
+File Path: mlmcbo/__init__.py
+Content:
+
+
+File Path: mlmcbo/acquisition_functions/__init__.py
+Content:
+from .mc_two_step_lookahead import qExpectedImprovementTwoStepLookahead, ExpectedImprovementTwoStepLookahead
+from .mlmc_inc_functions import qEIMLMCTwoStep, qEIMLMCThreeStep, CustomqMultiStepLookahead
+
+File Path: mlmcbo/acquisition_functions/mc_two_step_lookahead.py
+Content:
+from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
+
+import torch
+from botorch import settings
+from botorch.acquisition import (
+    AcquisitionFunction,
+    ExpectedImprovement,
+    qKnowledgeGradient,
+    MCAcquisitionObjective,
+    qExpectedImprovement,
+    qMultiStepLookahead
+)
+from botorch.acquisition.monte_carlo import MCAcquisitionFunction
+from botorch.acquisition.multi_step_lookahead import make_best_f
+from botorch.acquisition.objective import PosteriorTransform
+from botorch.exceptions.errors import UnsupportedError
+from botorch.models.model import Model
+from botorch.sampling.base import MCSampler
+from botorch.sampling.normal import IIDNormalSampler
+from botorch.utils.transforms import match_batch_shape, t_batch_mode_transform, concatenate_pending_points
+from torch import Tensor
+from torch.nn import ModuleList
+
+TAcqfArgConstructor = Callable[[Model, Tensor], Dict[str, Any]]
+
+
+class ExpectedImprovementTwoStepLookahead(qKnowledgeGradient):
+    r"""two-step lookahead expected improvement
+    implemented in a one-shot fashion"""
+
+    def __int__(
+            self,
+            model: Model,
+            num_fantasies: Optional[int] = None,
+            sampler: Optional[MCSampler] = None,
+            objective: Optional[MCAcquisitionObjective] = None,
+            inner_sampler: Optional[MCSampler] = None,
+            X_pending: Optional[Tensor] = None,
+            current_value: Optional[Tensor] = None
+    ) -> None:
+        super().__init__(
+            model,
+            num_fantasies,
+            sampler,
+            objective,
+            inner_sampler,
+            X_pending,
+            current_value
+        )
+
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate one step-lookahead qEI on the candidate set 'X'
+
+        Args:
+            X: A `b x (q + num_fantasies) x d` Tensor with `b` t-batches of
+                `q + num_fantasies` design points each. We split this X tensor
+                into two parts in the `q` dimension (`dim=-2`). The first `q`
+                are the q-batch of design points and the last num_fantasies are
+                the current solutions of the inner optimization problem.
+
+                `X_fantasies = X[..., -num_fantasies:, :]`
+                `X_fantasies.shape = b x num_fantasies x d`
+
+                `X_actual = X[..., :-num_fantasies, :]`
+                `X_actual.shape = b x q x d`
+
+        Returns:
+            A Tensor of shape `b`.
+            For t-batch b, the one-step lookahead EI value of the design
+                `X_actual[b]` is averaged across the fantasy models, where
+                `X_fantasies[b, i]` is chosen as the final selection for the
+                `i`-th fantasy model.
+        """
+        X_actual, X_fantasies = _split_fantasy_points(
+            X=X, n_f=self.num_fantasies
+        )
+
+        current_value = (
+            self.current_value if self.current_value else self.model.train_targets.max()
+        )
+
+        ei = ExpectedImprovement(model=self.model, best_f=current_value)
+        zero_step_ei = ei(X_actual)
+
+        # We only concatenate X_pending into the X part after splitting
+        if self.X_pending is not None:
+            X_actual = torch.cat(
+                [X_actual, match_batch_shape(self.X_pending, X_actual)], dim=-2
+            )
+
+        # construct the fantasy model of shape `num_fantasies x b`
+        fantasy_model = self.model.fantasize(
+            X=X_actual, sampler=self.sampler, observation_noise=False
+        )
+
+        best_f = fantasy_model.train_targets.max(dim=-1)[0]
+
+        if not self.inner_sampler:
+            one_step_ei = ExpectedImprovement(model=fantasy_model, best_f=best_f)
+        else:
+            one_step_ei = qExpectedImprovement(model=fantasy_model,
+                                               sampler=self.inner_sampler,
+                                               best_f=best_f)
+
+        with settings.propagate_grads(True):
+            values = one_step_ei(X=X_fantasies)
+
+        one_step_ei_avg = values.mean(dim=0)
+
+        return zero_step_ei + one_step_ei_avg
+
+
+class qExpectedImprovementAnt(qExpectedImprovement):
+    r"""qExpectedImprovement antithetic estimation"""
+
+    def __init__(
+            self,
+            model: Model,
+            best_f: Union[float, Tensor],
+            sampler: Optional[MCSampler] = None,
+            objective: Optional[MCAcquisitionObjective] = None,
+            posterior_transform: Optional[PosteriorTransform] = None,
+            X_pending: Optional[Tensor] = None,
+    ) -> None:
+        r"""q-Expected Improvement.
+
+        Args:
+            model: A fitted model.
+            best_f: The best objective value observed so far (assumed noiseless). Can be
+                a `batch_shape`-shaped tensor, which in case of a batched model
+                specifies potentially different values for each element of the batch.
+            sampler: The sampler used to draw base samples. Defaults to
+                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
+            objective: The MCAcquisitionObjective under which the samples are evaluated.
+                Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
+            X_pending:  A `m x d`-dim Tensor of `m` design points that have been
+                submitted for function evaluation but have not yet been evaluated.
+                Concatenated into X upon forward call. Copied and set to have no
+                gradient.
+        """
+
+        super().__init__(
+            model=model,
+            best_f=best_f,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+        )
+
+    @concatenate_pending_points
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate qExpectedImprovement on the candidate set `X`.
+
+        Args:
+            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design
+                points each.
+
+        Returns:
+            A `batch_shape'`-dim Tensor of Expected Improvement values at the given
+            design points `X`, where `batch_shape'` is the broadcasted batch shape of
+            model and input `X`.
+        """
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
+        samples = self.sampler(posterior)
+        obj = self.objective(samples, X=X)
+
+        obj_1 = obj[1::2]
+        obj_1 = (obj_1 - self.best_f.unsqueeze(-1).to(obj)).clamp_min(0)
+        q_ei_1 = obj_1.max(dim=-1)[0].mean(dim=0)
+        obj_2 = obj[::2]
+        obj_2 = (obj_2 - self.best_f.unsqueeze(-1).to(obj)).clamp_min(0)
+        q_ei_2 = obj_2.max(dim=-1)[0].mean(dim=0)
+        return (q_ei_1 + q_ei_2) / 2
+
+
+class qExpectedImprovementTwoStepLookahead(qMultiStepLookahead):
+
+    def __init__(
+            self,
+            model: Model,
+            batch_sizes: List[int],
+            num_fantasies: Optional[List[int]] = None,
+            samplers: Optional[List[MCSampler]] = None,
+            valfunc_cls: Optional[List[Optional[Type[AcquisitionFunction]]]] = [ExpectedImprovement,
+                                                                                qExpectedImprovement],
+            valfunc_argfacs: Optional[List[Optional[TAcqfArgConstructor]]] = [make_best_f, make_best_f],
+            objective: Optional[MCAcquisitionObjective] = None,
+            posterior_transform: Optional[PosteriorTransform] = None,
+            inner_mc_samples: Optional[List[int]] = None,
+            X_pending: Optional[Tensor] = None,
+            collapse_fantasy_base_samples: bool = True,
+            antithetic_variates=False,
+            num_samples=512,
+            num_samples_inner=512
+    ) -> None:
+        inner_samplers = [None, IIDNormalSampler(sample_shape=torch.Size([num_samples]), resample=False)]
+
+        if objective is not None and not isinstance(objective, MCAcquisitionObjective):
+            raise UnsupportedError(
+                "`qMultiStepLookahead` got a non-MC `objective`. This is not supported."
+                " Use `posterior_transform` and `objective=None` instead."
+            )
+
+        super(MCAcquisitionFunction, self).__init__(model=model)
+        self.batch_sizes = batch_sizes
+        if samplers is None:
+            samplers = [IIDNormalSampler(sample_shape=torch.Size([num_samples]), resample=False)]
+        if not ((num_fantasies is None) ^ (samplers is None)):
+            raise UnsupportedError(
+                "qMultiStepLookahead requires exactly one of `num_fantasies` or "
+                "`samplers` as arguments."
+            )
+        num_fantasies = [sampler.sample_shape[0] for sampler in samplers]
+        self.num_fantasies = num_fantasies
+        if antithetic_variates:
+            valfunc_cls = [ExpectedImprovement, qExpectedImprovementAnt]
+        if inner_mc_samples is None:
+            inner_mc_samples = [None] * (1 + len(num_fantasies))
+        if valfunc_argfacs is None:
+            valfunc_argfacs = [None] * (1 + len(batch_sizes))
+
+        self.objective = objective
+        self.posterior_transform = posterior_transform
+        self.set_X_pending(X_pending)
+        self.samplers = ModuleList(samplers)
+        self.inner_samplers = ModuleList(inner_samplers)
+        self._valfunc_cls = valfunc_cls
+        self._valfunc_argfacs = valfunc_argfacs
+        self._collapse_fantasy_base_samples = collapse_fantasy_base_samples
+
+
+def _split_fantasy_points(X: Tensor, n_f: int) -> Tuple[Tensor, Tensor]:
+    r"""Split a one-shot optimization input into actual and fantasy points
+
+    Args:
+        X: A `batch_shape x (q + n_f) x d`-dim tensor of actual and fantasy
+            points
+
+    Returns:
+        2-element tuple containing
+
+        - A `batch_shape x q x d`-dim tensor `X_actual` of input candidates.
+        - A `n_f x batch_shape x 1 x d`-dim tensor `X_fantasies` of fantasy
+            points, where `X_fantasies[i, batch_idx]` is the i-th fantasy point
+            associated with the batch indexed by `batch_idx`.
+    """
+    if n_f > X.size(-2):
+        raise ValueError(
+            f"n_f ({n_f}) must be less than the q-batch dimension of X ({X.size(-2)})"
+        )
+    split_sizes = [X.size(-2) - n_f, n_f]
+    X_actual, X_fantasies = torch.split(X, split_sizes, dim=-2)
+    # X_fantasies is b x num_fantasies x d, needs to be num_fantasies x b x 1 x d
+    # for batch mode evaluation with batch shape num_fantasies x b.
+    # b x num_fantasies x d --> num_fantasies x b x d
+    X_fantasies = X_fantasies.permute(-2, *range(X_fantasies.dim() - 2), -1)
+    # num_fantasies x b x 1 x d
+    X_fantasies = X_fantasies.unsqueeze(dim=-2)
+    return X_actual, X_fantasies
+
+File Path: mlmcbo/acquisition_functions/mlmc_inc_functions.py
+Content:
+import time
+from typing import Any, Callable, Dict, List, Optional, Type, Union
+
+import torch
+from botorch.acquisition import (
+    AcquisitionFunction,
+    ExpectedImprovement,
+    MCAcquisitionObjective,
+    qExpectedImprovement,
+    qMultiStepLookahead, PosteriorMean, MCAcquisitionFunction,
+)
+from botorch.acquisition.multi_step_lookahead import make_best_f, _construct_sample_weights, _construct_inner_samplers, \
+    _compute_stage_value
+from botorch.acquisition.objective import PosteriorTransform
+from botorch.exceptions import UnsupportedError
+from botorch.models.model import Model
+from botorch.optim import optimize_acqf
+from botorch.sampling.base import MCSampler
+from botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler
+from botorch.utils.transforms import t_batch_mode_transform, concatenate_pending_points, match_batch_shape
+from torch import Tensor
+from torch.nn import ModuleList
+
+TAcqfArgConstructor = Callable[[Model, Tensor], Dict[str, Any]]
+
+
+class qEIMLMCTwoStep:
+    r"""Class for two-step lookahead q-EI with MLMC (2-EI) by default"""
+
+    def __init__(self, model, bounds, num_restarts, raw_samples, q=1, batch_sizes=None):
+        r"""
+        Args:
+            bounds: bounds of objective function
+            model: a fitted single-outcome model
+            num_restarts: number of restarts for LBFGS
+            raw_samples: number of raw samples for LBFGS
+            q: numer of batch observations generated each iteration
+            batch_sizes: array for q of q-EI, default is [2] (2-EI)
+        """
+        if batch_sizes is None:
+            batch_sizes = [2]
+        self.model = model
+        self.bounds = bounds
+        self.num_restarts = num_restarts
+        self.raw_samples = raw_samples
+        self.q = q
+        self.batch_sizes = batch_sizes
+
+    @staticmethod
+    def _create_sampler(num_samples, seed=None):
+        r"""Initialize sampler with a seed for coupling"""
+        return IIDNormalSampler(sample_shape=torch.Size([num_samples]), seed=seed)
+
+    def sample_candidate(self, l, dl, num_samples, match=None, match_mode='point'):
+        r"""Generate new observations with MLMC
+        Args:
+            l: index level of estimation (starting from 0)
+            dl: starting level (l <- l + dl)
+            num_samples: number of outer samples
+            match: if None, set the initial matched value
+                   else matching the optimizer, so that MLMC tracks the same optimizer among levels;
+            match_mode: 'point' or 'forward' or 'backward'
+        Returns:
+            Three elements tuple
+            new_candidate: next candidate point by MLMC (optimizer)
+            new_value: corresponding value of objective by MLMC (optimum)
+            match_candidate: candidate used for matching in the next level
+        """
+
+        # number of inner samples
+        M = 2 ** (l + dl)
+
+        # fixed seed of base samples for coupling
+        # No need to coupling for level 0 (single level estimator instead of increments)
+        # seed_out, seed_in = (torch.randint(0, 10000000, (1,)).item() for _ in range(2))
+
+        sampler = self._create_sampler(num_samples)
+
+        samplers = [sampler]
+        inner_mc_samplers = [None if self.q == 1 else sampler, self._create_sampler(M)]
+
+        if l == 0:
+            if match_mode == 'point':
+                new_candidate, new_value = self.get_candidates(samplers, inner_mc_samplers, return_best=True)
+                match_candidate = new_candidate
+            elif match_mode == 'forward':
+                new_candidate, new_value = self.get_candidates(samplers, inner_mc_samplers, return_best=False)
+                match_candidate = new_candidate
+            elif match_mode == 'backward':
+                new_candidate, new_value = self.get_candidates(samplers, inner_mc_samplers, return_best=False)
+                diff = torch.argmin(dist_matrix(match, new_candidate), dim=1)
+                new_candidate = new_candidate[diff]
+                new_value = new_value[diff]
+                match_candidate = new_candidate[diff]
+        else:
+            new_candidate_f, new_value_f = self.get_candidates(samplers, inner_mc_samplers,
+                                                               return_best=False)
+            antithetic = True
+
+            if not antithetic:
+                inner_sampler = self._create_sampler(M//2)
+                inner_sampler.base_samples = inner_mc_samplers[1].base_samples[::2]
+                inner_mc_samplers[1] = inner_sampler
+                
+            new_candidate_c, new_value_c = self.get_candidates(samplers, inner_mc_samplers,
+                                                               antithetic=antithetic,
+                                                               return_best=False)
+            if match_mode == 'point':
+                diff_c = torch.argmin(torch.norm(match - new_candidate_c, dim=[1, 2]))
+                diff_f = torch.argmin(torch.norm(new_candidate_f - new_candidate_c[diff_c], dim=[1, 2]))
+                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]
+                new_value = new_value_f[diff_f] - new_value_c[diff_c]
+                match_candidate = new_candidate_f[diff_f]
+            elif match_mode == 'forward':
+                diff_c = torch.argmin(dist_matrix(match, new_candidate_c), dim=1)
+                diff_f = torch.argmin(dist_matrix(new_candidate_c[diff_c], new_candidate_f), dim=1)
+                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]
+                new_value = new_value_f[diff_f] - new_value_c[diff_c]
+                match_candidate = new_candidate_f[diff_f]
+            elif match_mode == 'backward':
+                if match is None:
+                    match = new_candidate_f
+                diff_f = torch.argmin(dist_matrix(match, new_candidate_f), dim=1)
+                diff_c = torch.argmin(dist_matrix(new_candidate_f[diff_f], new_candidate_c), dim=1)
+                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]
+                new_value = new_value_f[diff_f] - new_value_c[diff_c]
+                match_candidate = new_candidate_c[diff_c]
+
+        return new_candidate, new_value, match_candidate
+
+    def get_candidates(self, samplers, inner_mc_samplers, antithetic=False, return_best=True):
+        r"""Generate the next observation of single two-step lookahead EI.
+        Args:
+            samplers: samplers for outer MC
+            inner_mc_samplers: samplers for inner MC
+            antithetic: whether to compute antithetic estimator
+            return_best: whether to return the best result of objective function optimization
+        Returns:
+            new_candidate: next candidate point (optimizer)
+            new_value: corresponding value of objective (optimum)
+        """
+
+        # initialize the acquisition function for the zero and first steps
+        valfunc_cls = [ExpectedImprovement if self.q == 1 else qExpectedImprovement,
+                       qExpectedImprovement if antithetic is False else qExpectedImprovementAnt]
+        valfunc_argfacs = [make_best_f, make_best_f]
+
+        oneqEI = CustomqMultiStepLookahead(
+            model=self.model,
+            batch_sizes=self.batch_sizes,
+            num_fantasies=None,
+            samplers=samplers,
+            valfunc_cls=valfunc_cls,
+            valfunc_argfacs=valfunc_argfacs,
+            inner_mc_samplers=inner_mc_samplers
+        )
+
+        q_prime = oneqEI.get_augmented_q_batch_size(self.q)
+        new_candidate, new_value = optimize_acqf(
+            acq_function=oneqEI,
+            bounds=self.bounds,
+            q=q_prime,
+            num_restarts=self.num_restarts,
+            raw_samples=self.raw_samples,
+            return_best_only=return_best
+        )
+
+        return new_candidate, new_value
+
+
+class CustomqMultiStepLookahead(qMultiStepLookahead):
+    r"""Inherited from qMultiStepLookahead allowing passing inner samplers"""
+
+    def __init__(
+            self,
+            model: Model,
+            batch_sizes: List[int],
+            num_fantasies: Optional[List[int]] = None,
+            samplers: Optional[List[MCSampler]] = None,
+            # Modification to allow passing in inner samplers directly
+            inner_mc_samplers: Optional[List[Optional[MCSampler]]] = None,
+            valfunc_cls: Optional[List[Optional[Type[AcquisitionFunction]]]] = None,
+            valfunc_argfacs: Optional[List[Optional[TAcqfArgConstructor]]] = None,
+            objective: Optional[MCAcquisitionObjective] = None,
+            posterior_transform: Optional[PosteriorTransform] = None,
+            inner_mc_samples: Optional[List[int]] = None,
+            X_pending: Optional[Tensor] = None,
+            collapse_fantasy_base_samples: bool = True
+    ) -> None:
+        r"""rewrite the initializer of qMultistepLookahead by allowing passing inner samplers"""
+
+        if objective is not None and not isinstance(objective, MCAcquisitionObjective):
+            raise UnsupportedError(
+                "`qMultiStepLookahead` got a non-MC `objective`. This is not supported."
+                " Use `posterior_transform` and `objective=None` instead."
+            )
+
+        super(MCAcquisitionFunction, self).__init__(model=model)
+        self.batch_sizes = batch_sizes
+        if not ((num_fantasies is None) ^ (samplers is None)):
+            raise UnsupportedError(
+                "qMultiStepLookahead requires exactly one of `num_fantasies` or "
+                "`samplers` as arguments."
+            )
+        if samplers is None:
+            # If collapse_fantasy_base_samples is False, the `batch_range_override`
+            # is set on the samplers during the forward call.
+            samplers: List[MCSampler] = [
+                SobolQMCNormalSampler(sample_shape=torch.Size([nf]))
+                for nf in num_fantasies
+            ]
+        else:
+            num_fantasies = [sampler.sample_shape[0] for sampler in samplers]
+        self.num_fantasies = num_fantasies
+        # By default do not use stage values and use PosteriorMean as terminal value
+        # function (= multi-step KG)
+        if valfunc_cls is None:
+            valfunc_cls = [None for _ in num_fantasies] + [PosteriorMean]
+        if inner_mc_samplers is not None:
+            inner_samplers = inner_mc_samplers
+        else:
+            if inner_mc_samples is None:
+                inner_mc_samples = [None] * (1 + len(num_fantasies))
+            inner_samplers = _construct_inner_samplers(
+                batch_sizes=batch_sizes,
+                valfunc_cls=valfunc_cls,
+                objective=objective,
+                inner_mc_samples=inner_mc_samples,
+            )
+        if valfunc_argfacs is None:
+            valfunc_argfacs = [None] * (1 + len(batch_sizes))
+
+        self.objective = objective
+        self.posterior_transform = posterior_transform
+        self.set_X_pending(X_pending)
+        self.samplers = ModuleList(samplers)
+        self.inner_samplers = ModuleList(inner_samplers)
+        self._valfunc_cls = valfunc_cls
+        self._valfunc_argfacs = valfunc_argfacs
+        self._collapse_fantasy_base_samples = collapse_fantasy_base_samples
+
+
+class qExpectedImprovementAnt(qExpectedImprovement):
+    r"""qExpectedImprovement antithetic estimation."""
+
+    def __init__(
+            self,
+            model: Model,
+            best_f: Union[float, Tensor],
+            sampler: Optional[MCSampler] = None,
+            objective: Optional[MCAcquisitionObjective] = None,
+            posterior_transform: Optional[PosteriorTransform] = None,
+            X_pending: Optional[Tensor] = None,
+            **kwargs: Any,
+    ) -> None:
+        r"""
+        Args:
+            model: A fitted model.
+            best_f: The best objective value observed so far (assumed noiseless). Can be
+                a `batch_shape`-shaped tensor, which in case of a batched model
+                specifies potentially different values for each element of the batch.
+            sampler: The sampler used to draw base samples. Defaults to
+                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`
+            objective: The MCAcquisitionObjective under which the samples are evaluated.
+                Defaults to `IdentityMCObjective()`.
+            posterior_transform: A PosteriorTransform (optional).
+            X_pending:  A `m x d`-dim Tensor of `m` design points that have been
+                submitted for function evaluation but have not yet been evaluated.
+                Concatenated into X upon forward call. Copied and set to have no
+                gradient.
+        """
+
+        super().__init__(
+            model=model,
+            best_f=best_f,
+            sampler=sampler,
+            objective=objective,
+            posterior_transform=posterior_transform,
+            X_pending=X_pending,
+        )
+
+    @concatenate_pending_points
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate qExpectedImprovement antithetic on the candidate set `X`.
+
+        Args:
+            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design
+                points each.
+
+        Returns:
+            A `batch_shape'`-dim Tensor of antithetic of Expected Improvement values at the given
+            design points `X`, where `batch_shape'` is the broadcasted batch shape of
+            model and input `X`.
+        """
+        posterior = self.model.posterior(
+            X=X, posterior_transform=self.posterior_transform
+        )
+        samples = self.sampler(posterior)
+        # obj = self.objective(samples, X=X)
+
+        # # separate the samples and compute each estimation for antithetic approach
+        # obj_1 = obj[1::2]
+        # obj_1 = (obj_1 - self.best_f.unsqueeze(-1).to(obj)).clamp_min(0)
+        # q_ei_1 = obj_1.max(dim=-1)[0].mean(dim=0)
+        # obj_2 = obj[::2]
+        # obj_2 = (obj_2 - self.best_f.unsqueeze(-1).to(obj)).clamp_min(0)
+        # q_ei_2 = obj_2.max(dim=-1)[0].mean(dim=0)
+        # return (q_ei_1 + q_ei_2) / 2
+
+        obj_1 = self.objective(samples[::2], X=X)
+        obj_1 = (obj_1 - self.best_f.unsqueeze(-1).to(obj_1)).clamp_min(0)
+        q_ei_1 = obj_1.max(dim=-1)[0].mean(dim=0)
+
+        obj_2 = self.objective(samples[1::2], X=X)
+        obj_2 = (obj_2 - self.best_f.unsqueeze(-1).to(obj_2)).clamp_min(0)
+        q_ei_2 = obj_2.max(dim=-1)[0].mean(dim=0)
+
+        inds_1 = torch.argmax(q_ei_1, dim=-1)
+        inds_2 = torch.argmax(q_ei_2, dim=-1)
+
+        for i in range(len(inds_1)):
+            temp = q_ei_2[i, inds_1[i]].item()
+            q_ei_2[i, inds_1[i]] = q_ei_2[i, inds_2[i]]
+            q_ei_2[i, inds_2[i]] = temp
+
+        return (q_ei_1 + q_ei_2)/2
+
+    def _sample_forward(self, obj: Tensor) -> Tensor:
+        r"""Evaluate qExpectedImprovement per sample on the candidate set `X`.
+
+        Args:
+            obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.
+
+        Returns:
+            A `sample_shape x batch_shape x q`-dim Tensor of improvement utility values.
+        """
+        return (obj - self.best_f.unsqueeze(-1).to(obj)).clamp_min(0)
+
+
+class qEIMLMCThreeStep:
+    r"""Class for three-step lookahead q-EI with MLMC (1-EI) by default"""
+
+    def __init__(self, model, bounds, num_restarts, raw_samples, q=1, batch_sizes=None):
+        r"""
+        Args:
+            bounds: bounds of objective function
+            model: a fitted single-outcome model
+            num_restarts: number of restarts for LBFGS
+            raw_samples: number of raw samples for LBFGS
+            q: numer of batch observations generated each iteration
+            batch_sizes: array for q of q-EI, default is [1, 1] (1-EI)
+        """
+        if batch_sizes is None:
+            batch_sizes = [1, 1]
+        self.model = model
+        self.bounds = bounds
+        self.num_restarts = num_restarts
+        self.raw_samples = raw_samples
+        self.q = q
+        self.batch_sizes = batch_sizes
+
+    @staticmethod
+    def _create_sampler(num_samples, seed=None):
+        r"""Initialize sampler with a seed for coupling"""
+        return IIDNormalSampler(sample_shape=torch.Size([num_samples]), seed=seed)
+
+    def sample_candidate(self, l, dl, num_samples, match=None, match_mode='point'):
+        r"""Generate new observations with MLMC
+        Args:
+            l: index level of estimation (starting from 0)
+            dl: starting level (l <- l + dl)
+            num_samples: number of outer samples
+            match: if None, set the initial matched value
+                   else matching the optimizer, so that MLMC tracks the same optimizer among levels;
+            match_mode: 'point' or 'forward' or 'backward'
+        Returns:
+            Three elements tuple
+            new_candidate: next candidate point by MLMC (optimizer)
+            new_value: corresponding value of objective by MLMC (optimum)
+            match_candidate: candidate used for matching in the next level
+        """
+
+        # number of inner samples
+        M = 2 ** (l + dl)
+
+        # fixed seed of base samples for coupling
+        # No need to coupling for level 0 (single level estimator instead of increments)
+        # seed_out, seed_in = (torch.randint(0, 10000000, (1,)).item() for _ in range(2))
+
+        samplers = [self._create_sampler(num_samples), self._create_sampler(M)]
+
+        if l == 0:
+            if match_mode == 'point':
+                new_candidate, new_value = self.get_candidates(samplers, return_best=True)
+                match_candidate = new_candidate
+            elif match_mode == 'forward':
+                new_candidate, new_value = self.get_candidates(samplers, return_best=False)
+                match_candidate = new_candidate
+            elif match_mode == 'backward':
+                new_candidate, new_value = self.get_candidates(samplers, return_best=False)
+                diff = torch.argmin(dist_matrix(match, new_candidate), dim=1)
+                new_candidate = new_candidate[diff]
+                new_value = new_value[diff]
+                match_candidate = new_candidate[diff]
+        else:
+            new_candidate_f, new_value_f = self.get_candidates(samplers,
+                                                               return_best=False)
+            new_candidate_c, new_value_c = self.get_candidates(samplers,
+                                                               antithetic=True,
+                                                               return_best=False)
+            if match_mode == 'point':
+                diff_c = torch.argmin(torch.norm(match - new_candidate_c, dim=[1, 2]))
+                diff_f = torch.argmin(torch.norm(new_candidate_f - new_candidate_c[diff_c], dim=[1, 2]))
+                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]
+                new_value = new_value_f[diff_f] - new_value_c[diff_c]
+                match_candidate = new_candidate_f[diff_f]
+            elif match_mode == 'forward':
+                diff_c = torch.argmin(dist_matrix(match, new_candidate_c), dim=1)
+                diff_f = torch.argmin(dist_matrix(new_candidate_c[diff_c], new_candidate_f), dim=1)
+                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]
+                new_value = new_value_f[diff_f] - new_value_c[diff_c]
+                match_candidate = new_candidate_f[diff_f]
+            elif match_mode == 'backward':
+                if match is None:
+                    match = new_candidate_f
+                diff_f = torch.argmin(dist_matrix(match, new_candidate_f), dim=1)
+                diff_c = torch.argmin(dist_matrix(new_candidate_f[diff_f], new_candidate_c), dim=1)
+                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]
+                new_value = new_value_f[diff_f] - new_value_c[diff_c]
+                match_candidate = new_candidate_c[diff_c]
+
+        return new_candidate, new_value, match_candidate
+
+    def get_candidates(self, samplers, antithetic=False, return_best=True):
+        r"""Generate the next observation of single one-step lookahead EI.
+        Args:
+            samplers: samplers for outer MC
+            inner_mc_samplers: samplers for inner MC
+            antithetic: whether to compute antithetic estimator
+            return_best: whether to return the best result of objective function optimization
+        Returns:
+            new_candidate: next candidate point (optimizer)
+            new_value: corresponding value of objective (optimum)
+        """
+
+        # initialize the acquisition function for the zero, first and second steps
+        valfunc_cls = [ExpectedImprovement,
+                       ExpectedImprovement,
+                       ExpectedImprovement]
+        valfunc_argfacs = [make_best_f, make_best_f, make_best_f]
+
+        if antithetic is False:
+            twoqEI = CustomqMultiStepLookahead(
+                model=self.model,
+                batch_sizes=self.batch_sizes,
+                num_fantasies=None,
+                samplers=samplers,
+                valfunc_cls=valfunc_cls,
+                valfunc_argfacs=valfunc_argfacs,
+            )
+        else:
+            twoqEI =ThreeStepIncAntEI(
+                model=self.model,
+                batch_sizes=self.batch_sizes,
+                num_fantasies=None,
+                samplers=samplers,
+                valfunc_cls=valfunc_cls,
+                valfunc_argfacs=valfunc_argfacs,
+            )
+        q_prime = twoqEI.get_augmented_q_batch_size(self.q)
+        new_candidate, new_value = optimize_acqf(
+            acq_function=twoqEI,
+            bounds=self.bounds,
+            q=q_prime,
+            num_restarts=self.num_restarts,
+            raw_samples=self.raw_samples,
+            return_best_only=return_best
+        )
+
+        return new_candidate, new_value
+
+
+class ThreeStepIncAntEI(qMultiStepLookahead):
+
+    def __init__(
+            self,
+            model: Model,
+            batch_sizes: List[int],
+            num_fantasies: Optional[List[int]] = None,
+            samplers: Optional[List[MCSampler]] = None,
+            # Modification to allow passing in inner samplers directly
+            inner_mc_samplers: Optional[List[Optional[MCSampler]]] = None,
+            valfunc_cls: Optional[List[Optional[Type[AcquisitionFunction]]]] = None,
+            valfunc_argfacs: Optional[List[Optional[TAcqfArgConstructor]]] = None,
+            objective: Optional[MCAcquisitionObjective] = None,
+            posterior_transform: Optional[PosteriorTransform] = None,
+            inner_mc_samples: Optional[List[int]] = None,
+            X_pending: Optional[Tensor] = None,
+            collapse_fantasy_base_samples: bool = True
+    ) -> None:
+        r"""rewrite the initializer of qMultistepLookahead by allowing passing inner samplers"""
+
+        if objective is not None and not isinstance(objective, MCAcquisitionObjective):
+            raise UnsupportedError(
+                "`qMultiStepLookahead` got a non-MC `objective`. This is not supported."
+                " Use `posterior_transform` and `objective=None` instead."
+            )
+
+        super(MCAcquisitionFunction, self).__init__(model=model)
+        self.batch_sizes = batch_sizes
+        if not ((num_fantasies is None) ^ (samplers is None)):
+            raise UnsupportedError(
+                "qMultiStepLookahead requires exactly one of `num_fantasies` or "
+                "`samplers` as arguments."
+            )
+        if samplers is None:
+            # If collapse_fantasy_base_samples is False, the `batch_range_override`
+            # is set on the samplers during the forward call.
+            samplers: List[MCSampler] = [
+                SobolQMCNormalSampler(sample_shape=torch.Size([nf]))
+                for nf in num_fantasies
+            ]
+        else:
+            num_fantasies = [sampler.sample_shape[0] for sampler in samplers]
+        self.num_fantasies = num_fantasies
+        # By default do not use stage values and use PosteriorMean as terminal value
+        # function (= multi-step KG)
+        if valfunc_cls is None:
+            valfunc_cls = [None for _ in num_fantasies] + [PosteriorMean]
+        if inner_mc_samplers is not None:
+            inner_samplers = inner_mc_samplers
+        else:
+            if inner_mc_samples is None:
+                inner_mc_samples = [None] * (1 + len(num_fantasies))
+            inner_samplers = _construct_inner_samplers(
+                batch_sizes=batch_sizes,
+                valfunc_cls=valfunc_cls,
+                objective=objective,
+                inner_mc_samples=inner_mc_samples,
+            )
+        if valfunc_argfacs is None:
+            valfunc_argfacs = [None] * (1 + len(batch_sizes))
+
+        self.objective = objective
+        self.posterior_transform = posterior_transform
+        self.set_X_pending(X_pending)
+        self.samplers = ModuleList(samplers)
+        self.inner_samplers = ModuleList(inner_samplers)
+        self._valfunc_cls = valfunc_cls
+        self._valfunc_argfacs = valfunc_argfacs
+        self._collapse_fantasy_base_samples = collapse_fantasy_base_samples
+
+
+    @t_batch_mode_transform()
+    def forward(self, X: Tensor) -> Tensor:
+        r"""Evaluate qMultiStepLookahead on the candidate set X.
+
+        Args:
+            X: A `batch_shape x q' x d`-dim Tensor with `q'` design points for each
+                batch, where `q' = q_0 + f_1 q_1 + f_2 f_1 q_2 + ...`. Here `q_i`
+                is the number of candidates jointly considered in look-ahead step
+                `i`, and `f_i` is respective number of fantasies.
+
+        Returns:
+            The acquisition value for each batch as a tensor of shape `batch_shape`.
+        """
+        Xs = self.get_multi_step_tree_input_representation(X)
+
+        # set batch_range on samplers if not collapsing on fantasy dims
+        if not self._collapse_fantasy_base_samples:
+            self._set_samplers_batch_range(batch_shape=X.shape[:-2])
+
+        return _antstep(
+            model=self.model,
+            Xs=Xs,
+            samplers=self.samplers,
+            valfunc_cls=self._valfunc_cls,
+            valfunc_argfacs=self._valfunc_argfacs,
+            inner_samplers=self.inner_samplers,
+            objective=self.objective,
+            posterior_transform=self.posterior_transform,
+        )
+
+def _antstep(
+    model: Model,
+    Xs: List[Tensor],
+    samplers: List[Optional[MCSampler]],
+    valfunc_cls: List[Optional[Type[AcquisitionFunction]]],
+    valfunc_argfacs: List[Optional[TAcqfArgConstructor]],
+    inner_samplers: List[Optional[MCSampler]],
+    objective: MCAcquisitionObjective,
+    posterior_transform: PosteriorTransform,
+) -> Tensor:
+    r"""Antithetic estimator computation.
+    """
+    # compute zero step
+    sample_weights = torch.ones(*Xs[0].shape[:-2], device=Xs[0].device, dtype=Xs[0].dtype)
+    running_val = _compute_stage_value(
+        model=model,
+        valfunc_cls=valfunc_cls[0],
+        X=Xs[0],
+        objective=objective,
+        posterior_transform=posterior_transform,
+        inner_sampler=inner_samplers[0],
+        arg_fac=valfunc_argfacs[0],
+    )
+
+    # construct fantasy points
+    fantasy_model = model.fantasize(
+        X=Xs[0], sampler=samplers[0], observation_noise=True, propagate_grads=False
+    )
+
+    # augment sample weights appropriately
+    sample_weights = _construct_sample_weights(
+        prev_weights=sample_weights, sampler=samplers[0]
+    )
+
+    # compute first step
+    stage_val = _compute_stage_value(
+        model=fantasy_model,
+        valfunc_cls=valfunc_cls[1],
+        X=Xs[1],
+        objective=objective,
+        posterior_transform=posterior_transform,
+        inner_sampler=inner_samplers[1],
+        arg_fac=valfunc_argfacs[1],
+    )
+    running_val = running_val + stage_val
+
+    # construct fantasy points
+    base_samples = samplers[1].base_samples
+    base_samples1 = base_samples[0::2]
+    base_samples2 = base_samples[1::2]
+    sampler1 = IIDNormalSampler(sample_shape=torch.Size([len(base_samples1)]))
+    sampler1.base_samples = base_samples1
+    sampler2 = IIDNormalSampler(sample_shape=torch.Size([len(base_samples2)]))
+    sampler2.base_samples = base_samples2
+
+    fantasy_model1 = model.fantasize(
+        X=Xs[1], sampler=sampler1, observation_noise=True, propagate_grads=True
+    )
+    fantasy_model2 = model.fantasize(
+        X=Xs[1], sampler=sampler2, observation_noise=True, propagate_grads=True
+    )
+
+    # augment sample weights appropriately
+    sample_weights = _construct_sample_weights(
+        prev_weights=sample_weights, sampler=samplers[1]
+    )
+
+    # compute second step
+    stage_val1 = _compute_stage_value(
+        model=fantasy_model1,
+        valfunc_cls=valfunc_cls[2],
+        X=Xs[2][0::2],
+        objective=objective,
+        posterior_transform=posterior_transform,
+        inner_sampler=inner_samplers[2],
+        arg_fac=valfunc_argfacs[2],
+    )
+
+    stage_val2 = _compute_stage_value(
+        model=fantasy_model2,
+        valfunc_cls=valfunc_cls[2],
+        X=Xs[2][1::2],
+        objective=objective,
+        posterior_transform=posterior_transform,
+        inner_sampler=inner_samplers[2],
+        arg_fac=valfunc_argfacs[2],
+    )
+
+    running_val = running_val + 1/2 * torch.cat((stage_val1, stage_val2), dim=0)
+
+    batch_shape = running_val.shape[2:]
+    # expand sample weights to make sure it is the same shape as running_val,
+    # because we need to take a sum over sample weights for computing the
+    # weighted average
+    sample_weights = sample_weights.expand(running_val.shape)
+    return (running_val * sample_weights).view(-1, *batch_shape).sum(dim=0)
+
+
+
+def dist_matrix(x, y):
+    # compute the distance matrix of two vectors
+    xsq = torch.sum(x ** 2, dim=(1, 2))  # (N,)
+    ysq = torch.sum(y ** 2, dim=(1, 2))  # (M,)
+
+    mixprod = -2 * x.view(x.shape[0], -1) @ y.view(y.shape[0], -1).T  # (N, M)
+
+    return torch.sqrt(xsq.unsqueeze(1) + mixprod + ysq.unsqueeze(0))  # (N,1)+(N,M)+(1,M) => (N, M)
+File Path: mlmcbo/utils/__init__.py
+Content:
+from .optimize_mlmc import optimize_mlmc
+
+File Path: mlmcbo/utils/model_fit.py
+Content:
+import torch
+from botorch import fit_gpytorch_mll
+from botorch.models import FixedNoiseGP, SingleTaskGP
+from botorch.models.transforms import Normalize, Standardize
+from gpytorch import ExactMarginalLogLikelihood
+from gpytorch.kernels import ScaleKernel, RBFKernel
+
+
+def GPmodel(train_x, train_y, bounds=None):
+    # print(train_y)
+    train_yvar = torch.full_like(train_y, 1e-4)
+    model = FixedNoiseGP(train_x,
+                         train_y,
+                         train_yvar,
+                        )
+    mll = ExactMarginalLogLikelihood(model.likelihood, model)
+    fit_gpytorch_mll(mll)
+    return model
+
+
+File Path: mlmcbo/utils/objectiveFunctions.py
+Content:
+import math
+
+import torch
+from torch import Tensor
+from typing import List, Optional, Tuple
+from botorch.test_functions import SyntheticTestFunction
+
+
+class SelfDefinedFunction(SyntheticTestFunction):
+
+    def __init__(
+            self,
+            noise_std: Optional[float] = None,
+            negate: bool = False,
+            bounds: Optional[List[Tuple[float, float]]] = None,
+    ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
+        """
+        self.dim = 1
+        self._bounds = [(-10.0, 10.0)]
+        self._optimal_value = 1.4019
+        self._optimizers = [(2.0087)]
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        f = torch.exp(-(X - 2) ** 2) + torch.exp(-(X - 6) ** 2 / 10) + 1 / (X ** 2 + 1)
+        return f.squeeze(-1)
+
+class Goldstein(SyntheticTestFunction):
+
+    dim = 2
+    _bounds = [(-2.0, 2.0), (-2.0, 2.0)]
+    _optimal_value = 3.
+    _optimizers = [(0., -1.)]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        x1, x2 = X[..., 0], X[..., 1]
+        term1 = 1. + pow((x1+x2+1.), 2)*(19-14*x1+3*pow(x1, 2)-14*x2+6*x1*x2+3*pow(x2, 2))
+        term2 = 30. + pow((2*x1-3*x2), 2)*(18.-32.*x1+12*pow(x1, 2)+48*x2-36.*x1*x2+27*pow(x2, 2))
+        return term1 * term2
+
+
+class Ackley5(SyntheticTestFunction):
+    r"""Ackley test function.
+
+    d-dimensional function (usually evaluated on `[-32.768, 32.768]^d`):
+
+        f(x) = -A exp(-B sqrt(1/d sum_{i=1}^d x_i^2)) -
+            exp(1/d sum_{i=1}^d cos(c x_i)) + A + exp(1)
+
+    f has one minimizer for its global minimum at `z_1 = (0, 0, ..., 0)` with
+    `f(z_1) = 0`.
+    """
+
+    _optimal_value = 0.0
+    _check_grad_at_opt: bool = False
+
+    def __init__(
+        self,
+        dim: int = 5,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
+    ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
+        """
+        self.dim = dim
+        if bounds is None:
+            bounds = [(-1., 1.) for _ in range(self.dim)]
+        self._optimizers = [tuple(0.0 for _ in range(self.dim))]
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
+        self.a = 20
+        self.b = 0.2
+        self.c = 2 * math.pi
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        a, b, c = self.a, self.b, self.c
+        part1 = -a * torch.exp(-b / math.sqrt(self.dim) * torch.norm(X, dim=-1))
+        part2 = -(torch.exp(torch.mean(torch.cos(c * X), dim=-1)))
+        return part1 + part2 + a + math.e
+
+class Levy10(SyntheticTestFunction):
+    r"""Levy synthetic test function.
+
+    d-dimensional function (usually evaluated on `[-10, 10]^d`):
+
+        f(x) = sin^2(pi w_1) +
+            sum_{i=1}^{d-1} (w_i-1)^2 (1 + 10 sin^2(pi w_i + 1)) +
+            (w_d - 1)^2 (1 + sin^2(2 pi w_d))
+
+    where `w_i = 1 + (x_i - 1) / 4` for all `i`.
+
+    f has one minimizer for its global minimum at `z_1 = (1, 1, ..., 1)` with
+    `f(z_1) = 0`.
+    """
+
+    _optimal_value = 0.0
+
+    def __init__(
+        self,
+        dim=10,
+        noise_std: Optional[float] = None,
+        negate: bool = False,
+        bounds: Optional[List[Tuple[float, float]]] = None,
+    ) -> None:
+        r"""
+        Args:
+            dim: The (input) dimension.
+            noise_std: Standard deviation of the observation noise.
+            negate: If True, negate the function.
+            bounds: Custom bounds for the function specified as (lower, upper) pairs.
+        """
+        self.dim = dim
+        if bounds is None:
+            bounds = [(-1.0, 1.0) for _ in range(self.dim)]
+        self._optimizers = [tuple(1.0 for _ in range(self.dim))]
+        super().__init__(noise_std=noise_std, negate=negate, bounds=bounds)
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        w = 1.0 + (X - 1.0) / 4.0
+        part1 = torch.sin(math.pi * w[..., 0]) ** 2
+        part2 = torch.sum(
+            (w[..., :-1] - 1.0) ** 2
+            * (1.0 + 10.0 * torch.sin(math.pi * w[..., :-1] + 1.0) ** 2),
+            dim=-1,
+        )
+        part3 = (w[..., -1] - 1.0) ** 2 * (
+            1.0 + torch.sin(2.0 * math.pi * w[..., -1]) ** 2
+        )
+        return part1 + part2 + part3
+
+class SixHumpCamel2(SyntheticTestFunction):
+
+    dim = 2
+    _bounds = [(-2.0, 2.0), (-1.0, 1.0)]
+    _optimal_value = 0.
+    _optimizers = [(0.0898, -0.7126), (-0.0898, 0.7126)]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        x1, x2 = X[..., 0], X[..., 1]
+        return (
+                ((4 - 2.1 * x1**2 + x1**4 / 3) * x1**2
+            + x1 * x2
+            + (4 * x2**2 - 4) * x2**2 + 1.0316)/2
+        )
+
+
+class Cosine(SyntheticTestFunction):
+    r"""Cosine Mixture test function.
+
+    8-dimensional function (usually evaluated on `[-1, 1]^8`):
+
+        f(x) = 0.1 sum_{i=1}^8 cos(5 pi x_i) - sum_{i=1}^8 x_i^2
+
+    f has one maximizer for its global maximum at `z_1 = (0, 0, ..., 0)` with
+    `f(z_1) = 0.8`
+    """
+
+    dim = 8
+    _bounds = [(-1.0, 1.0) for _ in range(8)]
+    _optimal_value = -0.4
+    _optimizers = [tuple(0.0 for _ in range(8))]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        results = torch.sum(0.1 * torch.cos(5 * math.pi * X) - X**2, dim=-1)/2.
+        results += torch.sum(0.5*math.pi*torch.sin(5*math.pi*X) + 2*X, dim=-1)
+        return results
+
+class Branin2(SyntheticTestFunction):
+    r"""Branin test function.
+
+    Two-dimensional function (usually evaluated on `[-5, 10] x [0, 15]`):
+
+        B(x) = (x_2 - b x_1^2 + c x_1 - r)^2 + 10 (1-t) cos(x_1) + 10
+
+    Here `b`, `c`, `r` and `t` are constants where `b = 5.1 / (4 * math.pi ** 2)`
+    `c = 5 / math.pi`, `r = 6`, `t = 1 / (8 * math.pi)`
+    B has 3 minimizers for its global minimum at `z_1 = (-pi, 12.275)`,
+    `z_2 = (pi, 2.275)`, `z_3 = (9.42478, 2.475)` with `B(z_i) = 0.397887`.
+    """
+
+    dim = 2
+    _bounds = [(0.0, 15.0), (-5.0, 15.0)]
+    _optimal_value = 0.397887
+    _optimizers = [(-math.pi, 12.275), (math.pi, 2.275), (9.42478, 2.475)]
+
+    def evaluate_true(self, X: Tensor) -> Tensor:
+        t1 = (
+            X[..., 1]
+            - 5.1 / (4 * math.pi**2) * X[..., 0] ** 2
+            + 5 / math.pi * X[..., 0]
+            - 6
+        )
+        t2 = 10 * (1 - 1 / (8 * math.pi)) * torch.cos(X[..., 0])
+        return t1**2 + t2 + 10
+
+
+
+File Path: mlmcbo/utils/optimize_mlmc.py
+Content:
+import torch
+import numpy as np
+
+
+def optimize_mlmc(inc_function, eps, dl, alpha=1, beta=1.5, gamma=1, meanc=1, varc=1, var0=1, match_mode='point'):
+    r"""Optimize acquisition functions using mlmc.
+
+    Args:
+        inc_function: define the acquisition function estimation at different levels
+                      (single level estimator at l = 0 and increment otherwise)
+        eps: desired accuracy
+        dl: actual starting level
+        alpha: bias rate
+        beta: variance rate
+        gamma: cost rate
+        meanc: bias constant
+        varc: variance constant for increment
+        var0: variance for single level estimator
+        match_mode: match mode: 'point', 'forward' or 'backward'
+
+    Returns:
+        a tuple of optimiser, corresponding optimum, number of samples applied
+    """
+    # TODO: Allow pre-computation of constants
+
+    # total levels required (at least two levels)
+    L = np.maximum(np.ceil(np.log2(np.sqrt(2) * meanc / (eps * (2 ** alpha - 1))) / alpha).astype(int), dl + 1)
+    levels = np.arange(dl, L + 1)
+
+    Ncon = (np.sum(np.sqrt(varc * 2 ** (-levels * (beta - gamma)))) + np.sqrt(var0 * 2 ** gamma)) / (eps ** 2)
+    # number of outer samples at each level
+    Nl = np.ceil(np.maximum(Ncon * np.sqrt(varc * 2 ** (-levels * (beta + gamma))), 2)).astype(int)
+
+    # TODO: Check one-shot ml f is the same as single f(z^*)
+    # z is the optimizer and f is the corresponding optimum
+    f, z = 0., 0.
+    # matching optimizer such that the optimizers at levels correspond
+    match = None
+    if match_mode == 'backward':
+        for level, n in zip(reversed(levels - dl), reversed(Nl)):
+            zl, fl, match = inc_function.sample_candidate(level, dl, n, match=match, match_mode=match_mode)
+            if level == (levels - dl)[-1]:
+                f = fl
+                z = zl
+            else:
+                f += fl
+                z += zl
+            opt_ind = torch.argmax(f, dim=0)
+        return z[opt_ind], f[opt_ind], Nl
+    else:
+        for level, n in zip(levels - dl, Nl):
+            zl, fl, match = inc_function.sample_candidate(level, dl, n, match=match, match_mode=match_mode)
+            if match_mode == 'point':
+                f += fl
+                z += zl
+            else:
+                if level == (levels - dl)[0]:
+                    f = fl
+                    z = zl
+                else:
+                    f += fl
+                    z += zl
+        if match_mode == 'point':
+            return z, f, Nl
+        else:
+            opt_ind = torch.argmax(f, dim=0)
+            return z[opt_ind], f[opt_ind], Nl
+
+
+def optimize_mlmc_three(inc_function, eps, dl, alpha=1, beta=1.5, gamma=1, meanc=1, varc=1, var0=1, match_mode='point'):
+    r"""Optimize acquisition functions using mlmc.
+
+    Args:
+        inc_function: define the acquisition function estimation at different levels
+                      (single level estimator at l = 0 and increment otherwise)
+        eps: desired accuracy
+        dl: actual starting level
+        alpha: bias rate
+        beta: variance rate
+        gamma: cost rate
+        meanc: bias constant
+        varc: variance constant for increment
+        var0: variance for single level estimator
+        match_mode: match mode: 'point', 'forward' or 'backward'
+
+    Returns:
+        a tuple of optimiser, corresponding optimum, number of samples applied
+    """
+    # TODO: Allow pre-computation of constants
+
+    # total levels required (at least two levels)
+    L = np.maximum(np.ceil(np.log2(np.sqrt(2) * meanc / (eps * (2 ** alpha - 1))) / alpha).astype(int), dl + 1)
+    levels = np.arange(dl, L + 1)
+
+    Ncon = (np.sum(np.sqrt(varc * 2 ** (-levels * (beta - gamma)))) + np.sqrt(var0 * 2 ** gamma)) / (eps ** 2)
+    # number of outer samples at each level
+    Nl = np.ceil(np.maximum(Ncon * np.sqrt(varc * 2 ** (-levels * (beta + gamma))), 2)).astype(int)
+
+    # TODO: Check one-shot ml f is the same as single f(z^*)
+    # z is the optimizer and f is the corresponding optimum
+    f, z = 0., 0.
+    # matching optimizer such that the optimizers at levels correspond
+    match = None
+    if match_mode == 'backward':
+        for level, n in zip(reversed(levels - dl), reversed(Nl)):
+            zl, fl, match = inc_function.sample_candidate(level, dl, n, match=match, match_mode=match_mode)
+            if level == (levels - dl)[-1]:
+                f = fl
+                z = zl
+            else:
+                f += fl
+                z += zl
+        opt_ind = torch.argmax(f, dim=0)
+        return z[opt_ind], f[opt_ind], Nl
+    else:
+        for level, n in zip(levels - dl, Nl):
+            zl, fl, match = inc_function.sample_candidate(level, dl, n, match=match, match_mode=match_mode)
+            if match_mode == 'point':
+                f += fl
+                z += zl
+            else:
+                if level == (levels - dl)[0]:
+                    f = fl
+                    z = zl
+                else:
+                    f += fl
+                    z += zl
+        if match_mode == 'point':
+            return z, f, Nl
+        else:
+            opt_ind = torch.argmax(f, dim=0)
+            return z[opt_ind], f[opt_ind], Nl
+
+File Path: setup.py
+Content:
+from setuptools import setup, find_packages
+
+setup(
+    name='mlmcbo',
+    version='0.1.0',
+    packages=find_packages(),
+    install_requires=[
+        'botorch==0.9.2',
+        'numpy>=1.18.0',
+        'matplotlib',
+    ],
+    python_requires='>=3.9',
+    description='An extension of the BoTorch library adding new acquisition functions',
+    classifiers=[
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3.9',
+    ],
+)
+
+File Path: tutorials/error_matrics.py
+Content:
+import numpy as np
+import pandas as pd
+import torch
+
+
+def compute_nmse(results, costs, reference, relative, R):
+    # compute the NMSE, error bar, cumulative costs
+    error = (results.cpu() - reference)
+    MSE = torch.sum(error ** 2 / relative, dim=0) / R
+    errorBar = 1.96 * torch.std(error ** 2 / relative, dim=0) / np.sqrt(len(MSE))
+    Cost = torch.mean(torch.cumsum(costs, dim=1), dim=0)
+    return MSE, errorBar, Cost
+File Path: tutorials/runBO.py
+Content:
+import time
+
+import numpy as np
+import torch
+from botorch.acquisition import qExpectedImprovement, ExpectedImprovement
+from botorch.acquisition.multi_step_lookahead import make_best_f, qMultiStepLookahead
+from botorch.optim import optimize_acqf
+from botorch.sampling import IIDNormalSampler
+
+from mlmcbo.acquisition_functions import qEIMLMCTwoStep, qEIMLMCThreeStep
+from mlmcbo.acquisition_functions import CustomqMultiStepLookahead
+from mlmcbo.utils import optimize_mlmc
+from mlmcbo.utils.model_fit import GPmodel
+from mlmcbo.utils.optimize_mlmc import optimize_mlmc_three
+
+
+class runBO():
+    r"""run BO with MLMC or MC and return the results and costs"""
+    def __init__(self,
+                 target,
+                 train_x,
+                 train_y,
+                 n_runs,
+                 bounds,
+                 num_restarts,
+                 raw_samples,
+                 eps,
+                 q=None,
+                 ML=True,
+                 dl=0,
+                 match_mode='point'):
+        if q is None:
+            q = [1, 2]
+        self.target = target
+        self.train_x = train_x
+        self.train_y = train_y
+        self.n_runs = n_runs
+        self.bounds = bounds
+        self.num_restarts = num_restarts
+        self.raw_samples = raw_samples
+        self.eps = eps
+        self.q1 = q[0]
+        self.q2 = q[1]
+        self.dl = dl
+        self.ML = ML
+        self.match_mode = match_mode
+
+    def run(self):
+        results = torch.zeros(1, self.n_runs)
+        costs = torch.zeros(1, self.n_runs)
+
+        for j in range(self.n_runs):
+            # fit Gaussian process
+            model = GPmodel(self.train_x, self.train_y)
+            if self.ML:
+                # MLMC BO
+                qEI = qEIMLMCTwoStep(
+                    model=model,
+                    bounds=self.bounds,
+                    num_restarts=self.num_restarts,
+                    raw_samples=self.raw_samples,
+                    q=self.q1,
+                    batch_sizes=[self.q2]
+                )
+                start_time = time.time()
+                new_candidate, _, _ = optimize_mlmc(inc_function=qEI,
+                                                    eps=self.eps,
+                                                    dl=self.dl,
+                                                    alpha=1,
+                                                    beta=1.5,
+                                                    gamma=1,
+                                                    meanc=1,
+                                                    varc=1,
+                                                    var0=1,
+                                                    match_mode=self.match_mode,
+                                                    )
+
+                costs[:, j] = time.time() - start_time
+                print("Iteration {} finished, MLMC time {:.4f}".format(j, costs[:, j].item()))
+            else:
+                # MC BO
+                num_samples = np.round((1 / np.power(self.eps, 2))).astype(int)
+                sampler = IIDNormalSampler(sample_shape=torch.Size([num_samples]))
+                samplers = [sampler]
+                if self.q1 == 1:
+                    inner_mc_samplers = [None, IIDNormalSampler(sample_shape=torch.Size([num_samples]))]
+                    valfunc_cls = [ExpectedImprovement, qExpectedImprovement]
+                else:
+                    inner_mc_samplers = [sampler, IIDNormalSampler(sample_shape=torch.Size([num_samples]))]
+                    valfunc_cls = [qExpectedImprovement, qExpectedImprovement]
+                valfunc_argfacs = [make_best_f, make_best_f]
+                qEI = CustomqMultiStepLookahead(model=model,
+                                                batch_sizes=[self.q2],
+                                                samplers=samplers,
+                                                inner_mc_samplers=inner_mc_samplers,
+                                                valfunc_cls=valfunc_cls,
+                                                valfunc_argfacs=valfunc_argfacs)
+                q = qEI.get_augmented_q_batch_size(self.q1)
+                start = time.time()
+                new_candidate, _ = optimize_acqf(acq_function=qEI,
+                                                 bounds=self.bounds,
+                                                 q=q,
+                                                 num_restarts=self.num_restarts,
+                                                 raw_samples=self.raw_samples,
+                                                 )
+                costs[:, j] = time.time() - start
+                print("Iteration {} finished, MC time {:.4f}".format(j, costs[:, j].item()))
+
+            new_result = self.target(new_candidate).unsqueeze(-1)
+            self.train_x = torch.cat([self.train_x, new_candidate])
+            self.train_y = torch.cat([self.train_y, new_result])
+
+            # model = GPmodel(self.train_x, self.train_y)
+            # qEI.model = model
+
+            best_candidate = self.train_x[torch.argmax(self.train_y)]
+            best_result = self.target(best_candidate).unsqueeze(-1)
+
+            results[:, j] = best_result
+        return results, costs
+
+
+class runBOThree():
+    r"""run BO with MLMC or MC and return the results and costs"""
+    def __init__(self,
+                 target,
+                 train_x,
+                 train_y,
+                 n_runs,
+                 bounds,
+                 num_restarts,
+                 raw_samples,
+                 eps,
+                 q=None,
+                 ML=True,
+                 dl=0,
+                 match_mode='point'):
+        if q is None:
+            q = [1, 1, 1]
+        self.target = target
+        self.train_x = train_x
+        self.train_y = train_y
+        self.n_runs = n_runs
+        self.bounds = bounds
+        self.num_restarts = num_restarts
+        self.raw_samples = raw_samples
+        self.eps = eps
+        self.q1 = q[0]
+        self.q2 = q[1:]
+        self.dl = dl
+        self.ML = ML
+        self.match_mode = match_mode
+
+    def run(self):
+        results = torch.zeros(1, self.n_runs)
+        costs = torch.zeros(1, self.n_runs)
+
+        for j in range(self.n_runs):
+            # fit Gaussian process
+            model = GPmodel(self.train_x, self.train_y)
+            if self.ML:
+                # MLMC BO
+                qEI = qEIMLMCThreeStep(
+                    model=model,
+                    bounds=self.bounds,
+                    num_restarts=self.num_restarts,
+                    raw_samples=self.raw_samples,
+                    q=self.q1,
+                    batch_sizes=self.q2
+                )
+                start_time = time.time()
+                new_candidate, _, _ = optimize_mlmc_three(inc_function=qEI,
+                                                        eps=self.eps,
+                                                        dl=self.dl,
+                                                        alpha=1,
+                                                        beta=1.5,
+                                                        gamma=1,
+                                                        meanc=1,
+                                                        varc=1,
+                                                        var0=1,
+                                                        match_mode=self.match_mode,
+                                                        )
+
+                costs[:, j] = time.time() - start_time
+                print("Iteration {} finished, MLMC time {:.4f}".format(j, costs[:, j].item()))
+            else:
+                # MC BO
+                num_samples = np.round((1 / np.power(self.eps, 2))).astype(int)
+                # sampler = IIDNormalSampler(sample_shape=torch.Size([num_samples]))
+                samplers = [IIDNormalSampler(sample_shape=torch.Size([num_samples])),
+                            IIDNormalSampler(sample_shape=torch.Size([num_samples]))]
+                # if self.q1 == 1:
+                #     inner_mc_samplers = [None, IIDNormalSampler(sample_shape=torch.Size([num_samples]))]
+                #     valfunc_cls = [ExpectedImprovement, qExpectedImprovement]
+                # else:
+                #     inner_mc_samplers = [sampler, IIDNormalSampler(sample_shape=torch.Size([num_samples]))]
+                #     valfunc_cls = [qExpectedImprovement, qExpectedImprovement]
+                valfunc_cls = [ExpectedImprovement, ExpectedImprovement, ExpectedImprovement]
+                valfunc_argfacs = [make_best_f, make_best_f, make_best_f]
+                # qEI = CustomqMultiStepLookahead(model=model,
+                #                                 batch_sizes=[self.q2],
+                #                                 samplers=samplers,
+                #                                 inner_mc_samplers=inner_mc_samplers,
+                #                                 valfunc_cls=valfunc_cls,
+                #                                 valfunc_argfacs=valfunc_argfacs)
+                qEI = qMultiStepLookahead(model=model,
+                                          batch_sizes=self.q2,
+                                          samplers=samplers,
+                                          valfunc_cls=valfunc_cls,
+                                          valfunc_argfacs=valfunc_argfacs)
+                q = qEI.get_augmented_q_batch_size(self.q1)
+                start = time.time()
+                new_candidate, _ = optimize_acqf(acq_function=qEI,
+                                                 bounds=self.bounds,
+                                                 q=q,
+                                                 num_restarts=self.num_restarts,
+                                                 raw_samples=self.raw_samples,
+                                                 )
+                costs[:, j] = time.time() - start
+                print("Iteration {} finished, MC time {:.4f}".format(j, costs[:, j].item()))
+
+            new_result = self.target(new_candidate).unsqueeze(-1)
+            self.train_x = torch.cat([self.train_x, new_candidate])
+            self.train_y = torch.cat([self.train_y, new_result])
+
+            # model = GPmodel(self.train_x, self.train_y)
+            # qEI.model = model
+
+            best_candidate = self.train_x[torch.argmax(self.train_y)]
+            best_result = self.target(best_candidate).unsqueeze(-1)
+
+            results[:, j] = best_result
+        return results, costs
+File Path: tutorials/testTwoEI.py
+Content:
+import os
+import torch
+from botorch.test_functions import Ackley, Hartmann
+from matplotlib import pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
+
+import warnings
+from runBO import runBOThree
+
+import faulthandler
+
+from tutorials.error_matrics import compute_nmse
+
+faulthandler.enable()
+warnings.filterwarnings("ignore")
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+torch.set_default_dtype(torch.double)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.manual_seed(66)
+
+# target = Hartmann(negate=True)
+# fun_name = "Hartmann6"
+target = Ackley(dim=2, negate=True)
+fun_name = "Ackley2"
+
+# boundary of the problem
+bounds = target.bounds
+lower_bounds, upper_bounds = bounds[0], bounds[1]
+
+# dimension of the problem
+dim = target.dim
+
+# number of initial observations
+num_obs = 2 * dim
+
+# number of BO runs
+n_runs = 30
+
+# parameters for LBFGS
+num_restarts = 20  # number of restarts
+raw_samples = 256  # number of raw samples for each restarts
+
+# number of realisations
+R = 20
+
+# starting level of MLMC
+dl = 3
+
+# initialise results storage
+results_ml = torch.zeros(R, n_runs)
+costs_ml = torch.zeros(R, n_runs)
+
+results_sl = torch.zeros(R, n_runs)
+costs_sl = torch.zeros(R, n_runs)
+
+# reference solution
+reference = target.optimal_value
+
+# predefined accuracy - \varepsilon
+eps = 0.2
+
+relative = torch.zeros(R, 1)
+# initialise relative benchmark for GAP
+relative_gap = torch.zeros(R, 1)
+
+# match mode for MLMC - 'point', 'forward', 'backward'
+match_mode = 'point'
+
+for i in range(R):
+    # generate initial observations
+    train_x = (upper_bounds - lower_bounds) * torch.rand(num_obs, dim, device=device, dtype=torch.double) + lower_bounds
+    train_y = target(train_x).unsqueeze(-1)
+
+    # denominater of NMSE
+    relative[i] = (torch.max(train_y) - reference) ** 2
+    relative_gap[i] = torch.max(train_y)
+
+    print("Realisation {}.".format(i))
+    print("--------------------------------------------")
+    print("MLMC starts")
+    print("********************************************")
+
+    # MLMC BO run
+    # q is for number of batch size - qEI; for example, q = [2, 2] is qEI + qEI
+    # ML=True - MLMC; ML=False - MC
+    # match_mode = 'point', 'forward' or 'backward'
+    bo_mlmc = runBOThree(target=target,
+                         train_x=train_x,
+                         train_y=train_y,
+                         n_runs=n_runs,
+                         bounds=bounds,
+                         num_restarts=num_restarts,
+                         raw_samples=raw_samples,
+                         eps=eps,
+                         q=[1, 1, 1],
+                         ML=True,
+                         dl=dl,
+                         match_mode=match_mode)
+    results_ml[i, :], costs_ml[i, :] = bo_mlmc.run()
+    #
+    print("MC starts")
+    print("********************************************")
+    bo_mc = runBOThree(target=target,
+                       train_x=train_x,
+                       train_y=train_y,
+                       n_runs=n_runs,
+                       bounds=bounds,
+                       num_restarts=num_restarts,
+                       raw_samples=raw_samples,
+                       eps=eps,
+                       ML=False)
+    results_sl[i, :], costs_sl[i, :] = bo_mc.run()
+
+
+# NMSE
+MSE_ml, errorBar_ml, Cost_ml = compute_nmse(results_ml, costs_ml, reference, relative, R)
+MSE_sl, errorBar_sl, Cost_sl = compute_nmse(results_sl, costs_sl, reference, relative, R)
+
+fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+fig.tight_layout(pad=10.0)
+ax.errorbar(Cost_ml, MSE_ml, xerr=None, yerr=errorBar_ml, fmt='--o', capsize=3)
+ax.errorbar(Cost_sl, MSE_sl, xerr=None, yerr=errorBar_sl, fmt='--o', capsize=3)
+ax.grid()
+ax.legend(["MLMC2LAEI", "MC2LAEI"], fontsize=20, loc="lower left")
+ax.set_xlabel("Expected cumulative wall time in second", fontsize=20)
+ax.set_ylabel("NMSE", fontsize=20)
+ax.tick_params(axis='both', labelsize=15)
+ax.set_yscale("log")
+ax.xaxis.get_major_formatter()
+ax.yaxis.set_major_formatter(FormatStrFormatter('%.2e'))
+ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+plt.show()
+
+File Path: tutorials/testWholeBO.py
+Content:
+import os
+import numpy as np
+import pandas as pd
+import torch
+from botorch.test_functions import Ackley, Hartmann
+from matplotlib import pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
+
+from mlmcbo.utils.model_fit import GPmodel
+from mlmcbo.utils.objectiveFunctions import SelfDefinedFunction, Ackley5, SixHumpCamel2, Cosine, Levy10, Branin2
+import warnings
+from runBO import runBO
+
+import faulthandler
+
+from tutorials.error_matrics import compute_nmse
+
+faulthandler.enable()
+warnings.filterwarnings("ignore")
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+torch.set_default_dtype(torch.double)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.manual_seed(66)
+
+# target = Hartmann(negate=True)
+# fun_name = "Hartmann6"
+target = Ackley(dim=2, negate=True)
+fun_name = "Ackley2"
+
+# boundary of the problem
+bounds = target.bounds
+lower_bounds, upper_bounds = bounds[0], bounds[1]
+
+# dimension of the problem
+dim = target.dim
+
+# number of initial observations
+num_obs = 2 * dim
+
+# number of BO runs
+n_runs = 30
+
+# parameters for LBFGS
+num_restarts = 20  # number of restarts
+raw_samples = 256  # number of raw samples for each restarts
+
+# number of realisations
+R = 20
+
+# starting level of MLMC
+dl = 3
+
+# initialise results storage
+results_ml = torch.zeros(R, n_runs)
+costs_ml = torch.zeros(R, n_runs)
+
+results_sl = torch.zeros(R, n_runs)
+costs_sl = torch.zeros(R, n_runs)
+
+# reference solution
+reference = target.optimal_value
+
+# predefined accuracy - \varepsilon
+eps = 0.15
+
+# initialise relative benchmark for NMSE
+relative = torch.zeros(R, 1)
+# initialise relative benchmark for GAP
+relative_gap = torch.zeros(R, 1)
+
+# match mode for MLMC - 'point', 'forward', 'backward'
+match_mode = 'point'
+
+for i in range(R):
+    # generate initial observations
+    train_x = (upper_bounds - lower_bounds) * torch.rand(num_obs, dim, device=device, dtype=torch.double) + lower_bounds
+    train_y = target(train_x).unsqueeze(-1)
+
+    # denominater of NMSE
+    relative[i] = (torch.max(train_y) - reference) ** 2
+    relative_gap[i] = torch.max(train_y)
+
+    print("Realisation {}.".format(i))
+    print("--------------------------------------------")
+    print("MLMC starts")
+    print("********************************************")
+
+    # MLMC BO run
+    # q is for number of batch size - qEI; for example, q = [2, 2] is qEI + qEI
+    # ML=True - MLMC; ML=False - MC
+    # match_mode = 'point', 'forward' or 'backward'
+    bo_mlmc = runBO(target=target,
+                    train_x=train_x,
+                    train_y=train_y,
+                    n_runs=n_runs,
+                    bounds=bounds,
+                    num_restarts=num_restarts,
+                    raw_samples=raw_samples,
+                    eps=eps,
+                    q=[1, 2],
+                    ML=True,
+                    dl=dl,
+                    match_mode=match_mode)
+    results_ml[i, :], costs_ml[i, :] = bo_mlmc.run()
+
+    print("MC starts")
+    print("********************************************")
+    bo_mc = runBO(target=target,
+                  train_x=train_x,
+                  train_y=train_y,
+                  n_runs=n_runs,
+                  bounds=bounds,
+                  num_restarts=num_restarts,
+                  raw_samples=raw_samples,
+                  eps=eps,
+                  q=[1, 2],
+                  ML=False)
+    results_sl[i, :], costs_sl[i, :] = bo_mc.run()
+
+
+# NMSE
+MSE_ml, errorBar_ml, Cost_ml = compute_nmse(results_ml, costs_ml, reference, relative, R)
+MSE_sl, errorBar_sl, Cost_sl = compute_nmse(results_sl, costs_sl, reference, relative, R)
+
+fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+fig.tight_layout(pad=10.0)
+ax.errorbar(Cost_ml, MSE_ml, xerr=None, yerr=errorBar_ml, fmt='--o', capsize=3)
+ax.errorbar(Cost_sl, MSE_sl, xerr=None, yerr=errorBar_sl, fmt='--o', capsize=3)
+ax.grid()
+ax.legend(["MLMC", "MC"], fontsize=20, loc="lower left")
+ax.set_xlabel("Expected cumulative wall time in second", fontsize=20)
+ax.set_ylabel("NMSE", fontsize=20)
+ax.tick_params(axis='both', labelsize=15)
+ax.set_yscale("log")
+ax.xaxis.get_major_formatter()
+ax.yaxis.set_major_formatter(FormatStrFormatter('%.2e'))
+ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+plt.show()
+
+
+File Path: tutorials/tests.py
+Content:
+from typing import Any, Callable, Dict
+
+import numpy as np
+import torch
+from botorch.fit import fit_gpytorch_mll
+from botorch.models import SingleTaskGP
+from botorch.models.model import Model
+from botorch.models.transforms.input import Normalize
+from botorch.models.transforms.outcome import Standardize
+from botorch.optim import optimize_acqf
+from botorch.sampling.normal import IIDNormalSampler
+from botorch.test_functions import Hartmann
+from gpytorch.mlls import ExactMarginalLogLikelihood
+from torch import Tensor
+
+from mlmcbo.acquisition_functions.mc_two_step_lookahead import (qExpectedImprovementTwoStepLookahead,
+                                                                ExpectedImprovementTwoStepLookahead)
+from mlmcbo.acquisition_functions.mlmc_inc_functions import qEIMLMCTwoStep, qEIMLMCThreeStep
+from mlmcbo.utils.optimize_mlmc import optimize_mlmc, optimize_mlmc_three
+
+TAcqfArgConstructor = Callable[[Model, Tensor], Dict[str, Any]]
+torch.set_default_dtype(torch.double)
+
+neg_hartmann6 = Hartmann(dim=6, negate=True)
+torch.random.manual_seed(42)
+bounds = neg_hartmann6.bounds
+lower_bounds, upper_bounds = bounds[0], bounds[1]
+train_x = (upper_bounds - lower_bounds) * torch.rand(10, 6) + lower_bounds
+train_x = torch.rand(20, neg_hartmann6.dim)
+train_obj = neg_hartmann6(train_x).unsqueeze(-1)
+
+best_value = train_obj.max()
+print(f'Hartmann example:\nOptimal value = {neg_hartmann6.optimal_value}\nOptimizers = {neg_hartmann6.optimizers}')
+
+model = SingleTaskGP(
+    train_X=train_x,
+    train_Y=train_obj,
+    input_transform=Normalize(d=neg_hartmann6.dim, bounds=bounds),
+    outcome_transform=Standardize(m=1)
+)
+mll = ExactMarginalLogLikelihood(model.likelihood, model)
+fit_gpytorch_mll(mll)
+
+# MC Two-Step Lookahead EI
+# ------------------------------------------------------------------------------------------
+eps = 0.25
+N = np.round((1 / np.power(eps, 2))).astype(int)
+M = N
+
+sampler = IIDNormalSampler(sample_shape=torch.Size([N]), resample=False)
+inner_sampler = IIDNormalSampler(sample_shape=torch.Size([M]), resample=False)
+EI = ExpectedImprovementTwoStepLookahead(
+    model=model,
+    num_fantasies=None,
+    sampler=sampler,
+    inner_sampler=inner_sampler
+)
+
+torch.manual_seed(seed=0)
+new_candidate, _ = optimize_acqf(
+    acq_function=EI,
+    bounds=bounds,
+    q=1,
+    num_restarts=30,
+    raw_samples=100,
+    options={},
+)
+print(f'New candidate [MC One-Step Lookahead EI] = {new_candidate}')
+
+# MC Two-Step Lookahead qEI
+# ------------------------------------------------------------------------------------------
+batch_sizes = [2]
+
+qEI = qExpectedImprovementTwoStepLookahead(
+    model=model,
+    batch_sizes=batch_sizes,
+    antithetic_variates=False
+)
+n_points = qEI.get_augmented_q_batch_size(1)
+
+torch.manual_seed(seed=0)
+new_candidate, _ = optimize_acqf(
+    acq_function=qEI,
+    bounds=bounds,
+    q=n_points,
+    num_restarts=30,
+    raw_samples=100,
+    return_best_only=True,
+    options={},
+)
+print(f'New candidate [MC One-Step Lookahead qEI] = {new_candidate}')
+
+# MLMC Two-Step Lookahead qEI
+# ------------------------------------------------------------------------------------------
+qEI = qEIMLMCTwoStep(
+    model=model,
+    bounds=bounds,
+    num_restarts=30,
+    raw_samples=100,
+    q=1,
+    batch_sizes=[2]
+)
+
+torch.manual_seed(seed=0)
+new_candidate, _, _ = optimize_mlmc(
+    inc_function=qEI,
+    eps=1e-1,
+    dl=3,
+    alpha=1,
+    beta=1.5,
+    gamma=1,
+    meanc=1,
+    varc=1,
+    var0=1
+)
+print(f'New candidate [MLMC One-Step Lookahead qEI] = {new_candidate}')
+
+# MLMC Three-Step Lookahead qEI
+# ------------------------------------------------------------------------------------------
+threeqEI = qEIMLMCThreeStep(
+    model=model,
+    bounds=bounds,
+    num_restarts=10,
+    raw_samples=256,
+    q=1,
+    batch_sizes=[1, 1]
+)
+
+new_candidate, _, _ = optimize_mlmc_three(
+    inc_function=threeqEI,
+    eps=0.1,
+    dl=3,
+    alpha=1,
+    beta=1.5,
+    gamma=1,
+    meanc=1,
+    varc=1,
+    var0=1,
+    match_mode='point'
+)
+print(f'New candidate [MLMC Two-Step Lookahead qEI] = {new_candidate}')
+
+
+Output:
+{
+    "experimental_code": "import time\nfrom typing import Any, Callable, Dict, List, Optional, Type, Union\n\nimport torch\nfrom botorch.acquisition import (\n    AcquisitionFunction,\n    ExpectedImprovement,\n    MCAcquisitionObjective,\n    qExpectedImprovement,\n    qMultiStepLookahead, PosteriorMean, MCAcquisitionFunction,\n)\nfrom botorch.acquisition.multi_step_lookahead import make_best_f, _construct_sample_weights, _construct_inner_samplers, \\\n    _compute_stage_value\nfrom botorch.acquisition.objective import PosteriorTransform\nfrom botorch.exceptions import UnsupportedError\nfrom botorch.models.model import Model\nfrom botorch.optim import optimize_acqf\nfrom botorch.sampling.base import MCSampler\nfrom botorch.sampling.normal import IIDNormalSampler, SobolQMCNormalSampler\nfrom botorch.utils.transforms import t_batch_mode_transform, concatenate_pending_points, match_batch_shape\nfrom torch import Tensor\nfrom torch.nn import ModuleList\n\nTAcqfArgConstructor = Callable[[Model, Tensor], Dict[str, Any]]\n\n\nclass qEIMLMCTwoStep:\n    r\"\"\"Class for two-step lookahead q-EI with MLMC (2-EI) by default\"\"\"\n\n    def __init__(self, model, bounds, num_restarts, raw_samples, q=1, batch_sizes=None):\n        r\"\"\"\n        Args:\n            bounds: bounds of objective function\n            model: a fitted single-outcome model\n            num_restarts: number of restarts for LBFGS\n            raw_samples: number of raw samples for LBFGS\n            q: numer of batch observations generated each iteration\n            batch_sizes: array for q of q-EI, default is [2] (2-EI)\n        \"\"\"\n        if batch_sizes is None:\n            batch_sizes = [2]\n        self.model = model\n        self.bounds = bounds\n        self.num_restarts = num_restarts\n        self.raw_samples = raw_samples\n        self.q = q\n        self.batch_sizes = batch_sizes\n\n    @staticmethod\n    def _create_sampler(num_samples, seed=None):\n        r\"\"\"Initialize sampler with a seed for coupling\"\"\"\n        return IIDNormalSampler(sample_shape=torch.Size([num_samples]), seed=seed)\n\n    def sample_candidate(self, l, dl, num_samples, match=None, match_mode='point'):\n        r\"\"\"Generate new observations with MLMC\n        Args:\n            l: index level of estimation (starting from 0)\n            dl: starting level (l <- l + dl)\n            num_samples: number of outer samples\n            match: if None, set the initial matched value\n                   else matching the optimizer, so that MLMC tracks the same optimizer among levels;\n            match_mode: 'point' or 'forward' or 'backward'\n        Returns:\n            Three elements tuple\n            new_candidate: next candidate point by MLMC (optimizer)\n            new_value: corresponding value of objective by MLMC (optimum)\n            match_candidate: candidate used for matching in the next level\n        \"\"\"\n\n        # number of inner samples\n        M = 2 ** (l + dl)\n\n        # fixed seed of base samples for coupling\n        # No need to coupling for level 0 (single level estimator instead of increments)\n        # seed_out, seed_in = (torch.randint(0, 10000000, (1,)).item() for _ in range(2))\n\n        sampler = self._create_sampler(num_samples)\n\n        samplers = [sampler]\n        inner_mc_samplers = [None if self.q == 1 else sampler, self._create_sampler(M)]\n\n        if l == 0:\n            if match_mode == 'point':\n                new_candidate, new_value = self.get_candidates(samplers, inner_mc_samplers, return_best=True)\n                match_candidate = new_candidate\n            elif match_mode == 'forward':\n                new_candidate, new_value = self.get_candidates(samplers, inner_mc_samplers, return_best=False)\n                match_candidate = new_candidate\n            elif match_mode == 'backward':\n                new_candidate, new_value = self.get_candidates(samplers, inner_mc_samplers, return_best=False)\n                diff = torch.argmin(dist_matrix(match, new_candidate), dim=1)\n                new_candidate = new_candidate[diff]\n                new_value = new_value[diff]\n                match_candidate = new_candidate[diff]\n        else:\n            new_candidate_f, new_value_f = self.get_candidates(samplers, inner_mc_samplers,\n                                                               return_best=False)\n            antithetic = True\n\n            if not antithetic:\n                inner_sampler = self._create_sampler(M//2)\n                inner_sampler.base_samples = inner_mc_samplers[1].base_samples[::2]\n                inner_mc_samplers[1] = inner_sampler\n                \n            new_candidate_c, new_value_c = self.get_candidates(samplers, inner_mc_samplers,\n                                                               antithetic=antithetic,\n                                                               return_best=False)\n            if match_mode == 'point':\n                diff_c = torch.argmin(torch.norm(match - new_candidate_c, dim=[1, 2]))\n                diff_f = torch.argmin(torch.norm(new_candidate_f - new_candidate_c[diff_c], dim=[1, 2]))\n                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]\n                new_value = new_value_f[diff_f] - new_value_c[diff_c]\n                match_candidate = new_candidate_f[diff_f]\n            elif match_mode == 'forward':\n                diff_c = torch.argmin(dist_matrix(match, new_candidate_c), dim=1)\n                diff_f = torch.argmin(dist_matrix(new_candidate_c[diff_c], new_candidate_f), dim=1)\n                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]\n                new_value = new_value_f[diff_f] - new_value_c[diff_c]\n                match_candidate = new_candidate_f[diff_f]\n            elif match_mode == 'backward':\n                if match is None:\n                    match = new_candidate_f\n                diff_f = torch.argmin(dist_matrix(match, new_candidate_f), dim=1)\n                diff_c = torch.argmin(dist_matrix(new_candidate_f[diff_f], new_candidate_c), dim=1)\n                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]\n                new_value = new_value_f[diff_f] - new_value_c[diff_c]\n                match_candidate = new_candidate_c[diff_c]\n\n        return new_candidate, new_value, match_candidate\n\n    def get_candidates(self, samplers, inner_mc_samplers, antithetic=False, return_best=True):\n        r\"\"\"Generate the next observation of single two-step lookahead EI.\n        Args:\n            samplers: samplers for outer MC\n            inner_mc_samplers: samplers for inner MC\n            antithetic: whether to compute antithetic estimator\n            return_best: whether to return the best result of objective function optimization\n        Returns:\n            new_candidate: next candidate point (optimizer)\n            new_value: corresponding value of objective (optimum)\n        \"\"\"\n\n        # initialize the acquisition function for the zero and first steps\n        valfunc_cls = [ExpectedImprovement if self.q == 1 else qExpectedImprovement,\n                       qExpectedImprovement if antithetic is False else qExpectedImprovementAnt]\n        valfunc_argfacs = [make_best_f, make_best_f]\n\n        oneqEI = CustomqMultiStepLookahead(\n            model=self.model,\n            batch_sizes=self.batch_sizes,\n            num_fantasies=None,\n            samplers=samplers,\n            valfunc_cls=valfunc_cls,\n            valfunc_argfacs=valfunc_argfacs,\n            inner_mc_samplers=inner_mc_samplers\n        )\n\n        q_prime = oneqEI.get_augmented_q_batch_size(self.q)\n        new_candidate, new_value = optimize_acqf(\n            acq_function=oneqEI,\n            bounds=self.bounds,\n            q=q_prime,\n            num_restarts=self.num_restarts,\n            raw_samples=self.raw_samples,\n            return_best_only=return_best\n        )\n\n        return new_candidate, new_value\n\n\nclass CustomqMultiStepLookahead(qMultiStepLookahead):\n    r\"\"\"Inherited from qMultiStepLookahead allowing passing inner samplers\"\"\"\n\n    def __init__(\n            self,\n            model: Model,\n            batch_sizes: List[int],\n            num_fantasies: Optional[List[int]] = None,\n            samplers: Optional[List[MCSampler]] = None,\n            # Modification to allow passing in inner samplers directly\n            inner_mc_samplers: Optional[List[Optional[MCSampler]]] = None,\n            valfunc_cls: Optional[List[Optional[Type[AcquisitionFunction]]]] = None,\n            valfunc_argfacs: Optional[List[Optional[TAcqfArgConstructor]]] = None,\n            objective: Optional[MCAcquisitionObjective] = None,\n            posterior_transform: Optional[PosteriorTransform] = None,\n            inner_mc_samples: Optional[List[int]] = None,\n            X_pending: Optional[Tensor] = None,\n            collapse_fantasy_base_samples: bool = True\n    ) -> None:\n        r\"\"\"rewrite the initializer of qMultistepLookahead by allowing passing inner samplers\"\"\"\n\n        if objective is not None and not isinstance(objective, MCAcquisitionObjective):\n            raise UnsupportedError(\n                \"`qMultiStepLookahead` got a non-MC `objective`. This is not supported.\"\n                \" Use `posterior_transform` and `objective=None` instead.\"\n            )\n\n        super(MCAcquisitionFunction, self).__init__(model=model)\n        self.batch_sizes = batch_sizes\n        if not ((num_fantasies is None) ^ (samplers is None)):\n            raise UnsupportedError(\n                \"qMultiStepLookahead requires exactly one of `num_fantasies` or \"\n                \"`samplers` as arguments.\"\n            )\n        if samplers is None:\n            # If collapse_fantasy_base_samples is False, the `batch_range_override`\n            # is set on the samplers during the forward call.\n            samplers: List[MCSampler] = [\n                SobolQMCNormalSampler(sample_shape=torch.Size([nf]))\n                for nf in num_fantasies\n            ]\n        else:\n            num_fantasies = [sampler.sample_shape[0] for sampler in samplers]\n        self.num_fantasies = num_fantasies\n        # By default do not use stage values and use PosteriorMean as terminal value\n        # function (= multi-step KG)\n        if valfunc_cls is None:\n            valfunc_cls = [None for _ in num_fantasies] + [PosteriorMean]\n        if inner_mc_samplers is not None:\n            inner_samplers = inner_mc_samplers\n        else:\n            if inner_mc_samples is None:\n                inner_mc_samples = [None] * (1 + len(num_fantasies))\n            inner_samplers = _construct_inner_samplers(\n                batch_sizes=batch_sizes,\n                valfunc_cls=valfunc_cls,\n                objective=objective,\n                inner_mc_samples=inner_mc_samples,\n            )\n        if valfunc_argfacs is None:\n            valfunc_argfacs = [None] * (1 + len(batch_sizes))\n\n        self.objective = objective\n        self.posterior_transform = posterior_transform\n        self.set_X_pending(X_pending)\n        self.samplers = ModuleList(samplers)\n        self.inner_samplers = ModuleList(inner_samplers)\n        self._valfunc_cls = valfunc_cls\n        self._valfunc_argfacs = valfunc_argfacs\n        self._collapse_fantasy_base_samples = collapse_fantasy_base_samples\n\n\nclass qExpectedImprovementAnt(qExpectedImprovement):\n    r\"\"\"qExpectedImprovement antithetic estimation.\"\"\"\n\n    def __init__(\n            self,\n            model: Model,\n            best_f: Union[float, Tensor],\n            sampler: Optional[MCSampler] = None,\n            objective: Optional[MCAcquisitionObjective] = None,\n            posterior_transform: Optional[PosteriorTransform] = None,\n            X_pending: Optional[Tensor] = None,\n            **kwargs: Any,\n    ) -> None:\n        r\"\"\"\n        Args:\n            model: A fitted model.\n            best_f: The best objective value observed so far (assumed noiseless). Can be\n                a `batch_shape`-shaped tensor, which in case of a batched model\n                specifies potentially different values for each element of the batch.\n            sampler: The sampler used to draw base samples. Defaults to\n                `SobolQMCNormalSampler(num_samples=512, collapse_batch_dims=True)`\n            objective: The MCAcquisitionObjective under which the samples are evaluated.\n                Defaults to `IdentityMCObjective()`.\n            posterior_transform: A PosteriorTransform (optional).\n            X_pending:  A `m x d`-dim Tensor of `m` design points that have been\n                submitted for function evaluation but have not yet been evaluated.\n                Concatenated into X upon forward call. Copied and set to have no\n                gradient.\n        \"\"\"\n\n        super().__init__(\n            model=model,\n            best_f=best_f,\n            sampler=sampler,\n            objective=objective,\n            posterior_transform=posterior_transform,\n            X_pending=X_pending,\n        )\n\n    @concatenate_pending_points\n    @t_batch_mode_transform()\n    def forward(self, X: Tensor) -> Tensor:\n        r\"\"\"Evaluate qExpectedImprovement antithetic on the candidate set `X`.\n\n        Args:\n            X: A `batch_shape x q x d`-dim Tensor of t-batches with `q` `d`-dim design\n                points each.\n\n        Returns:\n            A `batch_shape'`-dim Tensor of antithetic of Expected Improvement values at the given\n            design points `X`, where `batch_shape'` is the broadcasted batch shape of\n            model and input `X`.\n        \"\"\"\n        posterior = self.model.posterior(\n            X=X, posterior_transform=self.posterior_transform\n        )\n        samples = self.sampler(posterior)\n\n        obj_1 = self.objective(samples[::2], X=X)\n        obj_1 = (obj_1 - self.best_f.unsqueeze(-1).to(obj_1)).clamp_min(0)\n        q_ei_1 = obj_1.max(dim=-1)[0].mean(dim=0)\n\n        obj_2 = self.objective(samples[1::2], X=X)\n        obj_2 = (obj_2 - self.best_f.unsqueeze(-1).to(obj_2)).clamp_min(0)\n        q_ei_2 = obj_2.max(dim=-1)[0].mean(dim=0)\n\n        inds_1 = torch.argmax(q_ei_1, dim=-1)\n        inds_2 = torch.argmax(q_ei_2, dim=-1)\n\n        for i in range(len(inds_1)):\n            temp = q_ei_2[i, inds_1[i]].item()\n            q_ei_2[i, inds_1[i]] = q_ei_2[i, inds_2[i]]\n            q_ei_2[i, inds_2[i]] = temp\n\n        return (q_ei_1 + q_ei_2)/2\n\n    def _sample_forward(self, obj: Tensor) -> Tensor:\n        r\"\"\"Evaluate qExpectedImprovement per sample on the candidate set `X`.\n\n        Args:\n            obj: A `sample_shape x batch_shape x q`-dim Tensor of MC objective values.\n\n        Returns:\n            A `sample_shape x batch_shape x q`-dim Tensor of improvement utility values.\n        \"\"\"\n        return (obj - self.best_f.unsqueeze(-1).to(obj)).clamp_min(0)\n\n\nclass qEIMLMCThreeStep:\n    r\"\"\"Class for three-step lookahead q-EI with MLMC (1-EI) by default\"\"\"\n\n    def __init__(self, model, bounds, num_restarts, raw_samples, q=1, batch_sizes=None):\n        r\"\"\"\n        Args:\n            bounds: bounds of objective function\n            model: a fitted single-outcome model\n            num_restarts: number of restarts for LBFGS\n            raw_samples: number of raw samples for LBFGS\n            q: numer of batch observations generated each iteration\n            batch_sizes: array for q of q-EI, default is [1, 1] (1-EI)\n        \"\"\"\n        if batch_sizes is None:\n            batch_sizes = [1, 1]\n        self.model = model\n        self.bounds = bounds\n        self.num_restarts = num_restarts\n        self.raw_samples = raw_samples\n        self.q = q\n        self.batch_sizes = batch_sizes\n\n    @staticmethod\n    def _create_sampler(num_samples, seed=None):\n        r\"\"\"Initialize sampler with a seed for coupling\"\"\"\n        return IIDNormalSampler(sample_shape=torch.Size([num_samples]), seed=seed)\n\n    def sample_candidate(self, l, dl, num_samples, match=None, match_mode='point'):\n        r\"\"\"Generate new observations with MLMC\n        Args:\n            l: index level of estimation (starting from 0)\n            dl: starting level (l <- l + dl)\n            num_samples: number of outer samples\n            match: if None, set the initial matched value\n                   else matching the optimizer, so that MLMC tracks the same optimizer among levels;\n            match_mode: 'point' or 'forward' or 'backward'\n        Returns:\n            Three elements tuple\n            new_candidate: next candidate point by MLMC (optimizer)\n            new_value: corresponding value of objective by MLMC (optimum)\n            match_candidate: candidate used for matching in the next level\n        \"\"\"\n\n        # number of inner samples\n        M = 2 ** (l + dl)\n\n        # fixed seed of base samples for coupling\n        # No need to coupling for level 0 (single level estimator instead of increments)\n        # seed_out, seed_in = (torch.randint(0, 10000000, (1,)).item() for _ in range(2))\n\n        samplers = [self._create_sampler(num_samples), self._create_sampler(M)]\n\n        if l == 0:\n            if match_mode == 'point':\n                new_candidate, new_value = self.get_candidates(samplers, return_best=True)\n                match_candidate = new_candidate\n            elif match_mode == 'forward':\n                new_candidate, new_value = self.get_candidates(samplers, return_best=False)\n                match_candidate = new_candidate\n            elif match_mode == 'backward':\n                new_candidate, new_value = self.get_candidates(samplers, return_best=False)\n                diff = torch.argmin(dist_matrix(match, new_candidate), dim=1)\n                new_candidate = new_candidate[diff]\n                new_value = new_value[diff]\n                match_candidate = new_candidate[diff]\n        else:\n            new_candidate_f, new_value_f = self.get_candidates(samplers,\n                                                               return_best=False)\n            new_candidate_c, new_value_c = self.get_candidates(samplers,\n                                                               antithetic=True,\n                                                               return_best=False)\n            if match_mode == 'point':\n                diff_c = torch.argmin(torch.norm(match - new_candidate_c, dim=[1, 2]))\n                diff_f = torch.argmin(torch.norm(new_candidate_f - new_candidate_c[diff_c], dim=[1, 2]))\n                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]\n                new_value = new_value_f[diff_f] - new_value_c[diff_c]\n                match_candidate = new_candidate_f[diff_f]\n            elif match_mode == 'forward':\n                diff_c = torch.argmin(dist_matrix(match, new_candidate_c), dim=1)\n                diff_f = torch.argmin(dist_matrix(new_candidate_c[diff_c], new_candidate_f), dim=1)\n                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]\n                new_value = new_value_f[diff_f] - new_value_c[diff_c]\n                match_candidate = new_candidate_f[diff_f]\n            elif match_mode == 'backward':\n                if match is None:\n                    match = new_candidate_f\n                diff_f = torch.argmin(dist_matrix(match, new_candidate_f), dim=1)\n                diff_c = torch.argmin(dist_matrix(new_candidate_f[diff_f], new_candidate_c), dim=1)\n                new_candidate = new_candidate_f[diff_f] - new_candidate_c[diff_c]\n                new_value = new_value_f[diff_f] - new_value_c[diff_c]\n                match_candidate = new_candidate_c[diff_c]\n\n        return new_candidate, new_value, match_candidate\n\n    def get_candidates(self, samplers, antithetic=False, return_best=True):\n        r\"\"\"Generate the next observation of single one-step lookahead EI.\n        Args:\n            samplers: samplers for outer MC\n            inner_mc_samplers: samplers for inner MC\n            antithetic: whether to compute antithetic estimator\n            return_best: whether to return the best result of objective function optimization\n        Returns:\n            new_candidate: next candidate point (optimizer)\n            new_value: corresponding value of objective (optimum)\n        \"\"\"\n\n        # initialize the acquisition function for the zero, first and second steps\n        valfunc_cls = [ExpectedImprovement,\n                       ExpectedImprovement,\n                       ExpectedImprovement]\n        valfunc_argfacs = [make_best_f, make_best_f, make_best_f]\n\n        if antithetic is False:\n            twoqEI = CustomqMultiStepLookahead(\n                model=self.model,\n                batch_sizes=self.batch_sizes,\n                num_fantasies=None,\n                samplers=samplers,\n                valfunc_cls=valfunc_cls,\n                valfunc_argfacs=valfunc_argfacs,\n            )\n        else:\n            twoqEI =ThreeStepIncAntEI(\n                model=self.model,\n                batch_sizes=self.batch_sizes,\n                num_fantasies=None,\n                samplers=samplers,\n                valfunc_cls=valfunc_cls,\n                valfunc_argfacs=valfunc_argfacs,\n            )\n        q_prime = twoqEI.get_augmented_q_batch_size(self.q)\n        new_candidate, new_value = optimize_acqf(\n            acq_function=twoqEI,\n            bounds=self.bounds,\n            q=q_prime,\n            num_restarts=self.num_restarts,\n            raw_samples=self.raw_samples,\n            return_best_only=return_best\n        )\n\n        return new_candidate, new_value\n\n\nclass ThreeStepIncAntEI(qMultiStepLookahead):\n\n    def __init__(\n            self,\n            model: Model,\n            batch_sizes: List[int],\n            num_fantasies: Optional[List[int]] = None,\n            samplers: Optional[List[MCSampler]] = None,\n            # Modification to allow passing in inner samplers directly\n            inner_mc_samplers: Optional[List[Optional[MCSampler]]] = None,\n            valfunc_cls: Optional[List[Optional[Type[AcquisitionFunction]]]] = None,\n            valfunc_argfacs: Optional[List[Optional[TAcqfArgConstructor]]] = None,\n            objective: Optional[MCAcquisitionObjective] = None,\n            posterior_transform: Optional[PosteriorTransform] = None,\n            inner_mc_samples: Optional[List[int]] = None,\n            X_pending: Optional[Tensor] = None,\n            collapse_fantasy_base_samples: bool = True\n    ) -> None:\n        r\"\"\"rewrite the initializer of qMultistepLookahead by allowing passing inner samplers\"\"\"\n\n        if objective is not None and not isinstance(objective, MCAcquisitionObjective):\n            raise UnsupportedError(\n                \"`qMultiStepLookahead` got a non-MC `objective`. This is not supported.\"\n                \" Use `posterior_transform` and `objective=None` instead.\"\n            )\n\n        super(MCAcquisitionFunction, self).__init__(model=model)\n        self.batch_sizes = batch_sizes\n        if not ((num_fantasies is None) ^ (samplers is None)):\n            raise UnsupportedError(\n                \"qMultiStepLookahead requires exactly one of `num_fantasies` or \"\n                \"`samplers` as arguments.\"\n            )\n        if samplers is None:\n            # If collapse_fantasy_base_samples is False, the `batch_range_override`\n            # is set on the samplers during the forward call.\n            samplers: List[MCSampler] = [\n                SobolQMCNormalSampler(sample_shape=torch.Size([nf]))\n                for nf in num_fantasies\n            ]\n        else:\n            num_fantasies = [sampler.sample_shape[0] for sampler in samplers]\n        self.num_fantasies = num_fantasies\n        # By default do not use stage values and use PosteriorMean as terminal value\n        # function (= multi-step KG)\n        if valfunc_cls is None:\n            valfunc_cls = [None for _ in num_fantasies] + [PosteriorMean]\n        if inner_mc_samplers is not None:\n            inner_samplers = inner_mc_samplers\n        else:\n            if inner_mc_samples is None:\n                inner_mc_samples = [None] * (1 + len(num_fantasies))\n            inner_samplers = _construct_inner_samplers(\n                batch_sizes=batch_sizes,\n                valfunc_cls=valfunc_cls,\n                objective=objective,\n                inner_mc_samples=inner_mc_samples,\n            )\n        if valfunc_argfacs is None:\n            valfunc_argfacs = [None] * (1 + len(batch_sizes))\n\n        self.objective = objective\n        self.posterior_transform = posterior_transform\n        self.set_X_pending(X_pending)\n        self.samplers = ModuleList(samplers)\n        self.inner_samplers = ModuleList(inner_samplers)\n        self._valfunc_cls = valfunc_cls\n        self._valfunc_argfacs = valfunc_argfacs\n        self._collapse_fantasy_base_samples = collapse_fantasy_base_samples\n\n\n    @t_batch_mode_transform()\n    def forward(self, X: Tensor) -> Tensor:\n        r\"\"\"Evaluate qMultiStepLookahead on the candidate set X.\n\n        Args:\n            X: A `batch_shape x q' x d`-dim Tensor with `q'` design points for each\n                batch, where `q' = q_0 + f_1 q_1 + f_2 f_1 q_2 + ...`. Here `q_i`\n                is the number of candidates jointly considered in look-ahead step\n                `i`, and `f_i` is respective number of fantasies.\n\n        Returns:\n            The acquisition value for each batch as a tensor of shape `batch_shape`.\n        \"\"\"\n        Xs = self.get_multi_step_tree_input_representation(X)\n\n        # set batch_range on samplers if not collapsing on fantasy dims\n        if not self._collapse_fantasy_base_samples:\n            self._set_samplers_batch_range(batch_shape=X.shape[:-2])\n\n        return _antstep(\n            model=self.model,\n            Xs=Xs,\n            samplers=self.samplers,\n            valfunc_cls=self._valfunc_cls,\n            valfunc_argfacs=self._valfunc_argfacs,\n            inner_samplers=self.inner_samplers,\n            objective=self.objective,\n            posterior_transform=self.posterior_transform,\n        )\n\ndef _antstep(\n    model: Model,\n    Xs: List[Tensor],\n    samplers: List[Optional[MCSampler]],\n    valfunc_cls: List[Optional[Type[AcquisitionFunction]]],\n    valfunc_argfacs: List[Optional[TAcqfArgConstructor]],\n    inner_samplers: List[Optional[MCSampler]],\n    objective: MCAcquisitionObjective,\n    posterior_transform: PosteriorTransform,\n) -> Tensor:\n    r\"\"\"Antithetic estimator computation.\n    \"\"\"\n    # compute zero step\n    sample_weights = torch.ones(*Xs[0].shape[:-2], device=Xs[0].device, dtype=Xs[0].dtype)\n    running_val = _compute_stage_value(\n        model=model,\n        valfunc_cls=valfunc_cls[0],\n        X=Xs[0],\n        objective=objective,\n        posterior_transform=posterior_transform,\n        inner_sampler=inner_samplers[0],\n        arg_fac=valfunc_argfacs[0],\n    )\n\n    # construct fantasy points\n    fantasy_model = model.fantasize(\n        X=Xs[0], sampler=samplers[0], observation_noise=True, propagate_grads=False\n    )\n\n    # augment sample weights appropriately\n    sample_weights = _construct_sample_weights(\n        prev_weights=sample_weights, sampler=samplers[0]\n    )\n\n    # compute first step\n    stage_val = _compute_stage_value(\n        model=fantasy_model,\n        valfunc_cls=valfunc_cls[1],\n        X=Xs[1],\n        objective=objective,\n        posterior_transform=posterior_transform,\n        inner_sampler=inner_samplers[1],\n        arg_fac=valfunc_argfacs[1],\n    )\n    running_val = running_val + stage_val\n\n    # construct fantasy points\n    base_samples = samplers[1].base_samples\n    base_samples1 = base_samples[0::2]\n    base_samples2 = base_samples[1::2]\n    sampler1 = IIDNormalSampler(sample_shape=torch.Size([len(base_samples1)]))\n    sampler1.base_samples = base_samples1\n    sampler2 = IIDNormalSampler(sample_shape=torch.Size([len(base_samples2)]))\n    sampler2.base_samples = base_samples2\n\n    fantasy_model1 = model.fantasize(\n        X=Xs[1], sampler=sampler1, observation_noise=True, propagate_grads=True\n    )\n    fantasy_model2 = model.fantasize(\n        X=Xs[1], sampler=sampler2, observation_noise=True, propagate_grads=True\n    )\n\n    # augment sample weights appropriately\n    sample_weights = _construct_sample_weights(\n        prev_weights=sample_weights, sampler=samplers[1]\n    )\n\n    # compute second step\n    stage_val1 = _compute_stage_value(\n        model=fantasy_model1,\n        valfunc_cls=valfunc_cls[2],\n        X=Xs[2][0::2],\n        objective=objective,\n        posterior_transform=posterior_transform,\n        inner_sampler=inner_samplers[2],\n        arg_fac=valfunc_argfacs[2],\n    )\n\n    stage_val2 = _compute_stage_value(\n        model=fantasy_model2,\n        valfunc_cls=valfunc_cls[2],\n        X=Xs[2][1::2],\n        objective=objective,\n        posterior_transform=posterior_transform,\n        inner_sampler=inner_samplers[2],\n        arg_fac=valfunc_argfacs[2],\n    )\n\n    running_val = running_val + 1/2 * torch.cat((stage_val1, stage_val2), dim=0)\n\n    batch_shape = running_val.shape[2:]\n    # expand sample weights to make sure it is the same shape as running_val,\n    # because we need to take a sum over sample weights for computing the\n    # weighted average\n    sample_weights = sample_weights.expand(running_val.shape)\n    return (running_val * sample_weights).view(-1, *batch_shape).sum(dim=0)\n\n\ndef dist_matrix(x, y):\n    # compute the distance matrix of two vectors\n    xsq = torch.sum(x ** 2, dim=(1, 2))  # (N,)\n    ysq = torch.sum(y ** 2, dim=(1, 2))  # (M,)\n\n    mixprod = -2 * x.view(x.shape[0], -1) @ y.view(y.shape[0], -1).T  # (N, M)\n\n    return torch.sqrt(xsq.unsqueeze(1) + mixprod + ysq.unsqueeze(0))  # (N,1)+(N,M)+(1,M) => (N, M)\n\nimport torch\nimport numpy as np\n\n\ndef optimize_mlmc(inc_function, eps, dl, alpha=1, beta=1.5, gamma=1, meanc=1, varc=1, var0=1, match_mode='point'):\n    r\"\"\"Optimize acquisition functions using mlmc.\n\n    Args:\n        inc_function: define the acquisition function estimation at different levels\n                      (single level estimator at l = 0 and increment otherwise)\n        eps: desired accuracy\n        dl: actual starting level\n        alpha: bias rate\n        beta: variance rate\n        gamma: cost rate\n        meanc: bias constant\n        varc: variance constant for increment\n        var0: variance for single level estimator\n        match_mode: match mode: 'point', 'forward' or 'backward'\n\n    Returns:\n        a tuple of optimiser, corresponding optimum, number of samples applied\n    \"\"\"\n    # TODO: Allow pre-computation of constants\n\n    # total levels required (at least two levels)\n    L = np.maximum(np.ceil(np.log2(np.sqrt(2) * meanc / (eps * (2 ** alpha - 1))) / alpha).astype(int), dl + 1)\n    levels = np.arange(dl, L + 1)\n\n    Ncon = (np.sum(np.sqrt(varc * 2 ** (-levels * (beta - gamma)))) + np.sqrt(var0 * 2 ** gamma)) / (eps ** 2)\n    # number of outer samples at each level\n    Nl = np.ceil(np.maximum(Ncon * np.sqrt(varc * 2 ** (-levels * (beta + gamma))), 2)).astype(int)\n\n    # TODO: Check one-shot ml f is the same as single f(z^*)\n    # z is the optimizer and f is the corresponding optimum\n    f, z = 0., 0.\n    # matching optimizer such that the optimizers at levels correspond\n    match = None\n    if match_mode == 'backward':\n        for level, n in zip(reversed(levels - dl), reversed(Nl)):\n            zl, fl, match = inc_function.sample_candidate(level, dl, n, match=match, match_mode=match_mode)\n            if level == (levels - dl)[-1]:\n                f = fl\n                z = zl\n            else:\n                f += fl\n                z += zl\n            opt_ind = torch.argmax(f, dim=0)\n        return z[opt_ind], f[opt_ind], Nl\n    else:\n        for level, n in zip(levels - dl, Nl):\n            zl, fl, match = inc_function.sample_candidate(level, dl, n, match=match, match_mode=match_mode)\n            if match_mode == 'point':\n                f += fl\n                z += zl\n            else:\n                if level == (levels - dl)[0]:\n                    f = fl\n                    z = zl\n                else:\n                    f += fl\n                    z += zl\n        if match_mode == 'point':\n            return z, f, Nl\n        else:\n            opt_ind = torch.argmax(f, dim=0)\n            return z[opt_ind], f[opt_ind], Nl\n\n\ndef optimize_mlmc_three(inc_function, eps, dl, alpha=1, beta=1.5, gamma=1, meanc=1, varc=1, var0=1, match_mode='point'):\n    r\"\"\"Optimize acquisition functions using mlmc.\n\n    Args:\n        inc_function: define the acquisition function estimation at different levels\n                      (single level estimator at l = 0 and increment otherwise)\n        eps: desired accuracy\n        dl: actual starting level\n        alpha: bias rate\n        beta: variance rate\n        gamma: cost rate\n        meanc: bias constant\n        varc: variance constant for increment\n        var0: variance for single level estimator\n        match_mode: match mode: 'point', 'forward' or 'backward'\n\n    Returns:\n        a tuple of optimiser, corresponding optimum, number of samples applied\n    \"\"\"\n    # TODO: Allow pre-computation of constants\n\n    # total levels required (at least two levels)\n    L = np.maximum(np.ceil(np.log2(np.sqrt(2) * meanc / (eps * (2 ** alpha - 1))) / alpha).astype(int), dl + 1)\n    levels = np.arange(dl, L + 1)\n\n    Ncon = (np.sum(np.sqrt(varc * 2 ** (-levels * (beta - gamma)))) + np.sqrt(var0 * 2 ** gamma)) / (eps ** 2)\n    # number of outer samples at each level\n    Nl = np.ceil(np.maximum(Ncon * np.sqrt(varc * 2 ** (-levels * (beta + gamma))), 2)).astype(int)\n\n    # TODO: Check one-shot ml f is the same as single f(z^*)\n    # z is the optimizer and f is the corresponding optimum\n    f, z = 0., 0.\n    # matching optimizer such that the optimizers at levels correspond\n    match = None\n    if match_mode == 'backward':\n        for level, n in zip(reversed(levels - dl), reversed(Nl)):\n            zl, fl, match = inc_function.sample_candidate(level, dl, n, match=match, match_mode=match_mode)\n            if level == (levels - dl)[-1]:\n                f = fl\n                z = zl\n            else:\n                f += fl\n                z += zl\n        opt_ind = torch.argmax(f, dim=0)\n        return z[opt_ind], f[opt_ind], Nl\n    else:\n        for level, n in zip(levels - dl, Nl):\n            zl, fl, match = inc_function.sample_candidate(level, dl, n, match=match, match_mode=match_mode)\n            if match_mode == 'point':\n                f += fl\n                z += zl\n            else:\n                if level == (levels - dl)[0]:\n                    f = fl\n                    z = zl\n                else:\n                    f += fl\n                    z += zl\n        if match_mode == 'point':\n            return z, f, Nl\n        else:\n            opt_ind = torch.argmax(f, dim=0)\n            return z[opt_ind], f[opt_ind], Nl",
+    "experimental_info": "The MLMC approach is implemented for approximating multi-step look-ahead acquisition functions, specifically two-step (`qEIMLMCTwoStep`) and three-step (`qEIMLMCThreeStep`) Expected Improvement (EI). It utilizes an antithetic coupling (`qExpectedImprovementAnt`, `ThreeStepIncAntEI`) to enhance convergence. The core MLMC optimization is handled by `optimize_mlmc` and `optimize_mlmc_three` functions.\n\n### Experimental Settings:\n\n*   **Objective Functions:** Experiments are typically conducted on synthetic test functions like `Ackley(dim=2, negate=True)` or `Hartmann(dim=6, negate=True)`. The `SelfDefinedFunction`, `Goldstein`, `Ackley5`, `Levy10`, `SixHumpCamel2`, `Cosine`, and `Branin2` functions are also available.\n*   **Initial Observations:** Number of initial observations is `2 * dim`, where `dim` is the dimensionality of the objective function.\n*   **BO Iterations:** `n_runs` is set to 30 for Bayesian Optimization (BO) runs.\n*   **Realisations:** `R` is 20 for multiple independent runs to compute average performance and error bars.\n*   **Optimizer Settings (LBFGS):**\n    *   `num_restarts`: 20-30 restarts (e.g., 20 in `runBO` examples, 30 in `tutorials/tests.py` for MC, 10 for MLMC three-step).\n    *   `raw_samples`: 100-256 raw samples for each restart (e.g., 256 in `runBO` examples, 100 for MC/MLMC two-step in `tutorials/tests.py`, 256 for MLMC three-step).\n*   **MLMC Parameters:**\n    *   `eps` (desired accuracy): Ranges from 0.1 to 0.25 (e.g., 0.2 for `testTwoEI`, 0.15 for `testWholeBO`, 1e-1 or 0.1 for specific `tutorials/tests.py` examples).\n    *   `dl` (actual starting level): Typically set to 3.\n    *   `alpha`: Bias rate, default 1.\n    *   `beta`: Variance rate, default 1.5.\n    *   `gamma`: Cost rate, default 1.\n    *   `meanc`: Bias constant, default 1.\n    *   `varc`: Variance constant for increment, default 1.\n    *   `var0`: Variance for single level estimator, default 1.\n    *   `match_mode`: 'point', 'forward', or 'backward'. 'point' is a common setting.\n*   **Acquisition Function Settings:**\n    *   `q` (batch size for optimization): For two-step MLMC, `q=[1, 2]` (meaning 1-batch, 2-step lookahead). For three-step MLMC, `q=[1, 1, 1]` (meaning 1-batch, 3-step lookahead).\n    *   `num_samples` (outer MC samples for MC baseline): `np.round((1 / np.power(eps, 2))).astype(int)`.\n    *   `inner_mc_samples` (inner MC samples for MC baseline): Typically the same as `num_samples` for the two-step acquisition.\n*   **Model:** Gaussian Process (GP) with `FixedNoiseGP` or `SingleTaskGP` (with `Normalize` input and `Standardize` outcome transforms for `SingleTaskGP`). Fitted using `ExactMarginalLogLikelihood`.\n*   **Data Types and Seeds:**\n    *   `torch.set_default_dtype(torch.double)`.\n    *   `torch.manual_seed(66)` for overall experiments, or `torch.manual_seed(0)` for specific optimization calls in `tutorials/tests.py`.\n    *   `device = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")`.\n*   **Performance Metrics:** Normalized Mean Squared Error (NMSE) of the best observed value against the true optimal value, averaged over realisations, and plotted against expected cumulative wall time."
+}
